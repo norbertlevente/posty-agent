@@ -1,3 +1,9 @@
+## Install as a skill
+
+```bash
+npx skills add gitroomhq/postiz-agent
+```
+
 # Postiz CLI
 
 **Social media automation CLI for AI agents** - Schedule posts across 28+ platforms programmatically.
@@ -40,6 +46,10 @@ postiz auth:status
 # Remove stored credentials
 postiz auth:logout
 ```
+
+#### Self-Hosting the Auth Server
+
+By default, `postiz auth:login` uses the hosted auth server at `cli-auth.postiz.com`. If you want to self-host the OAuth2 device flow server, follow the guide in [`server/SERVER.md`](./server/SERVER.md).
 
 ### Option 2: API Key
 
