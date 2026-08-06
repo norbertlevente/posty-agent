@@ -130,7 +130,7 @@ posty posts:create \
   -c "Special launch offer: 50% off!" \
   -m "discount-banner.jpg" \
   -c "Limited to first 100 customers!" \
-  -s "2024-12-25T09:00:00Z" \
+  -s "2026-12-25T09:00:00Z" \
   -i "$X_ID"
 ```
 
@@ -199,9 +199,9 @@ posty posts:create \
 ## Flags that do not exist
 
 `--comments` and `--image` appear in older documentation and in scripts written
-against it. **Neither is a flag on this CLI.** yargs ignores an unknown option,
-so a command using them does not error — it quietly posts without the comments
-and without the media.
+against it. **Neither is a flag on this CLI.** Unknown options are now a hard
+error (the CLI runs yargs in strict mode), so a command using them fails
+immediately instead of quietly posting without the comments and the media.
 
 The real flags are `-c` (repeatable), `-m` (repeatable, paired with `-c`),
 `-i`, `-s`, `-t`, `-d`, `--settings`, `--shortLink` and `--json`.
@@ -319,7 +319,7 @@ posty posts:create \
   -c "💰 Special launch pricing: 50% off for early adopters!" \
   -m "https://cdn.example.com/pricing.jpg" \
   -c "🔗 Get started: https://example.com/productx" \
-  -s "2024-12-25T09:00:00Z" \
+  -s "2026-12-25T09:00:00Z" \
   -d 3600000 \
   -i "$X_ID,$FB_ID,$THREADS_ID"
 

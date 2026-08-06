@@ -1,23 +1,19 @@
 import { PostyAPI } from '../api';
 import { getConfig } from '../config';
+import { resolveDateInput } from '../dates';
+import { result, status, fail } from '../output';
 import { readFileSync, existsSync } from 'fs';
 
 export async function getMissingContent(args: any) {
   const config = getConfig();
   const api = new PostyAPI(config);
 
-  if (!args.id) {
-    console.error('❌ Post ID is required');
-    process.exit(1);
-  }
-
   try {
-    const result = await api.getMissingContent(args.id);
-    console.log(JSON.stringify(result, null, 2));
-    return result;
+    const res = await api.getMissingContent(args.id);
+    result(res);
+    return res;
   } catch (error: any) {
-    console.error('❌ Failed to get missing content:', error.message);
-    process.exit(1);
+    fail('Failed to get missing content', error);
   }
 }
 
@@ -25,24 +21,26 @@ export async function connectPost(args: any) {
   const config = getConfig();
   const api = new PostyAPI(config);
 
-  if (!args.id) {
-    console.error('❌ Post ID is required');
-    process.exit(1);
+  try {
+    const res = await api.updateReleaseId(args.id, args.releaseId);
+    status(`✅ Post ${args.id} connected to release ${args.releaseId}`);
+    result(res);
+    return res;
+  } catch (error: any) {
+    fail('Failed to connect post', error);
   }
+}
 
-  if (!args.releaseId) {
-    console.error('❌ --release-id is required');
-    process.exit(1);
-  }
+export async function findSlot(args: any) {
+  const config = getConfig();
+  const api = new PostyAPI(config);
 
   try {
-    const result = await api.updateReleaseId(args.id, args.releaseId);
-    console.log(`✅ Post ${args.id} connected to release ${args.releaseId}`);
-    console.log(JSON.stringify(result, null, 2));
-    return result;
+    const res = await api.findSlot(args.id);
+    result(res);
+    return res;
   } catch (error: any) {
-    console.error('❌ Failed to connect post:', error.message);
-    process.exit(1);
+    fail('Failed to find a free slot', error);
   }
 }
 
@@ -64,7 +62,7 @@ export async function createPost(args: any) {
       const jsonContent = readFileSync(jsonPath, 'utf-8');
       postData = JSON.parse(jsonContent);
     } catch (error: any) {
-      console.error('❌ Failed to parse JSON file:', error.message);
+      console.error(`❌ Failed to parse JSON file: ${error.message}`);
       process.exit(1);
     }
   } else {
@@ -116,16 +114,38 @@ export async function createPost(args: any) {
           ? JSON.parse(args.settings)
           : args.settings;
       } catch (error: any) {
-        console.error('❌ Failed to parse settings JSON:', error.message);
+        console.error(`❌ Failed to parse settings JSON: ${error.message}`);
+        process.exit(1);
+      }
+    }
+
+    const type = args.type || 'schedule';
+
+    // `now` publishes immediately; the server replaces the date, but the API
+    // still requires the field, so send the current instant when it is omitted.
+    let dateIso: string;
+    if (!args.date && type === 'now') {
+      dateIso = new Date().toISOString();
+    } else {
+      try {
+        const resolved = resolveDateInput(args.date);
+        dateIso = resolved.iso;
+        if (resolved.assumedTimezone) {
+          status(
+            `ℹ️  Interpreted "${args.date}" as ${resolved.assumedTimezone} → ${dateIso} (set POSTY_TIMEZONE or pass an explicit offset to override)`
+          );
+        }
+      } catch (error: any) {
+        console.error(`❌ ${error.message}`);
         process.exit(1);
       }
     }
 
     // Build the proper post structure
     postData = {
-      type: args.type || 'schedule', // 'schedule' or 'draft'
+      type,
       creationMethod: 'CLI',
-      date: args.date, // Required date field
+      date: dateIso,
       shortLink: args.shortLink !== false,
       tags: [],
       posts: integrations.map((integrationId: string) => ({
@@ -137,13 +157,17 @@ export async function createPost(args: any) {
   }
 
   try {
-    const result = await api.createPost(postData);
-    console.log('✅ Post created successfully!');
-    console.log(JSON.stringify(result, null, 2));
-    return result;
+    const res = await api.createPost(postData);
+    status('✅ Post created successfully!');
+    if (postData?.type && postData.type !== 'draft') {
+      status(
+        'Note: a key without posts:publish creates a DRAFT even when you asked to schedule — check the type in the response.'
+      );
+    }
+    result(res);
+    return res;
   } catch (error: any) {
-    console.error('❌ Failed to create post:', error.message);
-    process.exit(1);
+    fail('Failed to create post', error);
   }
 }
 
@@ -158,10 +182,20 @@ export async function listPosts(args: any) {
   const defaultEndDate = new Date();
   defaultEndDate.setDate(defaultEndDate.getDate() + 30);
 
+  const resolve = (label: string, value: string | undefined, fallback: Date) => {
+    if (!value) return fallback.toISOString();
+    try {
+      return resolveDateInput(value).iso;
+    } catch (error: any) {
+      console.error(`❌ Invalid ${label}: ${error.message}`);
+      process.exit(1);
+    }
+  };
+
   // Only send fields that are in GetPostsDto
   const filters: any = {
-    startDate: args.startDate || defaultStartDate.toISOString(),
-    endDate: args.endDate || defaultEndDate.toISOString(),
+    startDate: resolve('--startDate', args.startDate, defaultStartDate),
+    endDate: resolve('--endDate', args.endDate, defaultEndDate),
   };
 
   // customer is optional in the DTO
@@ -170,13 +204,11 @@ export async function listPosts(args: any) {
   }
 
   try {
-    const result = await api.listPosts(filters);
-    console.log('📋 Posts:');
-    console.log(JSON.stringify(result, null, 2));
-    return result;
+    const res = await api.listPosts(filters);
+    result(res);
+    return res;
   } catch (error: any) {
-    console.error('❌ Failed to list posts:', error.message);
-    process.exit(1);
+    fail('Failed to list posts', error);
   }
 }
 
@@ -184,24 +216,13 @@ export async function changePostStatus(args: any) {
   const config = getConfig();
   const api = new PostyAPI(config);
 
-  if (!args.id) {
-    console.error('❌ Post ID is required');
-    process.exit(1);
-  }
-
-  if (args.status !== 'draft' && args.status !== 'schedule') {
-    console.error('❌ --status must be either "draft" or "schedule"');
-    process.exit(1);
-  }
-
   try {
-    const result = await api.changePostStatus(args.id, args.status);
-    console.log(`✅ Post ${args.id} status changed to ${args.status}`);
-    console.log(JSON.stringify(result, null, 2));
-    return result;
+    const res = await api.changePostStatus(args.id, args.status);
+    status(`✅ Post ${args.id} status changed to ${args.status}`);
+    result(res);
+    return res;
   } catch (error: any) {
-    console.error('❌ Failed to change post status:', error.message);
-    process.exit(1);
+    fail('Failed to change post status', error);
   }
 }
 
@@ -209,16 +230,12 @@ export async function deletePost(args: any) {
   const config = getConfig();
   const api = new PostyAPI(config);
 
-  if (!args.id) {
-    console.error('❌ Post ID is required');
-    process.exit(1);
-  }
-
   try {
-    await api.deletePost(args.id);
-    console.log(`✅ Post ${args.id} deleted successfully!`);
+    const res = await api.deletePost(args.id);
+    status(`✅ Post ${args.id} deleted successfully!`);
+    result(res);
+    return res;
   } catch (error: any) {
-    console.error('❌ Failed to delete post:', error.message);
-    process.exit(1);
+    fail('Failed to delete post', error);
   }
 }

@@ -84,6 +84,16 @@ If you see `-m "something.jpg"` anywhere below, treat it as shorthand for "the `
 
 ---
 
+## Output contract
+
+Every command prints its **JSON result — and nothing else — to stdout**;
+status lines, warnings and errors go to stderr, and every failure exits 1. So
+`posty upload x.jpg | jq -r '.path'` is always safe, with no stripping needed.
+Unknown flags are an error, not silently ignored — if a flag is rejected, it
+does not exist; do not retry with variations.
+
+---
+
 ## ⚠️ Authentication Required
 
 **You MUST authenticate before running any Posty CLI command.** All commands will fail without valid credentials.
@@ -217,11 +227,10 @@ polling loop on `posts:list` cannot starve `posts:create`.
 
 | Routes | Limit |
 |---|---|
-| Reads — `posts:list`, `integrations:list`, `integrations:groups`, `integrations:settings`, `posts:missing`, notifications, find-slot | 600/h (the `API_LIMIT` default; production sets 600) |
+| Reads — `posts:list`, `integrations:list`, `integrations:groups`, `integrations:settings`, `posts:missing`, `posts:find-slot`, notifications | 600/h (the `API_LIMIT` default; production sets 600) |
 | Publish and delete — `posts:create`, `posts:delete`, `posts:status`, `integrations:trigger` | 60/h |
 | Analytics and channel refresh — `analytics:platform`, `analytics:post`, `/social/:integration` | 30/h |
 | Uploads — `upload`, `upload-from-url` | 30/h |
-| The two AI-video routes | 10/h |
 
 The bucket is keyed on the hash of the presented key, so rotating a key starts
 a fresh allowance and the old secret's allowance dies with it. Exceeding a
@@ -252,15 +261,15 @@ posty integrations:trigger <integration-id> <method-name> -d '{"param":"value"}'
 
 ```bash
 # Simple post (date is REQUIRED)
-posty posts:create -c "Content" -s "2024-12-31T12:00:00Z" -i "integration-id"
+posty posts:create -c "Content" -s "2026-12-31T12:00:00Z" -i "integration-id"
 
 # Draft post
-posty posts:create -c "Content" -s "2024-12-31T12:00:00Z" -t draft -i "integration-id"
+posty posts:create -c "Content" -s "2026-12-31T12:00:00Z" -t draft -i "integration-id"
 
 # Post with media (upload each file FIRST — see Rule 2)
 IMG1=$(posty upload img1.jpg | jq -r '.path')
 IMG2=$(posty upload img2.jpg | jq -r '.path')
-posty posts:create -c "Content" -m "$IMG1,$IMG2" -s "2024-12-31T12:00:00Z" -i "integration-id"
+posty posts:create -c "Content" -m "$IMG1,$IMG2" -s "2026-12-31T12:00:00Z" -i "integration-id"
 
 # Post with comments (each with own media — every file uploaded first)
 MAIN=$(posty upload main.jpg | jq -r '.path')
@@ -271,16 +280,16 @@ posty posts:create \
   -c "Main post" -m "$MAIN" \
   -c "First comment" -m "$C1" \
   -c "Second comment" -m "$C2A,$C2B" \
-  -s "2024-12-31T12:00:00Z" \
+  -s "2026-12-31T12:00:00Z" \
   -i "integration-id"
 
 # Multi-platform post
-posty posts:create -c "Content" -s "2024-12-31T12:00:00Z" -i "$X_ID,$FB_ID,$THREADS_ID"
+posty posts:create -c "Content" -s "2026-12-31T12:00:00Z" -i "$X_ID,$FB_ID,$THREADS_ID"
 
 # Platform-specific settings
 posty posts:create \
   -c "Content" \
-  -s "2024-12-31T12:00:00Z" \
+  -s "2026-12-31T12:00:00Z" \
   --settings '{"who_can_reply_post":"everyone"}' \
   -i "$X_ID"
 
@@ -295,7 +304,7 @@ posty posts:create --json post.json
 posty posts:list
 
 # List posts in date range
-posty posts:list --startDate "2024-01-01T00:00:00Z" --endDate "2024-12-31T23:59:59Z"
+posty posts:list --startDate "2026-01-01T00:00:00Z" --endDate "2026-12-31T23:59:59Z"
 
 # Delete post
 posty posts:delete <post-id>
@@ -379,7 +388,7 @@ posty upload image.jpg
 # Workflow: Upload → Extract URL → Use in post
 VIDEO=$(posty upload video.mp4)
 VIDEO_PATH=$(echo "$VIDEO" | jq -r '.path')
-posty posts:create -c "Content" -s "2024-12-31T12:00:00Z" -m "$VIDEO_PATH" -i "tiktok-id"
+posty posts:create -c "Content" -s "2026-12-31T12:00:00Z" -m "$VIDEO_PATH" -i "tiktok-id"
 ```
 
 ---
@@ -434,7 +443,7 @@ THUMB_PATH=$(echo "$THUMB_RESULT" | jq -r '.path')
 # Use in post
 posty posts:create \
   -c "Check out my video!" \
-  -s "2024-12-31T12:00:00Z" \
+  -s "2026-12-31T12:00:00Z" \
   -m "$VIDEO_PATH" \
   -i "tiktok-id"
 ```
@@ -453,42 +462,49 @@ posty posts:create \
   -c "Point one (2/4)" -m "$P1" \
   -c "Point two (3/4)" -m "$P2" \
   -c "Conclusion (4/4)" -m "$OUTRO" \
-  -s "2024-12-31T12:00:00Z" \
-  -d 2000 \
+  -s "2026-12-31T12:00:00Z" \
+  -d 5 \
   -i "$X_ID"
+# -d is the delay between comments in MINUTES (here: 5 minutes)
 ```
 
-### Pattern 4: Multi-Platform Campaign
+### Pattern 4: Multi-Platform Campaign (different content per channel)
+
+JSON mode takes the API's real request body — `type`, `date`, `shortLink`,
+`tags`, and a `posts` array where each element names an `integration`, its
+`value` thread and its `settings`. There is no `"integrations"` key and no
+`"provider"` key; a full working file is
+[examples/multi-platform-post.json](./examples/multi-platform-post.json).
 
 ```bash
-# Create JSON file with platform-specific content
-cat > campaign.json << 'EOF'
+IMG=$(posty upload akcio.jpg | jq -r '.path')
+
+cat > kampany.json << EOF
 {
-  "integrations": ["<x-id>", "<facebook-id>", "<threads-id>"],
+  "type": "schedule",
+  "date": "2026-12-01T09:00:00Z",
+  "shortLink": false,
+  "tags": [],
   "posts": [
     {
-      "provider": "twitter",
-      "post": [
-        {
-          "content": "Short tweet version #tech",
-          "image": ["<URL returned by `posty upload twitter-image.jpg`>"]
-        }
-      ]
+      "integration": { "id": "<x-id>" },
+      "value": [
+        { "content": "Karácsonyi akció! 🎄 -20% minden csomagra. #akcio", "image": [ { "id": "a", "path": "$IMG" } ] }
+      ],
+      "settings": { "who_can_reply_post": "everyone" }
     },
     {
-      "provider": "linkedin",
-      "post": [
-        {
-          "content": "Professional LinkedIn version with more context...",
-          "image": ["<URL returned by `posty upload linkedin-image.jpg`>"]
-        }
-      ]
+      "integration": { "id": "<facebook-id>" },
+      "value": [
+        { "content": "Elindult a karácsonyi akciónk — december végéig minden csomag 20% kedvezménnyel. Részletek a weboldalon!", "image": [ { "id": "b", "path": "$IMG" } ] }
+      ],
+      "settings": { "post_type": "post" }
     }
   ]
 }
 EOF
 
-posty posts:create --json campaign.json
+posty posts:create --json kampany.json
 ```
 
 ### Pattern 5: Validate Settings Before Posting
@@ -512,7 +528,7 @@ fi
 # Create post with settings
 posty posts:create \
   -c "$CONTENT" \
-  -s "2024-12-31T12:00:00Z" \
+  -s "2026-12-31T12:00:00Z" \
   --settings '{"key": "value"}' \
   -i "$INTEGRATION_ID"
 ```
@@ -524,9 +540,9 @@ posty posts:create \
 
 # Schedule posts for the week
 DATES=(
-  "2024-02-14T09:00:00Z"
-  "2024-02-15T09:00:00Z"
-  "2024-02-16T09:00:00Z"
+  "2026-02-14T09:00:00Z"
+  "2026-02-15T09:00:00Z"
+  "2026-02-16T09:00:00Z"
 )
 
 CONTENT=(
@@ -554,7 +570,7 @@ done
 
 CONTENT="Your post content"
 INTEGRATION_ID="$X_ID"
-DATE="2024-12-31T12:00:00Z"
+DATE="2026-12-31T12:00:00Z"
 MAX_RETRIES=3
 
 for attempt in $(seq 1 $MAX_RETRIES); do
@@ -668,7 +684,7 @@ posty posts:create \
   -c "Main post" -m "$I1,$I2" \
   -c "Comment 1" -m "$CI" \
   -c "Comment 2" -m "$A1,$A2" \
-  -s "2024-12-31T12:00:00Z" \
+  -s "2026-12-31T12:00:00Z" \
   -d 5 \  # Delay between comments in minutes
   -i "integration-id"
 ```
@@ -688,10 +704,21 @@ Internally creates (note: every URL is a Posty-uploaded `.path`, not a raw filen
 
 ### Date Handling
 
-All dates use ISO 8601 format:
-- Schedule posts: `-s "2024-12-31T12:00:00Z"`
-- List posts: `--startDate "2024-01-01T00:00:00Z" --endDate "2024-12-31T23:59:59Z"`
-- Defaults: `posts:list` uses 30 days ago to 30 days from now
+- Full ISO 8601 with a timezone is always safe: `-s "2026-12-31T12:00:00Z"`,
+  `-s "2026-12-31T13:00:00+01:00"`.
+- **A datetime WITHOUT a timezone (`-s "2026-12-31 12:00"` or
+  `-s "2026-12-31T12:00"`) is interpreted as Europe/Budapest local time**,
+  DST included, and converted to UTC before it is sent. The CLI prints the
+  resolved UTC instant on stderr. Override the zone with `POSTY_TIMEZONE`
+  (an IANA name) or by writing an explicit offset. This is what a Hungarian
+  user means by "délben" — never re-interpret their local time as UTC.
+- A bare date (`-s "2026-12-31"`) means midnight Budapest time that day.
+- `posts:list --startDate/--endDate` accept the same shapes; defaults are
+  30 days ago to 30 days from now.
+- `posty posts:find-slot <integration-id>` returns `{"date": "..."}` — the
+  next free slot on that channel's schedule; pass it straight back to
+  `posts:create -s`.
+- `-t now` publishes immediately and needs no `--date`.
 
 ### Media Upload Response
 
@@ -708,7 +735,7 @@ Extract path for use in posts:
 ```bash
 RESULT=$(posty upload image.jpg)
 PATH=$(echo "$RESULT" | jq -r '.path')
-posty posts:create -c "Content" -s "2024-12-31T12:00:00Z" -m "$PATH" -i "integration-id"
+posty posts:create -c "Content" -s "2026-12-31T12:00:00Z" -m "$PATH" -i "integration-id"
 ```
 
 ### JSON Mode vs CLI Flags
@@ -864,9 +891,8 @@ All optional. `topicType`: `STANDARD` | `EVENT` | `OFFER`. `callToActionType`:
 State these plainly rather than attempting a workaround.
 
 - **No AI video generation.** The `/generate-video` and `/video/function`
-  routes exist and are rate-limited, but the feature does not work and is not
-  offered. Do not tell a user Posty can generate video, and do not call those
-  routes.
+  routes were removed from the API entirely (2026-08-06). Do not tell a user
+  Posty can generate video, and do not call those routes — they 404.
 - **No image or video generation of any kind through this CLI.** Media comes
   from files the user already has, via `posty upload`.
 - **No channel deletion.** `DELETE /integrations/:id` was deliberately removed
@@ -882,10 +908,7 @@ State these plainly rather than attempting a workaround.
 - [HOW_TO_RUN.md](./HOW_TO_RUN.md) - Installing and running the CLI
 - [examples/COMMAND_LINE_GUIDE.md](./examples/COMMAND_LINE_GUIDE.md) - Complete command syntax reference
 - [PROVIDER_SETTINGS.md](./PROVIDER_SETTINGS.md) - Settings schema for every supported channel
-- [INTEGRATION_TOOLS_WORKFLOW.md](./INTEGRATION_TOOLS_WORKFLOW.md) - The tools workflow
-- [INTEGRATION_SETTINGS_DISCOVERY.md](./INTEGRATION_SETTINGS_DISCOVERY.md) - Settings discovery workflow
 - [SUPPORTED_FILE_TYPES.md](./SUPPORTED_FILE_TYPES.md) - The eight accepted media types
-- [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md) - Code architecture
 
 **Ready-to-use examples:**
 - [examples/EXAMPLES.md](./examples/EXAMPLES.md) - Comprehensive examples
@@ -904,7 +927,7 @@ State these plainly rather than attempting a workaround.
 3. **Settings schema mismatch** - Check `integrations:settings` for required fields
 4. **Media MUST be uploaded to Posty first** - ⚠️ **CRITICAL (Rule 2):** Every value passed to `-m` or to an `image`/media field in JSON mode must be a `.path` returned by `posty upload`. Raw local filenames (`image.jpg`) and external URLs (`https://...`) will be rejected — TikTok, Instagram, YouTube and most other providers only accept Posty-verified URLs. No exceptions: even a "quick test post" needs the upload step.
 5. **JSON escaping in shell** - Use single quotes for JSON: `--settings '{...}'`
-6. **Date format** - Must be ISO 8601: `"2024-12-31T12:00:00Z"` and is REQUIRED
+6. **Date format** - ISO 8601 (`"2026-12-31T12:00:00Z"`). A datetime without a timezone is read as Europe/Budapest. Required except with `-t now` or `--json`.
 7. **Tool not found** - Check available tools in `integrations:settings` output
 8. **Character limits** - Each platform has different limits, check `maxLength` in settings
 9. **Required settings** - YouTube requires `title` and `type`; X requires `who_can_reply_post`; Instagram requires `post_type`; TikTok requires `privacy_level` and `content_posting_method`. Threads and Bluesky require nothing.
@@ -929,16 +952,19 @@ posty integrations:groups                         # List groups (customers)
 posty integrations:settings <id>                  # Get settings schema
 posty integrations:trigger <id> <method> -d '{}'  # Fetch dynamic data
 
-# Posting (date is REQUIRED)
-posty posts:create -c "text" -s "2024-12-31T12:00:00Z" -i "id"                  # Simple
-posty posts:create -c "text" -s "2024-12-31T12:00:00Z" -t draft -i "id"        # Draft
-posty posts:create -c "text" -m "$(posty upload img.jpg | jq -r '.path')" -s "2024-12-31T12:00:00Z" -i "id"  # With media (upload first — Rule 2)
-posty posts:create -c "main" -c "comment" -s "2024-12-31T12:00:00Z" -i "id"    # With comment
-posty posts:create -c "text" -s "2024-12-31T12:00:00Z" --settings '{}' -i "id" # Platform-specific
+# Posting (date required unless -t now or --json)
+posty posts:create -c "text" -s "2026-12-31T12:00:00Z" -i "id"                  # Simple (UTC)
+posty posts:create -c "Jó reggelt!" -s "2026-12-31 08:00" -i "id"              # Budapest local time
+posty posts:create -c "text" -t now -i "id"                                     # Publish immediately
+posty posts:create -c "text" -s "2026-12-31T12:00:00Z" -t draft -i "id"        # Draft
+posty posts:create -c "text" -m "$(posty upload img.jpg | jq -r '.path')" -s "2026-12-31T12:00:00Z" -i "id"  # With media (upload first — Rule 2)
+posty posts:create -c "main" -c "comment" -s "2026-12-31T12:00:00Z" -i "id"    # With comment
+posty posts:create -c "text" -s "2026-12-31T12:00:00Z" --settings '{}' -i "id" # Platform-specific
 posty posts:create --json file.json                                             # Complex
 
 # Management
 posty posts:list                                  # List posts
+posty posts:find-slot <integration-id>            # Next free slot: {"date": "..."}
 posty posts:delete <id>                          # Delete post
 posty posts:status <id> --status draft           # Move to draft (stops workflow)
 posty posts:status <id> --status schedule        # Queue draft for publishing

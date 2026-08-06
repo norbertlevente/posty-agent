@@ -75,7 +75,7 @@ posty posts:create \
 ```bash
 posty posts:create \
   -c "Future post" \
-  -s "2024-12-31T12:00:00Z" \
+  -s "2026-12-31T12:00:00Z" \
   -i "$X_ID,$FB_ID"
 ```
 
@@ -127,7 +127,7 @@ This creates a 5-part Twitter thread, with each tweet having its own image and a
 ```json
 {
   "type": "now",                    // "now", "schedule", "draft", "update"
-  "date": "2024-01-15T12:00:00Z",  // When to post (ISO 8601)
+  "date": "2026-01-15T12:00:00Z",  // When to post (ISO 8601)
   "shortLink": true,                // Enable URL shortening
   "tags": [],                       // Array of tags
   "posts": [...]                    // Array of posts
@@ -168,7 +168,7 @@ Create a coordinated multi-platform launch:
 ```json
 {
   "type": "schedule",
-  "date": "2024-03-15T09:00:00Z",
+  "date": "2026-03-15T09:00:00Z",
   "posts": [
     {
       "integration": { "id": "twitter-id" },
@@ -288,7 +288,7 @@ done
 cat > thread.json << 'EOF'
 {
   "type": "now",
-  "date": "2024-12-31T12:00:00Z",
+  "date": "2026-12-31T12:00:00Z",
   "shortLink": true,
   "tags": [],
   "posts": [{
@@ -319,5 +319,4 @@ Common errors and solutions:
 ## Further Reading
 
 - See `SKILL.md` for AI agent patterns
-- See `README.md` for installation and setup
-- See `QUICK_START.md` for basic usage
+- See `HOW_TO_RUN.md` for installation and setup

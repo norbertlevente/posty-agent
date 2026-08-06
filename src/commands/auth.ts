@@ -1,7 +1,6 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync, chmodSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
-import fetch from 'node-fetch';
 
 const CREDENTIALS_DIR = join(homedir(), '.posty');
 const CREDENTIALS_FILE = join(CREDENTIALS_DIR, 'credentials.json');

@@ -1,25 +1,26 @@
 import { PostyAPI } from '../api';
 import { getConfig } from '../config';
+import { result, fail } from '../output';
+
+function daysArg(args: any): string {
+  const days = String(args.days ?? '7');
+  if (!/^\d+$/.test(days) || Number(days) < 1) {
+    console.error('❌ --days must be a positive whole number of days, e.g. --days 30');
+    process.exit(1);
+  }
+  return days;
+}
 
 export async function getAnalytics(args: any) {
   const config = getConfig();
   const api = new PostyAPI(config);
 
-  if (!args.id) {
-    console.error('❌ Integration ID is required');
-    process.exit(1);
-  }
-
-  const date = args.date || '7';
-
   try {
-    const result = await api.getAnalytics(args.id, date);
-    console.log(`📊 Analytics for integration: ${args.id}`);
-    console.log(JSON.stringify(result, null, 2));
-    return result;
+    const res = await api.getAnalytics(args.id, daysArg(args));
+    result(res);
+    return res;
   } catch (error: any) {
-    console.error('❌ Failed to get analytics:', error.message);
-    process.exit(1);
+    fail('Failed to get analytics', error);
   }
 }
 
@@ -27,20 +28,11 @@ export async function getPostAnalytics(args: any) {
   const config = getConfig();
   const api = new PostyAPI(config);
 
-  if (!args.id) {
-    console.error('❌ Post ID is required');
-    process.exit(1);
-  }
-
-  const date = args.date || '7';
-
   try {
-    const result = await api.getPostAnalytics(args.id, date);
-    console.log(`📊 Analytics for post: ${args.id}`);
-    console.log(JSON.stringify(result, null, 2));
-    return result;
+    const res = await api.getPostAnalytics(args.id, daysArg(args));
+    result(res);
+    return res;
   } catch (error: any) {
-    console.error('❌ Failed to get post analytics:', error.message);
-    process.exit(1);
+    fail('Failed to get post analytics', error);
   }
 }

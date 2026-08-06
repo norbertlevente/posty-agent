@@ -1,6 +1,6 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { createPost, listPosts, deletePost, getMissingContent, connectPost, changePostStatus } from './commands/posts';
+import { createPost, listPosts, deletePost, getMissingContent, connectPost, changePostStatus, findSlot } from './commands/posts';
 import { listIntegrations, listGroups, getIntegrationSettings, triggerIntegrationTool } from './commands/integrations';
 import { getAnalytics, getPostAnalytics } from './commands/analytics';
 import { uploadFile } from './commands/upload';
@@ -12,45 +12,46 @@ yargs(hideBin(process.argv))
   .usage('$0 <command> [options]')
   .command(
     'posts:create',
-    'Create a new post',
+    'Create a new post (schedule, draft, or publish now)',
     (yargs: Argv) => {
       return yargs
         .option('content', {
           alias: 'c',
-          describe: 'Post/comment content (can be used multiple times)',
+          describe: 'Post/comment content (repeat for a thread: first is the post, the rest are comments)',
           type: 'string',
         })
         .option('media', {
           alias: 'm',
-          describe: 'Comma-separated media URLs for the corresponding -c (can be used multiple times)',
+          describe: 'Comma-separated media URLs for the corresponding -c (repeatable; URLs must come from "posty upload")',
           type: 'string',
         })
         .option('integrations', {
           alias: 'i',
-          describe: 'Comma-separated list of integration IDs',
+          describe: 'Comma-separated list of integration IDs (from "posty integrations:list")',
           type: 'string',
         })
         .option('date', {
           alias: 's',
-          describe: 'Schedule date (ISO 8601 format) - REQUIRED',
+          describe:
+            'Publish date. ISO 8601 with timezone ("2026-12-31T12:00:00Z"), or a naive datetime ("2026-12-31 12:00") interpreted in Europe/Budapest (override with POSTY_TIMEZONE). Required unless --type now or --json.',
           type: 'string',
         })
         .option('type', {
           alias: 't',
-          describe: 'Post type: "schedule" or "draft"',
+          describe: 'Post type: "schedule" (default), "draft", or "now" (publish immediately)',
           type: 'string',
-          choices: ['schedule', 'draft'],
+          choices: ['schedule', 'draft', 'now'],
           default: 'schedule',
         })
         .option('delay', {
           alias: 'd',
-          describe: 'Delay in minutes between comments (default: 0)',
+          describe: 'Delay in MINUTES between comments (default: 0)',
           type: 'number',
           default: 0,
         })
         .option('json', {
           alias: 'j',
-          describe: 'Path to JSON file with full post structure',
+          describe: 'Path to JSON file with the full post structure (see examples/)',
           type: 'string',
         })
         .option('shortLink', {
@@ -59,7 +60,7 @@ yargs(hideBin(process.argv))
           default: true,
         })
         .option('settings', {
-          describe: 'Platform-specific settings as JSON string',
+          describe: 'Platform-specific settings as JSON string (schema: "posty integrations:settings <id>")',
           type: 'string',
         })
         .check((argv) => {
@@ -69,74 +70,74 @@ yargs(hideBin(process.argv))
           if (!argv.json && !argv.integrations) {
             throw new Error('--integrations is required when not using --json');
           }
-          if (!argv.json && !argv.date) {
-            throw new Error('--date is required when not using --json');
+          if (!argv.json && !argv.date && argv.type !== 'now') {
+            throw new Error('--date is required when not using --json (or use --type now to publish immediately)');
           }
           return true;
         })
         .example(
-          '$0 posts:create -c "Hello World!" -s "2024-12-31T12:00:00Z" -i "twitter-123"',
-          'Simple scheduled post'
+          '$0 posts:create -c "Hello World!" -s "2026-12-31T12:00:00Z" -i "integration-id"',
+          'Simple scheduled post (explicit UTC)'
         )
         .example(
-          '$0 posts:create -c "Draft post" -s "2024-12-31T12:00:00Z" -t draft -i "twitter-123"',
+          '$0 posts:create -c "Boldog karácsonyt! 🎄" -s "2026-12-24 18:00" -i "integration-id"',
+          'Naive datetime — interpreted as Europe/Budapest local time'
+        )
+        .example(
+          '$0 posts:create -c "Ez most azonnal megy ki" -t now -i "integration-id"',
+          'Publish immediately (no --date needed)'
+        )
+        .example(
+          '$0 posts:create -c "Draft post" -s "2026-12-31T12:00:00Z" -t draft -i "integration-id"',
           'Create draft post'
         )
         .example(
-          '$0 posts:create -c "Main post" -m "img1.jpg,img2.jpg" -s "2024-12-31T12:00:00Z" -i "twitter-123"',
-          'Post with multiple images'
+          '$0 posts:create -c "Main post" -m "img1.jpg,img2.jpg" -s "2026-12-31T12:00:00Z" -i "integration-id"',
+          'Post with multiple images (each URL from "posty upload")'
         )
         .example(
-          '$0 posts:create -c "Main post" -m "img1.jpg" -c "First comment" -m "img2.jpg" -c "Second comment" -m "img3.jpg,img4.jpg" -s "2024-12-31T12:00:00Z" -i "twitter-123"',
+          '$0 posts:create -c "Main post" -m "img1.jpg" -c "First comment" -m "img2.jpg" -c "Second comment" -m "img3.jpg,img4.jpg" -s "2026-12-31T12:00:00Z" -i "integration-id"',
           'Post with comments, each having their own media'
         )
         .example(
-          '$0 posts:create -c "Main" -c "Comment with semicolon; see?" -c "Another!" -s "2024-12-31T12:00:00Z" -i "twitter-123"',
-          'Comments can contain semicolons'
-        )
-        .example(
-          '$0 posts:create -c "Thread 1/3" -c "Thread 2/3" -c "Thread 3/3" -d 5 -s "2024-12-31T12:00:00Z" -i "twitter-123"',
-          'Twitter thread with 5 minute delay'
+          '$0 posts:create -c "Thread 1/3" -c "Thread 2/3" -c "Thread 3/3" -d 5 -s "2026-12-31T12:00:00Z" -i "integration-id"',
+          'X (Twitter) thread with 5 minute delay between comments'
         )
         .example(
           '$0 posts:create --json ./post.json',
           'Complex post from JSON file'
         )
         .example(
-          '$0 posts:create -c "Post to subreddit" -s "2024-12-31T12:00:00Z" --settings \'{"subreddit":[{"value":{"subreddit":"programming","title":"My Title","type":"text","url":"","is_flair_required":false}}]}\' -i "reddit-123"',
-          'Reddit post with specific subreddit settings'
-        )
-        .example(
-          '$0 posts:create -c "Video description" -s "2024-12-31T12:00:00Z" --settings \'{"title":"My Video","type":"public","tags":[{"value":"tech","label":"Tech"}]}\' -i "youtube-123"',
-          'YouTube post with title and tags'
-        )
-        .example(
-          '$0 posts:create -c "Tweet content" -s "2024-12-31T12:00:00Z" --settings \'{"who_can_reply_post":"everyone"}\' -i "twitter-123"',
+          '$0 posts:create -c "Tweet content" -s "2026-12-31T12:00:00Z" --settings \'{"who_can_reply_post":"everyone"}\' -i "integration-id"',
           'X (Twitter) post with reply settings'
+        )
+        .example(
+          '$0 posts:create -c "Video description" -s "2026-12-31T12:00:00Z" --settings \'{"title":"My Video","type":"public"}\' -i "youtube-id"',
+          'YouTube post with title and visibility'
         );
     },
     createPost as any
   )
   .command(
     'posts:list',
-    'List all posts',
+    'List posts in a date range',
     (yargs: Argv) => {
       return yargs
         .option('startDate', {
-          describe: 'Start date (ISO 8601 format). Default: 30 days ago',
+          describe: 'Start date (ISO 8601; naive datetimes read as Europe/Budapest). Default: 30 days ago',
           type: 'string',
         })
         .option('endDate', {
-          describe: 'End date (ISO 8601 format). Default: 30 days from now',
+          describe: 'End date (ISO 8601; naive datetimes read as Europe/Budapest). Default: 30 days from now',
           type: 'string',
         })
         .option('customer', {
-          describe: 'Customer ID (optional)',
+          describe: 'Customer (group) ID (optional)',
           type: 'string',
         })
-        .example('$0 posts:list', 'List all posts (last 30 days to next 30 days)')
+        .example('$0 posts:list', 'List posts (last 30 days to next 30 days)')
         .example(
-          '$0 posts:list --startDate "2024-01-01T00:00:00Z" --endDate "2024-12-31T23:59:59Z"',
+          '$0 posts:list --startDate "2026-01-01T00:00:00Z" --endDate "2026-12-31T23:59:59Z"',
           'List posts for a specific date range'
         )
         .example(
@@ -158,6 +159,22 @@ yargs(hideBin(process.argv))
         .example('$0 posts:delete abc123', 'Delete post with ID abc123');
     },
     deletePost as any
+  )
+  .command(
+    'posts:find-slot <id>',
+    'Find the next free publishing slot for an integration',
+    (yargs: Argv) => {
+      return yargs
+        .positional('id', {
+          describe: 'Integration ID',
+          type: 'string',
+        })
+        .example(
+          '$0 posts:find-slot integration-123',
+          'Returns {"date": "..."} — the next free datetime, usable as posts:create --date'
+        );
+    },
+    findSlot as any
   )
   .command(
     'posts:missing <id>',
@@ -248,7 +265,7 @@ yargs(hideBin(process.argv))
   )
   .command(
     'integrations:settings <id>',
-    'Get settings schema for a specific integration',
+    'Get settings schema, rules, max length and tools for an integration',
     (yargs: Argv) => {
       return yargs
         .positional('id', {
@@ -256,12 +273,12 @@ yargs(hideBin(process.argv))
           type: 'string',
         })
         .example(
-          '$0 integrations:settings reddit-123',
-          'Get settings schema for Reddit integration'
+          '$0 integrations:settings youtube-456',
+          'Get settings schema for a YouTube integration'
         )
         .example(
-          '$0 integrations:settings youtube-456',
-          'Get settings schema for YouTube integration'
+          '$0 integrations:settings instagram-123',
+          'Get settings schema and tools for an Instagram integration'
         );
     },
     getIntegrationSettings as any
@@ -276,7 +293,7 @@ yargs(hideBin(process.argv))
           type: 'string',
         })
         .positional('method', {
-          describe: 'Method name from the integration tools',
+          describe: 'Method name from the "tools" array of integrations:settings',
           type: 'string',
         })
         .option('data', {
@@ -285,16 +302,8 @@ yargs(hideBin(process.argv))
           type: 'string',
         })
         .example(
-          '$0 integrations:trigger reddit-123 getSubreddits',
-          'Get list of subreddits'
-        )
-        .example(
-          '$0 integrations:trigger reddit-123 searchSubreddits -d \'{"query":"programming"}\'',
-          'Search for subreddits'
-        )
-        .example(
-          '$0 integrations:trigger youtube-123 getPlaylists',
-          'Get YouTube playlists'
+          '$0 integrations:trigger instagram-123 audioSearch -d \'{"q":"lofi","type":"music"}\'',
+          'Search Instagram audio for a Reel (the only tool on a supported channel)'
         );
     },
     triggerIntegrationTool as any
@@ -308,8 +317,8 @@ yargs(hideBin(process.argv))
           describe: 'Integration ID',
           type: 'string',
         })
-        .option('date', {
-          alias: 'd',
+        .option('days', {
+          alias: ['d', 'date'],
           describe: 'Number of days to look back (default: 7)',
           type: 'string',
           default: '7',
@@ -334,8 +343,8 @@ yargs(hideBin(process.argv))
           describe: 'Post ID',
           type: 'string',
         })
-        .option('date', {
-          alias: 'd',
+        .option('days', {
+          alias: ['d', 'date'],
           describe: 'Number of days to look back (default: 7)',
           type: 'string',
           default: '7',
@@ -353,20 +362,20 @@ yargs(hideBin(process.argv))
   )
   .command(
     'upload <file>',
-    'Upload a file',
+    'Upload a media file; returns the URL to pass to posts:create -m',
     (yargs: Argv) => {
       return yargs
         .positional('file', {
-          describe: 'File path to upload',
+          describe: 'File path to upload (jpeg/png/gif/webp/avif/bmp/tiff up to 10 MB, mp4 up to 1 GB)',
           type: 'string',
         })
-        .example('$0 upload ./image.png', 'Upload an image');
+        .example('$0 upload ./image.png', 'Upload an image; use the returned .path in posts:create -m');
     },
     uploadFile as any
   )
   .command(
     'auth:login',
-    'Authenticate using OAuth2 (device flow)',
+    'Authenticate using the OAuth2 device flow (opens a browser)',
     (yargs: Argv) => {
       return yargs
         .option('auth-server', {
@@ -388,16 +397,18 @@ yargs(hideBin(process.argv))
   )
   .command(
     'auth:status',
-    'Show current authentication status',
+    'Show current authentication status and verify the credentials',
     {},
     authStatus as any
   )
-  .demandCommand(1, 'You need at least one command')
+  .demandCommand(1, 'Specify a command. Run "posty --help" for the list.')
+  .strict()
   .help()
   .alias('h', 'help')
   .version()
   .alias('v', 'version')
+  .wrap(Math.min(110, process.stdout.columns || 110))
   .epilogue(
-    'For more information, visit: https://posty.hu\n\nAuthentication:\n  OAuth2: posty auth:login\n  API Key: export POSTY_API_KEY=your_api_key\n\n📽️  Recommendation: Use agent-media to generate AI videos & images (Kling, Veo, Sora, Seedance, Flux, Grok) and post them directly with Posty.\n   Install: npm install -g agent-media-cli\n   Learn more: https://agent-media.ai'
+    'Output contract: results are JSON on stdout; status and errors go to stderr. Every failure exits 1.\n\nAuthentication:\n  Device login: posty auth:login\n  API Key: export POSTY_API_KEY=your_api_key\n\nDates: naive datetimes ("2026-12-31 12:00") are interpreted in Europe/Budapest (override with POSTY_TIMEZONE or an explicit offset).\n\nFor more information, visit: https://posty.hu'
   )
   .parse();

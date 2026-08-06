@@ -1,26 +1,27 @@
 import { PostyAPI } from '../api';
 import { getConfig } from '../config';
-import { readFileSync } from 'fs';
+import { result, status, fail } from '../output';
+import { readFileSync, existsSync } from 'fs';
+import { basename } from 'path';
 
 export async function uploadFile(args: any) {
   const config = getConfig();
   const api = new PostyAPI(config);
 
-  if (!args.file) {
-    console.error('❌ File path is required');
+  if (!existsSync(args.file)) {
+    console.error(`❌ File not found: ${args.file}`);
     process.exit(1);
   }
 
   try {
     const fileBuffer = readFileSync(args.file);
-    const filename = args.file.split('/').pop() || 'file';
+    const filename = basename(args.file) || 'file';
 
-    const result = await api.upload(fileBuffer, filename);
-    console.log('✅ File uploaded successfully!');
-    console.log(JSON.stringify(result, null, 2));
-    return result;
+    const res = await api.upload(fileBuffer, filename);
+    status('✅ File uploaded successfully!');
+    result(res);
+    return res;
   } catch (error: any) {
-    console.error('❌ Failed to upload file:', error.message);
-    process.exit(1);
+    fail('Failed to upload file', error);
   }
 }

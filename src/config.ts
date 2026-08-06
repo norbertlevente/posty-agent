@@ -18,7 +18,7 @@ export function getConfig(): PostyConfig {
   if (!apiKey) {
     console.error('❌ Error: No authentication found.');
     console.error('Options:');
-    console.error('  1. OAuth2: posty auth:login --client-id <id> --client-secret <secret>');
+    console.error('  1. Device login: posty auth:login');
     console.error('  2. API Key: export POSTY_API_KEY=your_api_key');
     process.exit(1);
   }

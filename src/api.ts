@@ -1,8 +1,26 @@
-import fetch, { FormData } from 'node-fetch';
-
 export interface PostyConfig {
   apiKey: string;
   apiUrl?: string;
+}
+
+/**
+ * Thrown for any non-2xx answer from the API. `status` survives so command
+ * handlers can say something more useful than the raw body — in particular
+ * a 401/403 should point the user at `posty auth:login`, not at the JSON.
+ */
+export class ApiError extends Error {
+  constructor(public status: number, public body: string) {
+    super(`API Error (${status}): ${body}`);
+    this.name = 'ApiError';
+  }
+
+  get isAuthError() {
+    return this.status === 401 || this.status === 403;
+  }
+
+  get isRateLimit() {
+    return this.status === 429;
+  }
 }
 
 export class PostyAPI {
@@ -25,21 +43,22 @@ export class PostyAPI {
       ...options.headers,
     };
 
+    let response: Response;
     try {
-      const response = await fetch(url, {
+      response = await fetch(url, {
         ...options,
         headers,
       });
-
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`API Error (${response.status}): ${error}`);
-      }
-
-      return await response.json();
     } catch (error: any) {
-      throw new Error(`Request failed: ${error.message}`);
+      throw new Error(`Could not reach ${this.apiUrl}: ${error.message}`);
     }
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new ApiError(response.status, error);
+    }
+
+    return await response.json();
   }
 
   async createPost(data: any) {
@@ -74,67 +93,56 @@ export class PostyAPI {
     });
   }
 
+  async findSlot(integrationId: string) {
+    return this.request(
+      `/public/v1/find-slot/${encodeURIComponent(integrationId)}`,
+      {
+        method: 'GET',
+      }
+    );
+  }
+
   async upload(file: Buffer, filename: string) {
     const formData = new FormData();
     const extension = filename.split('.').pop()?.toLowerCase() || '';
 
-    // Determine MIME type based on file extension
+    // The server sniffs magic bytes and accepts exactly eight types; this map
+    // only sets the declared Content-Type for the multipart part.
     const mimeTypes: Record<string, string> = {
-      // Images
-      'png': 'image/png',
-      'jpg': 'image/jpeg',
-      'jpeg': 'image/jpeg',
-      'gif': 'image/gif',
-      'webp': 'image/webp',
-      'svg': 'image/svg+xml',
-      'bmp': 'image/bmp',
-      'ico': 'image/x-icon',
-
-      // Videos
-      'mp4': 'video/mp4',
-      'mov': 'video/quicktime',
-      'avi': 'video/x-msvideo',
-      'mkv': 'video/x-matroska',
-      'webm': 'video/webm',
-      'flv': 'video/x-flv',
-      'wmv': 'video/x-ms-wmv',
-      'm4v': 'video/x-m4v',
-      'mpeg': 'video/mpeg',
-      'mpg': 'video/mpeg',
-      '3gp': 'video/3gpp',
-
-      // Audio
-      'mp3': 'audio/mpeg',
-      'wav': 'audio/wav',
-      'ogg': 'audio/ogg',
-      'aac': 'audio/aac',
-      'flac': 'audio/flac',
-      'm4a': 'audio/mp4',
-
-      // Documents
-      'pdf': 'application/pdf',
-      'doc': 'application/msword',
-      'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      png: 'image/png',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      gif: 'image/gif',
+      webp: 'image/webp',
+      avif: 'image/avif',
+      bmp: 'image/bmp',
+      tif: 'image/tiff',
+      tiff: 'image/tiff',
+      mp4: 'video/mp4',
     };
 
     const type = mimeTypes[extension] || 'application/octet-stream';
 
-    const blob = new Blob([file], { type });
+    const blob = new Blob([new Uint8Array(file)], { type });
     formData.append('file', blob, filename);
 
     const url = `${this.apiUrl}/public/v1/upload`;
-    const response = await fetch(url, {
-      method: 'POST',
-      // @ts-ignore
-      body: formData,
-      headers: {
-        Authorization: this.apiKey,
-      },
-    });
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          Authorization: this.apiKey,
+        },
+      });
+    } catch (error: any) {
+      throw new Error(`Could not reach ${this.apiUrl}: ${error.message}`);
+    }
 
     if (!response.ok) {
       const error = await response.text();
-      throw new Error(`Upload failed (${response.status}): ${error}`);
+      throw new ApiError(response.status, error);
     }
 
     return await response.json();

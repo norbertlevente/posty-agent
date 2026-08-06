@@ -7,6 +7,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Hungarian-friendly dates.** A `--date`/`--startDate`/`--endDate` value
+  without a timezone designator (`2026-12-31 12:00`, `2026-12-31`) is now
+  interpreted as Europe/Budapest local time (DST-aware) and converted to UTC
+  before it is sent; the resolved instant is echoed on stderr. Previously the
+  backend read such values in the server's clock (UTC), silently shifting
+  Hungarian posts by one or two hours. Override with `POSTY_TIMEZONE` or an
+  explicit offset.
+- `posts:create --type now` publishes immediately; `--date` becomes optional.
+- `posts:find-slot <integration-id>` — the next free publishing slot for a
+  channel (`GET /public/v1/find-slot/:id`), usable directly as a
+  `posts:create --date`.
+
+### Changed
+- **Strict output contract.** Results are JSON on stdout and nothing else;
+  status lines ("✅ Post created…", "📋 Posts:") moved to stderr. The
+  documented `posty upload … | jq -r '.path'` pattern previously failed
+  because the decorative header made stdout invalid JSON.
+- Unknown flags and commands are now an error (yargs `.strict()`) instead of
+  being silently ignored — a typoed `--comments` used to post with the
+  comments missing and no warning.
+- Auth failures (401/403) now tell the user to run `posty auth:login` or check
+  `POSTY_API_KEY`; 429 answers explain the per-key/per-route/per-hour bucket.
+- `analytics:*` look-back flag is `--days` (the old `-d`/`--date` spellings
+  still work); the value is validated as a positive whole number.
+- Dropped the `node-fetch` dependency in favour of Node's built-in fetch —
+  the ESM-only `node-fetch@3` could not be `require`d from the CJS build on
+  Node 18/20 — and removed the stray `@types/pg` runtime dependency left over
+  from the deleted auth server.
+- The stale `--client-id`/`--client-secret` mention in the "no authentication
+  found" error is gone; those flags never existed.
+
+### Removed
+- `server/` — the standalone device-flow auth server that was never deployed
+  and had been superseded by the flow inside Posty's backend.
+- The working-note markdown files (`SUMMARY.md`, `SYNTAX_UPGRADE.md`,
+  `FEATURES.md`, `QUICK_START.md`, `PROJECT_STRUCTURE.md`,
+  `PROVIDER_SETTINGS_SUMMARY.md`, `INTEGRATION_SETTINGS_DISCOVERY.md`,
+  `INTEGRATION_TOOLS_WORKFLOW.md`). What they said that mattered lives in
+  `SKILL.md`, `HOW_TO_RUN.md`, `PROVIDER_SETTINGS.md` and
+  `SUPPORTED_FILE_TYPES.md`.
+- The `agent-media` recommendation from `--help` — its removal from the docs
+  was already recorded below, but it had survived in the epilogue.
+
+### Fixed
+- `SKILL.md`: the multi-platform JSON example used a made-up
+  `{"integrations": …, "provider": …}` shape the API rejects; it now shows the
+  real request body. A thread example passed `-d 2000` (2000 **minutes** — the
+  delay unit is minutes, not milliseconds). The rate-limit table and the
+  "what Posty does not do" section still described the deleted AI-video
+  routes.
+
+## Earlier unreleased work
+
 ### Changed
 - **The npm package is now `posty-cli`.** It was `posty`, which on npmjs.com is
   an unrelated UK-postcode library by another author — so `npm install -g posty`

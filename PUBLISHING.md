@@ -67,7 +67,7 @@ npm publish --dry-run       # shows exactly what would go, publishes nothing
 ```
 
 `package.json` `files` ships `dist`, `SKILL.md`, `CHANGELOG.md` and `LICENSE`.
-`src/`, `examples/`, `server/` and the other markdown stay out.
+`src/`, `examples/` and the other markdown stay out.
 
 Verify the tarball contains `dist/index.js`, that it starts with
 `#!/usr/bin/env node`, and that `SKILL.md` is the current one — it is what an

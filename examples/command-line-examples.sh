@@ -81,7 +81,7 @@ echo '  -m "product-hero.jpg,product-features.jpg" \'
 echo '  -c "Special launch offer - 50% off!" \'
 echo '  -m "discount-banner.jpg" \'
 echo '  -c "Limited time only!" \'
-echo '  -s "2024-12-25T09:00:00Z" \'
+echo '  -s "2026-12-25T09:00:00Z" \'
 echo '  -i "$X_ID,$FB_ID"'
 echo ""
 
@@ -144,7 +144,7 @@ echo "  - Use multiple -c flags for main post + comments"
 echo "  - Use -m flags to specify media for each -c"
 echo "  - First -c is the main post, subsequent ones are comments"
 echo "  - -m is optional, can be omitted for text-only comments"
-echo "  - Use -d to set delay between comments (in milliseconds)"
+echo "  - Use -d to set delay between comments (in minutes)"
 echo "  - Semicolons and special characters work fine in -c content!"
 echo ""
 echo "📖 For more examples, see:"
