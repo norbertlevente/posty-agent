@@ -1,331 +1,137 @@
-# Posty CLI - Project Structure
+# Project structure
 
-## Overview
+The `posty` CLI, the Claude skill it ships as, and an unused auth server kept
+for reference.
 
-The Posty CLI is a complete command-line interface package for interacting with the Posty social media scheduling API. It's designed for developers and AI agents to automate social media posting.
+This is a **standalone repository**, not a package inside a monorepo. Earlier
+versions of this file described `apps/cli/` inside the Posty product repo. That
+layout does not exist here, and neither does the `README.md` those versions
+listed.
 
-## Directory Structure
+## Layout
 
 ```
-apps/cli/
-├── src/                          # Source code
-│   ├── index.ts                  # Main CLI entry point
-│   ├── api.ts                    # API client for Posty API
-│   ├── config.ts                 # Configuration and environment handling
-│   └── commands/                 # Command implementations
-│       ├── posts.ts              # Posts management commands
-│       ├── integrations.ts       # Integrations listing
-│       └── upload.ts             # Media upload command
+.
+├── src/
+│   ├── index.ts                  yargs command table — the authoritative flag list
+│   ├── api.ts                    HTTP client for /public/v1
+│   ├── config.ts                 credentials file → env var fallback
+│   └── commands/
+│       ├── auth.ts               device flow, status, logout
+│       ├── posts.ts              create, list, delete, status, missing, connect
+│       ├── integrations.ts       list, groups, settings, trigger
+│       ├── analytics.ts          platform, post
+│       └── upload.ts             media upload
 │
-├── examples/                     # Usage examples
-│   └── basic-usage.sh            # Shell script example
+├── skills/
+│   └── elor/SKILL.md             SYMLINK to ../../SKILL.md — do not edit separately
 │
-├── dist/                         # Build output (generated)
-│   ├── index.js                  # Compiled CLI executable
-│   └── index.js.map              # Source map
+├── server/                       SUPERSEDED. A standalone device-flow service
+│                                 that was never deployed; the flow now lives in
+│                                 Posty's own backend. See server/SERVER.md.
 │
-├── package.json                  # Package configuration
-├── tsconfig.json                 # TypeScript configuration
-├── tsup.config.ts                # Build configuration
+├── examples/                     runnable JSON payloads and shell scripts
 │
-├── README.md                     # Main documentation
-├── SKILL.md                      # AI agent usage guide
-├── QUICK_START.md                # Quick start guide
-├── CHANGELOG.md                  # Version history
-├── PROJECT_STRUCTURE.md          # This file
-│
-├── .gitignore                    # Git ignore rules
-└── .npmignore                    # npm publish ignore rules
+├── .claude-plugin/               plugin + marketplace manifests
+├── package.json                  bin: posty → dist/index.js
+├── tsup.config.ts                CJS bundle, shebang, source map
+└── dist/                         build output (generated)
 ```
 
-## File Descriptions
+## Commands
 
-### Source Files
+Sixteen, defined in `src/index.ts`. That file is the source of truth for flags;
+anything not in it does not exist, and yargs ignores unknown options silently
+rather than erroring.
 
-#### `src/index.ts`
-- Main entry point for the CLI
-- Uses `yargs` for command parsing
-- Defines all available commands and their options
-- Contains help text and usage examples
+| Command | Handler |
+|---|---|
+| `auth:login`, `auth:logout`, `auth:status` | `commands/auth.ts` |
+| `posts:create` | `commands/posts.ts::createPost` |
+| `posts:list` | `commands/posts.ts::listPosts` |
+| `posts:delete <id>` | `commands/posts.ts::deletePost` |
+| `posts:status <id>` | `commands/posts.ts::changePostStatus` |
+| `posts:missing <id>` | `commands/posts.ts::getMissingContent` |
+| `posts:connect <id>` | `commands/posts.ts::connectPost` |
+| `integrations:list` | `commands/integrations.ts` |
+| `integrations:groups` | `commands/integrations.ts` |
+| `integrations:settings <id>` | `commands/integrations.ts` |
+| `integrations:trigger <id> <method>` | `commands/integrations.ts` |
+| `analytics:platform <id>` | `commands/analytics.ts` |
+| `analytics:post <id>` | `commands/analytics.ts` |
+| `upload <file>` | `commands/upload.ts` |
 
-#### `src/api.ts`
-- API client class `PostyAPI`
-- Handles all HTTP requests to the Posty API
-- Methods for:
-  - Creating posts
-  - Listing posts
-  - Deleting posts
-  - Uploading files
-  - Listing integrations
-- Error handling and response parsing
+`posts:create` flags: `-c/--content` (repeatable), `-m/--media` (repeatable,
+paired with `-c`), `-i/--integrations`, `-s/--schedule` (**required**),
+`-t/--type`, `-d/--delay`, `--settings`, `--shortLink`, `-j/--json`.
 
-#### `src/config.ts`
-- Configuration management
-- Environment variable handling
-- Validates required settings (API key)
-- Provides default values
+There is no `--image`, no `--comments` and no `-p/--provider`. The provider is
+inferred from the integration id.
 
-#### `src/commands/posts.ts`
-- Post management commands implementation
-- `createPost()` - Create new social media posts
-- `listPosts()` - List posts with filters
-- `deletePost()` - Delete posts by ID
+## Request flow
 
-#### `src/commands/integrations.ts`
-- Integration management
-- `listIntegrations()` - Show connected accounts
+```
+argv → src/index.ts (yargs)
+     → commands/*.ts
+     → config.ts        ~/.posty/credentials.json, else POSTY_API_KEY
+     → api.ts           fetch, Authorization header
+     → JSON to stdout, or an ❌ message and exit 1
+```
 
-#### `src/commands/upload.ts`
-- Media upload functionality
-- `uploadFile()` - Upload images to Posty
+## Configuration
 
-### Configuration Files
+| Source | Wins |
+|---|---|
+| `~/.posty/credentials.json` (from `auth:login`) | first |
+| `POSTY_API_KEY` + `POSTY_API_URL` | fallback |
 
-#### `package.json`
-- Package name: `posty`
-- Version: `1.0.0`
-- Executable bin: `posty` → `dist/index.js`
-- Scripts: `dev`, `build`, `start`, `publish`
-- Repository and metadata information
+The credentials file stores `accessToken`, `apiUrl` and `organizationId`, mode
+`0600` in a `0700` directory. Its `apiUrl` comes from the device-token
+response, so the server can move the CLI to a new API base without a release.
 
-#### `tsconfig.json`
-- Extends base config from monorepo
-- Target: ES2017
-- Module: CommonJS
-- Enables decorators and source maps
+Default base when nothing is set: `https://posty.hu/api`. `https://api.posty.hu`
+is live and equivalent.
 
-#### `tsup.config.ts`
-- Build tool configuration
-- Entry point: `src/index.ts`
-- Output format: CommonJS
-- Adds shebang for Node.js execution
-- Generates source maps
+## API surface used
 
-### Documentation Files
+Base `/public/v1`, all authenticated by the `Authorization` header.
 
-#### `README.md`
-- Main package documentation
-- Installation instructions
-- Usage examples
-- API reference
-- Development guide
+| Endpoint | Command | Scope | Rate limit |
+|---|---|---|---|
+| `POST /posts` | `posts:create` | `posts:draft` | 60/h |
+| `GET /posts` | `posts:list` | `posts:read` | default |
+| `DELETE /posts/:id` | `posts:delete` | `posts:draft` | 60/h |
+| `PUT /posts/:id/status` | `posts:status` | `posts:publish` | 60/h |
+| `GET /posts/:id/missing` | `posts:missing` | `posts:read` | default |
+| `PUT /posts/:id/release-id` | `posts:connect` | `posts:publish` | default |
+| `GET /integrations` | `integrations:list` | `channels:read` | default |
+| `GET /groups` | `integrations:groups` | `channels:read` | default |
+| `GET /integration-settings/:id` | `integrations:settings` | `channels:read` | default |
+| `POST /integration-trigger/:id` | `integrations:trigger` | `channels:read` | 60/h |
+| `GET /analytics/:integration` | `analytics:platform` | `analytics:read` | 30/h |
+| `GET /analytics/post/:postId` | `analytics:post` | `analytics:read` | 30/h |
+| `POST /upload` | `upload` | `media:write` | 30/h |
 
-#### `SKILL.md`
-- Comprehensive guide for AI agents
-- Usage patterns and workflows
-- Command examples
-- Best practices
-- Error handling
+"Default" is the module-level `API_LIMIT`, 600/h per key in production. Every
+route keeps its own bucket, keyed on the hash of the presented key.
 
-#### `QUICK_START.md`
-- Fast onboarding guide
-- Installation steps
-- Basic commands
-- Common workflows
-- Troubleshooting
+Routes the API exposes that the CLI does not wrap: `POST /upload-from-url`,
+`GET /find-slot/:id`, `GET /is-connected`, `GET /notifications`,
+`DELETE /posts/group/:group`, `GET /social/:integration`. The two AI-video
+routes exist and are rate-limited, but **video generation does not work and is
+not a feature** — do not wrap them.
 
-#### `CHANGELOG.md`
-- Version history
-- Release notes
-- Feature additions
-- Bug fixes
-
-### Example Files
-
-#### `examples/basic-usage.sh`
-- Bash script example
-- Demonstrates basic CLI workflow
-- Shows integration listing, post creation, and deletion
-
-## Build Process
-
-### Development Build
+## Build
 
 ```bash
-pnpm run dev
+pnpm run build      # tsup: src/index.ts → dist/index.js (CJS, shebang, sourcemap)
+pnpm run dev        # watch
 ```
 
-- Watches for file changes
-- Rebuilds automatically
-- Useful during development
-
-### Production Build
-
-```bash
-pnpm run build
-```
-
-1. Cleans `dist/` directory
-2. Compiles TypeScript → JavaScript
-3. Bundles dependencies
-4. Adds shebang for executable
-5. Generates source maps
-6. Makes output executable
-
-### Output
-
-- `dist/index.js` - Main executable (~490KB)
-- `dist/index.js.map` - Source map (~920KB)
-
-## Commands Architecture
-
-### Command Flow
-
-```
-User Input
-    ↓
-index.ts (yargs parser)
-    ↓
-Command Handler (posts.ts, integrations.ts, upload.ts)
-    ↓
-config.ts (get API key)
-    ↓
-api.ts (make API request)
-    ↓
-Response / Error
-    ↓
-Output to console
-```
-
-### Available Commands
-
-1. **posts:create**
-   - Options: `--content`, `--integrations`, `--schedule`, `--image`
-   - Handler: `commands/posts.ts::createPost()`
-
-2. **posts:list**
-   - Options: `--page`, `--limit`, `--search`
-   - Handler: `commands/posts.ts::listPosts()`
-
-3. **posts:delete**
-   - Positional: `<id>`
-   - Handler: `commands/posts.ts::deletePost()`
-
-4. **integrations:list**
-   - No options
-   - Handler: `commands/integrations.ts::listIntegrations()`
-
-5. **upload**
-   - Positional: `<file>`
-   - Handler: `commands/upload.ts::uploadFile()`
-
-## Environment Variables
-
-| Variable | Required | Default | Usage |
-|----------|----------|---------|-------|
-| `POSTY_API_KEY` | ✅ Yes | - | Authentication token |
-| `POSTY_API_URL` | ❌ No | `https://posty.hu/api` | Custom API endpoint |
-
-## Dependencies
-
-### Runtime Dependencies (from root)
-- `yargs` - CLI argument parsing
-- `node-fetch` - HTTP requests
-- Standard Node.js modules (`fs`, `path`)
-
-### Dev Dependencies
-- `tsup` - TypeScript bundler
-- `typescript` - Type checking
-- `@types/yargs` - TypeScript types
-
-## Integration Points
-
-### With Monorepo
-
-1. **Build Scripts**
-   - Added to root `package.json`
-   - `pnpm run build:cli` - Build the CLI
-   - `pnpm run publish-cli` - Publish to npm
-
-2. **TypeScript Config**
-   - Extends `tsconfig.base.json`
-   - Shares common compiler options
-
-3. **Dependencies**
-   - Uses shared dependencies from root
-   - No duplicate packages
-
-### With Posty API
-
-1. **Endpoints Used**
-   - `POST /public/v1/posts` - Create post
-   - `GET /public/v1/posts` - List posts
-   - `DELETE /public/v1/posts/:id` - Delete post
-   - `GET /public/v1/integrations` - List integrations
-   - `POST /public/v1/upload` - Upload media
-
-2. **Authentication**
-   - API key via `Authorization` header
-   - Configured through environment variable
+`package.json` `files` ships `dist`, `SKILL.md`, `CHANGELOG.md` and `LICENSE`.
 
 ## Publishing
 
-### To npm
-
-```bash
-pnpm run publish-cli
-```
-
-This will:
-1. Build the package
-2. Publish to npm with public access
-3. Include only `dist/`, `README.md`, and `SKILL.md`
-
-### Package Contents (via .npmignore)
-
-**Included:**
-- `dist/` - Compiled code
-- `README.md` - Documentation
-
-**Excluded:**
-- `src/` - Source code
-- `examples/` - Examples
-- Config files
-- Other markdown files
-
-## Testing
-
-### Manual Testing
-
-```bash
-# Test help
-node dist/index.js --help
-
-# Test without API key (should error)
-node dist/index.js posts:list
-
-# Test with API key (requires valid key)
-POSTY_API_KEY=test node dist/index.js integrations:list
-```
-
-### Automated Testing (Future)
-
-- Unit tests for API client
-- Integration tests for commands
-- E2E tests with mock API
-
-## Future Enhancements
-
-1. **More Commands**
-   - Analytics retrieval
-   - Team management
-   - Settings configuration
-
-2. **Features**
-   - Interactive mode
-   - Config file support (~/.postyrc)
-   - Output formatting (JSON, table, CSV)
-   - Verbose/debug mode
-   - Batch operations from file
-
-3. **Developer Experience**
-   - TypeScript types export
-   - Programmatic API
-   - Plugin system
-   - Custom integrations
-
-## Support
-
-- **Issues:** https://github.com/postyhq/posty-app/issues
-- **Docs:** See README.md, SKILL.md, QUICK_START.md
-- **Website:** https://posty.hu
+**Do not.** The npm name `posty` belongs to somebody else's package, and
+publishing is the owner's decision and irreversible. See
+[PUBLISHING.md](./PUBLISHING.md).

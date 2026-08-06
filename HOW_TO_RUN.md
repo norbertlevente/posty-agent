@@ -1,300 +1,159 @@
-# How to Run the Posty CLI
+# How to run the Posty CLI
 
-There are several ways to run the CLI, depending on your needs.
+This repository **is** the CLI. It is a standalone package — there is no
+`apps/cli` directory and no monorepo to build it from. Earlier versions of this
+file described that layout; it does not exist here.
 
-## Option 1: Direct Execution (Quick Test) ⚡
+## Install
 
-The built file at `apps/cli/dist/index.js` is already executable!
-
-```bash
-# From the monorepo root
-node apps/cli/dist/index.js --help
-
-# Or run it directly (it has a shebang)
-./apps/cli/dist/index.js --help
-
-# Example command
-export POSTY_API_KEY=your_key
-node apps/cli/dist/index.js posts:list
-```
-
-## Option 2: Link Globally (Recommended for Development) 🔗
-
-This creates a global `posty` command you can use anywhere:
+**Not from npm.** The name `posty` on npmjs.com belongs to an unrelated
+UK-postcode library by another author. `npm install -g posty` installs that,
+successfully and silently. Do not run it.
 
 ```bash
-# From the monorepo root
-cd apps/cli
-pnpm link --global
+git clone <this repository>
+cd posty-agent
 
-# Now you can use it anywhere!
+pnpm install
+pnpm run build          # tsup → dist/index.js, with a shebang
+
+npm link                # makes `posty` available on your PATH
 posty --help
-posty posts:list
-posty posts:create -c "Hello!" -i "twitter-123"
-
-# To unlink later
-pnpm unlink --global
 ```
 
-**After linking, you can use `posty` from any directory!**
+`npm link` is reversible with `npm unlink -g posty` from the same directory.
 
-## Option 3: Use pnpm Filter (From Root) 📦
+### Without linking
+
+`dist/index.js` is executable on its own:
 
 ```bash
-# From the monorepo root
-pnpm --filter posty start -- --help
-pnpm --filter posty start -- posts:list
-pnpm --filter posty start -- posts:create -c "Hello" -i "twitter-123"
+node dist/index.js --help
+./dist/index.js --help
 ```
 
-## Option 4: Use npm/npx (After Publishing) 🌐
-
-Once published to npm:
+### Rebuilding while you work
 
 ```bash
-# Install globally
-npm install -g posty
-
-# Or use with npx (no install)
-npx posty --help
-npx posty posts:list
+pnpm run dev            # tsup --watch
 ```
 
-## Quick Setup Guide
+A linked binary points at `dist/`, so a rebuild takes effect immediately — no
+re-link.
 
-### Step 1: Build the CLI
+## Authenticate
+
+Two ways, and the CLI prefers the first if both are present.
+
+### Device login
 
 ```bash
-# From monorepo root
-pnpm run build:cli
+posty auth:login
 ```
 
-### Step 2: Set Your API Key
+Prints a short code, opens the approval page in your browser, and polls until
+you approve it while signed in to Posty. You choose there which workspace and
+which channels the resulting key may reach.
+
+Credentials go to `~/.posty/credentials.json`, mode `0600` inside a `0700`
+directory. The response also carries the API base, so the CLI points itself at
+the right host without needing a release.
+
+```bash
+posty auth:status       # verifies the credentials against the API
+posty auth:logout       # deletes the file
+```
+
+### API key
+
+Mint one in the web app under **Settings → Developers**. It is shown once and
+stored hashed — a lost key is rotated, not recovered.
 
 ```bash
 export POSTY_API_KEY=your_api_key_here
-
-# To make it permanent, add to your shell profile:
-echo 'export POSTY_API_KEY=your_api_key' >> ~/.bashrc
-# or ~/.zshrc if you use zsh
 ```
 
-### Step 3: Choose Your Method
+Permanent:
 
-**For quick testing:**
 ```bash
-node apps/cli/dist/index.js --help
+echo 'export POSTY_API_KEY=your_api_key' >> ~/.zshrc   # or ~/.bashrc
 ```
 
-**For regular use (recommended):**
+## Environment variables
+
+| Variable | Required | Default | What it does |
+|---|---|---|---|
+| `POSTY_API_KEY` | Only without `auth:login` | — | Bearer credential |
+| `POSTY_API_URL` | No | `https://posty.hu/api` | API base. `https://api.posty.hu` is live and equivalent. |
+| `POSTY_AUTH_SERVER` | No | `https://posty.hu/api` | Where the device flow runs |
+| `POSTY_CLIENT_NAME` | No | `Posty CLI` | The name shown on the approval page |
+
+Stored credentials from `auth:login` override `POSTY_API_KEY` and
+`POSTY_API_URL`. If you set a key and it seems to be ignored, run
+`posty auth:status` — a stale `~/.posty/credentials.json` is the usual reason.
+
+`docs.posty.hu`, `cdn.posty.hu` and `mcp.posty.hu` appear in older
+documentation. None of them resolve.
+
+## First commands
+
 ```bash
-cd apps/cli
-pnpm link --global
-posty --help
+posty auth:status
+posty integrations:list
 ```
+
+`integrations:list` is the ground truth for what you can post to. LinkedIn,
+TikTok and Google Business Profile are pending those platforms' own approval,
+so they may not appear even though the code is complete.
+
+```bash
+# Upload first — always. -m takes URLs from upload, never a local filename.
+IMG=$(posty upload ./photo.jpg | jq -r '.path')
+
+posty posts:create \
+  -c "Első poszt a CLI-ből" \
+  -m "$IMG" \
+  -s "2026-12-31T12:00:00Z" \
+  -t draft \
+  -i "<integration-id>"
+```
+
+`-s` is required on every post. `-t draft` is worth using the first few times:
+it validates exactly as a scheduled post would, without publishing.
 
 ## Troubleshooting
 
-### "Command not found: posty"
+**`posty: command not found`** — `which posty`. If empty, `npm link` again from
+this directory, or use `node dist/index.js`.
 
-If you linked globally but still get this error:
+**`No authentication found`** — neither `~/.posty/credentials.json` nor
+`POSTY_API_KEY`. Run `posty auth:login`.
 
-```bash
-# Check if it's linked
-which posty
+**`401 Invalid API key`** — wrong, revoked or expired. Re-run `auth:login`, or
+mint a new key.
 
-# If not found, try linking again
-cd apps/cli
-pnpm link --global
+**`403 … missing the required permission: <scope>`** — the key was not granted
+that scope, *or* its owner's role no longer allows it. Scopes are re-checked
+against the owner's current role on every request, so a key that worked
+yesterday can narrow today with nothing having been revoked.
 
-# Or check your PATH
-echo $PATH
-```
+**`400 Unsupported file type.`** — eight MIME types are accepted and the server
+sniffs magic bytes, so renaming does not help. See
+[SUPPORTED_FILE_TYPES.md](./SUPPORTED_FILE_TYPES.md).
 
-### "POSTY_API_KEY is not set"
+**`429`** — rate limit, per key per route per hour. Back off; retrying in a
+loop just spends the next hour too.
 
-```bash
-export POSTY_API_KEY=your_key
+**A post came back as a draft when you asked for a schedule** — the key lacks
+`posts:publish`. The server coerces rather than refusing. Read the `type` in
+the response.
 
-# Verify it's set
-echo $POSTY_API_KEY
-```
-
-### Permission Denied
-
-If you get permission errors:
-
-```bash
-# Make the file executable
-chmod +x apps/cli/dist/index.js
-
-# Then try again
-./apps/cli/dist/index.js --help
-```
-
-### Rebuild After Changes
-
-After making code changes, rebuild:
-
-```bash
-pnpm run build:cli
-```
-
-If you linked globally, the changes will be reflected immediately (no need to re-link).
-
-## Testing the CLI
-
-### Test Help Command
+## Getting help
 
 ```bash
 posty --help
 posty posts:create --help
 ```
 
-### Test with Sample Command (requires API key)
-
-```bash
-export POSTY_API_KEY=your_key
-
-# List integrations
-posty integrations:list
-
-# Create a test post
-posty posts:create \
-  -c "Test post from CLI" \
-  -i "your-integration-id"
-```
-
-## Development Workflow
-
-### 1. Make Changes
-
-Edit files in `apps/cli/src/`
-
-### 2. Rebuild
-
-```bash
-pnpm run build:cli
-```
-
-### 3. Test
-
-```bash
-# If linked globally
-posty --help
-
-# Or direct execution
-node apps/cli/dist/index.js --help
-```
-
-### 4. Watch Mode (Auto-rebuild)
-
-```bash
-# From apps/cli directory
-pnpm run dev
-
-# In another terminal, test your changes
-posty --help
-```
-
-## Environment Variables
-
-### Required
-
-- `POSTY_API_KEY` - Your Posty API key (required for all operations)
-
-### Optional
-
-- `POSTY_API_URL` - Custom API endpoint (default: `https://posty.hu/api`)
-
-### Setting Environment Variables
-
-**Temporary (current session):**
-```bash
-export POSTY_API_KEY=your_key
-export POSTY_API_URL=https://custom-api.com
-```
-
-**Permanent (add to shell profile):**
-```bash
-# For bash
-echo 'export POSTY_API_KEY=your_key' >> ~/.bashrc
-source ~/.bashrc
-
-# For zsh
-echo 'export POSTY_API_KEY=your_key' >> ~/.zshrc
-source ~/.zshrc
-```
-
-## Using Aliases
-
-Create a convenient alias:
-
-```bash
-# Add to ~/.bashrc or ~/.zshrc
-alias pz='posty'
-
-# Now you can use
-pz posts:list
-pz posts:create -c "Quick post" -i "twitter-123"
-```
-
-## Production Deployment
-
-### Publish to npm
-
-```bash
-# From monorepo root
-pnpm run publish-cli
-
-# Or from apps/cli
-cd apps/cli
-pnpm run publish
-```
-
-### Install from npm
-
-```bash
-# Global install
-npm install -g posty
-
-# Project-specific
-npm install posty
-npx posty --help
-```
-
-## Summary of Methods
-
-| Method | Command | Use Case |
-|--------|---------|----------|
-| **Direct Node** | `node apps/cli/dist/index.js` | Quick testing, no installation |
-| **Direct Execution** | `./apps/cli/dist/index.js` | Same as above, slightly shorter |
-| **Global Link** | `posty` (after `pnpm link --global`) | **Recommended** for development |
-| **pnpm Filter** | `pnpm --filter posty start --` | From monorepo root |
-| **npm Global** | `posty` (after `npm i -g posty`) | After publishing to npm |
-| **npx** | `npx posty` | One-off usage without installing |
-
-## Recommended Setup
-
-For the best development experience:
-
-```bash
-# 1. Build
-pnpm run build:cli
-
-# 2. Link globally
-cd apps/cli
-pnpm link --global
-
-# 3. Set API key
-export POSTY_API_KEY=your_key
-
-# 4. Test
-posty --help
-posty integrations:list
-
-# 5. Start using!
-posty posts:create -c "My first post" -i "twitter-123"
-```
-
-Now you can use `posty` from anywhere! 🚀
+Start with [SKILL.md](./SKILL.md) — it is the complete guide, and the one an AI
+agent should read.

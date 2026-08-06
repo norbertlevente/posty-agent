@@ -1,4 +1,12 @@
-# Posty CLI - Improved Syntax! 🎉
+# The `-c` / `-m` syntax
+
+A historical note about how `posts:create` came to take repeated flags, kept
+because scripts written against the older shape still exist.
+
+**The short version:** repeat `-c` for the post and each comment, pair each
+with its own `-m`. `--comments` and `--image` are not flags on this CLI and
+never were on this fork — yargs ignores unknown options rather than erroring,
+so a command using them posts with the comments and the media silently missing.
 
 ## What Changed
 
@@ -13,18 +21,18 @@ posty posts:create \
   -c "main post content" -m "media1.png,media2.png" \
   -c "first comment" -m "media3.png" \
   -c "second comment; with semicolon!" -m "media4.png,media5.png" \
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 ## The Problem We Solved
 
-### ❌ Old Approach (Problematic)
+### ❌ The old shape (upstream, not this CLI)
 
 ```bash
 posty posts:create \
   -c "Main post" \
   --comments "Comment 1;Comment 2;Comment 3" \
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 **Issues:**
@@ -32,6 +40,9 @@ posty posts:create \
 2. ❌ Comments can't have their own media
 3. ❌ Less intuitive syntax
 4. ❌ Limited flexibility
+
+**And on this CLI it does nothing.** `--comments` is not a registered option,
+so the post goes out with no comments at all and no error.
 
 ### ✅ New Approach (Better!)
 
@@ -41,7 +52,7 @@ posty posts:create \
   -c "Comment 1; with semicolon!" -m "comment1.jpg" \
   -c "Comment 2" -m "comment2.jpg" \
   -c "Comment 3" \
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 **Benefits:**
@@ -61,13 +72,20 @@ posty posts:create \
   -c "Content 1" -m "media-for-content-1.jpg" \    # Pair 1
   -c "Content 2" -m "media-for-content-2.jpg" \    # Pair 2
   -c "Content 3" -m "media-for-content-3.jpg" \    # Pair 3
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 - **1st `-c`** = Main post
 - **2nd `-c`** = First comment (posted after delay)
 - **3rd `-c`** = Second comment (posted after delay)
 - Each `-m` is paired with the corresponding `-c` (in order)
+
+### Every `-m` value is an uploaded URL
+
+`-m` takes a `.path` returned by `posty upload`, comma-separated for several.
+A local filename is not an upload shortcut — it produces a post with a broken
+media reference. Read `media1.png` below as shorthand for
+`$(posty upload media1.png | jq -r '.path')`.
 
 ### Media is Optional
 
@@ -76,7 +94,7 @@ posty posts:create \
   -c "Post with media" -m "image.jpg" \
   -c "Comment without media" \
   -c "Another comment" \
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 Result:
@@ -90,7 +108,7 @@ Result:
 posty posts:create \
   -c "Main post" -m "img1.jpg,img2.jpg,img3.jpg" \
   -c "Comment" -m "img4.jpg,img5.jpg" \
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 Result:
@@ -109,7 +127,7 @@ posty posts:create \
   -m "features-detail.jpg" \
   -c "💰 Special offer: 50% off!" \
   -m "discount.jpg" \
-  -i "twitter-123,linkedin-456"
+  -i "$X_ID,$FB_ID"
 ```
 
 ### Example 2: Twitter Thread
@@ -122,7 +140,7 @@ posty posts:create \
   -c "Step 3: ... (4/5)" -m "step3.jpg" \
   -c "Conclusion (5/5)" -m "done.jpg" \
   -d 2000 \
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 ### Example 3: Tutorial with Screenshots
@@ -137,7 +155,7 @@ posty posts:create \
   -m "enable-screenshot.jpg" \
   -c "3. You're done! 🎉" \
   -m "success-screenshot.jpg" \
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 ### Example 4: Content with Special Characters
@@ -148,7 +166,7 @@ posty posts:create \
   -c "First tip: Use const; avoid var" \
   -c "Second tip: Functions should do one thing; keep it simple" \
   -c "Third tip: Comments should explain 'why'; not 'what'" \
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 **No escaping needed!** Semicolons work perfectly.
@@ -167,7 +185,7 @@ posty posts:create \
 
 ## Delay Between Comments
 
-Use `-d` to control the delay between comments:
+`-d` sets the `delay` value recorded on each comment.
 
 ```bash
 posty posts:create \
@@ -175,7 +193,7 @@ posty posts:create \
   -c "Comment 1" \
   -c "Comment 2" \
   -d 10 \    # 10 minutes between each
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 **Default:** 0 (no delay)
@@ -206,12 +224,14 @@ posty posts:create \
   -c "Comment; with semicolon!" \
   -m "img3.jpg" \
   -c "Another comment" \
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 ## Migration Guide
 
-If you have existing scripts using the old syntax:
+If you have existing scripts using the old syntax — note that on this CLI they
+were not merely limited, they were silently dropping the comments and the
+media.
 
 ### Before:
 ```bash
@@ -219,27 +239,30 @@ posty posts:create \
   -c "Main post" \
   --comments "Comment 1;Comment 2" \
   --image "main-image.jpg" \
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 ### After:
 ```bash
+MAIN=$(posty upload main-image.jpg | jq -r '.path')
+
 posty posts:create \
-  -c "Main post" -m "main-image.jpg" \
+  -c "Main post" -m "$MAIN" \
   -c "Comment 1" \
   -c "Comment 2" \
-  -i "twitter-123"
+  -s "2026-12-31T12:00:00Z" \
+  -i "$X_ID"
 ```
+
+`-s` is required. It is absent from every example above this line because they
+predate the requirement; add it.
 
 ## Documentation
 
-See these files for more details:
-
-- **COMMAND_LINE_GUIDE.md** - Comprehensive command-line guide
-- **command-line-examples.sh** - Executable examples
-- **EXAMPLES.md** - Full usage patterns
-- **SKILL.md** - AI agent integration
-- **README.md** - General documentation
+- [examples/COMMAND_LINE_GUIDE.md](./examples/COMMAND_LINE_GUIDE.md) — full command-line reference
+- [examples/command-line-examples.sh](./examples/command-line-examples.sh) — executable examples
+- [examples/EXAMPLES.md](./examples/EXAMPLES.md) — usage patterns
+- [SKILL.md](./SKILL.md) — the complete guide, and what an AI agent should read
 
 ## Summary
 
@@ -254,7 +277,7 @@ See these files for more details:
 
 ### 🎯 Perfect For:
 
-- Twitter threads
+- X threads
 - Product launches with follow-ups
 - Tutorials with screenshots
 - Event coverage

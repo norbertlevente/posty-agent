@@ -1,4 +1,27 @@
-# Posty CLI Auth Server
+# Posty CLI Auth Server — SUPERSEDED, NOT DEPLOYED
+
+> **Do not set this up. `posty auth:login` does not use it.**
+>
+> This directory is a standalone device-flow service, with its own Postgres and
+> its own OAuth app, that was never deployed. Its hostname
+> (`cli-auth.posty.hu`) is NXDOMAIN, which is why `auth:login` could not work
+> at all until the flow was moved.
+>
+> **The device flow now lives inside Posty's own backend.** `POST /device/code`
+> and `POST /device/token` are served by
+> `apps/backend/src/api/routes/device.auth.controller.ts` in the product repo,
+> with the approval page at `/device` on the web app, where the human picks the
+> workspace and the channels the resulting key may reach. The wire contract is
+> the same, so the CLI needed only a changed default URL.
+>
+> The code below is kept for reference and is unmaintained. Two things in it are
+> already wrong: `platform.posty.hu` does not exist, and the callback URL it
+> tells you to register points at a server nobody runs.
+>
+> **Where the live flow is documented:** the Authentication section of
+> [../SKILL.md](../SKILL.md).
+
+---
 
 Device flow OAuth2 server that allows CLI users to authenticate without needing client credentials. The server holds the OAuth app secret and mediates the authorization flow.
 

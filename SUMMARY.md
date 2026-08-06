@@ -1,271 +1,69 @@
-# Posty CLI - Creation Summary
+# What this repository is
 
-## ✅ What Was Created
+The `posty` command-line interface to Posty's public API, plus the Claude skill
+it ships as. Written for AI agents first and people second: every command
+prints JSON to stdout, and every error prints a message and exits non-zero.
 
-A complete, production-ready CLI package for the Posty API has been successfully created at `apps/cli/`.
+This file used to be a build report — "✅ 18 files created", "359 lines of
+code", "ready for npm publishing", a directory tree rooted at `apps/cli/`, and
+a documentation list including a `README.md`. None of that describes this
+repository. It is a standalone package, the layout is in
+[PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md), and it is not on npm.
 
-### Package Details
+## Where to start
 
-- **Package Name:** `posty`
-- **Version:** 1.0.0
-- **Executable:** `posty` command
-- **Lines of Code:** 359 lines
-- **Build Size:** ~491KB (compressed)
-- **License:** AGPL-3.0
+| You are | Read |
+|---|---|
+| An AI agent about to use the CLI | [SKILL.md](./SKILL.md) — everything, in one file |
+| A person installing it | [HOW_TO_RUN.md](./HOW_TO_RUN.md) |
+| In a hurry | [QUICK_START.md](./QUICK_START.md) |
+| Writing a `--settings` payload | [PROVIDER_SETTINGS.md](./PROVIDER_SETTINGS.md) |
+| Hitting a `400` on upload | [SUPPORTED_FILE_TYPES.md](./SUPPORTED_FILE_TYPES.md) |
+| Looking for a template | [examples/](./examples/) |
 
-## 📦 Package Structure
+## The three things that trip everyone up
 
-```
-apps/cli/
-├── src/                          # Source code (359 lines)
-│   ├── index.ts                  # CLI entry point with yargs
-│   ├── api.ts                    # Posty API client
-│   ├── config.ts                 # Environment configuration
-│   └── commands/
-│       ├── posts.ts              # Post management
-│       ├── integrations.ts       # Integration listing
-│       └── upload.ts             # Media upload
-│
-├── examples/                     # Usage examples
-│   └── basic-usage.sh            # Bash example
-│
-├── Documentation (5 files)
-│   ├── README.md                 # Main documentation
-│   ├── SKILL.md                  # AI agent guide
-│   ├── QUICK_START.md            # Quick start guide
-│   ├── CHANGELOG.md              # Version history
-│   └── PROJECT_STRUCTURE.md      # Architecture docs
-│
-└── Configuration
-    ├── package.json              # Package config
-    ├── tsconfig.json             # TypeScript config
-    ├── tsup.config.ts            # Build config
-    ├── .gitignore                # Git ignore
-    └── .npmignore                # npm ignore
-```
+**1. The channel list is short.** Publishing is proven on X, Facebook,
+Instagram, Threads and Bluesky. YouTube is coming. LinkedIn, TikTok and Google
+Business Profile are complete in code and blocked on those platforms' own
+approval. Nothing else is offered, whatever inherited provider code exists on
+the server. `posty integrations:list` is the truth for a given account.
 
-## 🚀 Features Implemented
+**2. Media must be uploaded first.** `-m` takes a URL returned by
+`posty upload`, never a local filename. Eight file types are accepted and the
+server decides by sniffing bytes, so renaming a `.mov` to `.mp4` does not work.
 
-### Commands
+**3. It is not on npm.** `npm install -g posty` installs an unrelated
+UK-postcode library by another author. Clone, `pnpm run build`, `npm link`.
 
-1. **posts:create** - Create social media posts
-   - ✅ Content input
-   - ✅ Integration selection
-   - ✅ Scheduled posting
-   - ✅ Image attachment
-
-2. **posts:list** - List all posts
-   - ✅ Pagination support
-   - ✅ Search functionality
-   - ✅ Filtering options
-
-3. **posts:delete** - Delete posts by ID
-   - ✅ ID-based deletion
-   - ✅ Confirmation messages
-
-4. **integrations:list** - Show connected accounts
-   - ✅ List all integrations
-   - ✅ Show provider info
-
-5. **upload** - Upload media files
-   - ✅ Image upload support
-   - ✅ Multiple formats (PNG, JPG, GIF)
-
-### Technical Features
-
-- ✅ Environment variable configuration (POSTY_API_KEY)
-- ✅ Custom API URL support (POSTY_API_URL)
-- ✅ Comprehensive error handling
-- ✅ User-friendly error messages with emojis
-- ✅ JSON output for programmatic parsing
-- ✅ Executable shebang for direct execution
-- ✅ TypeScript with proper types
-- ✅ Source maps for debugging
-- ✅ Build optimization with tsup
-
-## 📚 Documentation Created
-
-1. **README.md** (Primary documentation)
-   - Installation instructions
-   - Usage examples
-   - API reference
-   - Development guide
-
-2. **SKILL.md** (AI Agent Guide)
-   - Comprehensive patterns for AI agents
-   - Usage examples
-   - Workflow suggestions
-   - Best practices
-   - Error handling
-
-3. **QUICK_START.md**
-   - Fast onboarding
-   - Common workflows
-   - Troubleshooting
-   - Tips & tricks
-
-4. **CHANGELOG.md**
-   - Version 1.0.0 release notes
-   - Feature list
-
-5. **PROJECT_STRUCTURE.md**
-   - Architecture overview
-   - File descriptions
-   - Build process
-   - Integration points
-
-## 🔧 Build System Integration
-
-### Root package.json Scripts Added
-
-```json
-{
-  "build:cli": "rm -rf apps/cli/dist && pnpm --filter ./apps/cli run build",
-  "publish-cli": "pnpm run --filter ./apps/cli publish"
-}
-```
-
-### CLI Package Scripts
-
-```json
-{
-  "dev": "tsup --watch",
-  "build": "tsup",
-  "start": "node ./dist/index.js",
-  "publish": "tsup && pnpm publish --access public"
-}
-```
-
-## 🎯 Usage Examples
-
-### Basic Usage
-
-```bash
-# Set API key
-export POSTY_API_KEY=your_api_key
-
-# Create a post
-posty posts:create -c "Hello World!" -i "twitter-123"
-
-# List posts
-posty posts:list
-
-# Upload media
-posty upload ./image.png
-```
-
-### AI Agent Usage
-
-```bash
-# Post to social media
-export POSTY_API_KEY="your_key"
-posty posts:create -c "Your content here"
-```
-
-## ✨ Example Files
-
-1. **basic-usage.sh**
-   - Shell script demonstration
-   - Complete workflow example
-   - Error handling
-
-## 🧪 Testing
-
-### Manual Testing Completed
-
-```bash
-✅ Build successful (173ms)
-✅ Help command works
-✅ Version command works (1.0.0)
-✅ Error handling works (API key validation)
-✅ All commands have help text
-✅ Examples are valid
-```
-
-### Test Results
+## Commands
 
 ```
-✅ pnpm run build:cli - SUCCESS
-✅ posty --help - SUCCESS
-✅ posty --version - SUCCESS
-✅ posty posts:create --help - SUCCESS
-✅ Error without API key - WORKS AS EXPECTED
+auth:login   auth:logout   auth:status
+
+integrations:list   integrations:groups
+integrations:settings <id>   integrations:trigger <id> <method>
+
+posts:create   posts:list   posts:delete <id>
+posts:status <id>   posts:missing <id>   posts:connect <id>
+
+analytics:platform <id>   analytics:post <id>
+
+upload <file>
 ```
 
-## 📋 Checklist
+`src/index.ts` is the authoritative flag list. yargs ignores unknown options
+rather than erroring, so a flag that is not in that file fails silently rather
+than loudly — which is exactly how `--image` and `--comments` survived in the
+documentation for as long as they did.
 
-- ✅ CLI package created in apps/cli
-- ✅ Package name is "posty"
-- ✅ Uses POSTY_API_KEY environment variable
-- ✅ Integrates with Posty public API
-- ✅ Built for AI agent usage
-- ✅ SKILL.md created with comprehensive guide
-- ✅ README.md with full documentation
-- ✅ Build system configured
-- ✅ TypeScript compilation working
-- ✅ Executable binary generated
-- ✅ Examples provided
-- ✅ Error handling implemented
-- ✅ Help documentation complete
+## Configuration
 
-## 🚦 Next Steps
+`~/.posty/credentials.json` from `auth:login` wins; `POSTY_API_KEY` is the
+fallback. Default API base `https://posty.hu/api`; `https://api.posty.hu` is
+live and equivalent.
 
-### To Use Locally
+## Publishing
 
-```bash
-# Build the CLI
-pnpm run build:cli
-
-# Test it
-node apps/cli/dist/index.js --help
-
-# Link globally (optional)
-cd apps/cli
-pnpm link --global
-
-# Use anywhere
-posty --help
-```
-
-### To Publish to npm
-
-```bash
-# From monorepo root
-pnpm run publish-cli
-
-# Or from apps/cli
-cd apps/cli
-pnpm run publish
-```
-
-### To Use in AI Agents
-
-1. Install: `npm install -g posty`
-2. Set API key: `export POSTY_API_KEY=your_key`
-3. Use commands programmatically
-4. Parse JSON output
-5. See SKILL.md for patterns
-
-## 📊 Statistics
-
-- **Total Files Created:** 18
-- **Source Code Files:** 6
-- **Documentation Files:** 5
-- **Example Files:** 2
-- **Config Files:** 5
-- **Total Lines of Code:** 359
-- **Build Time:** ~170ms
-- **Output Size:** 491KB
-
-## 🎉 Summary
-
-A complete, production-ready CLI tool for Posty has been created with:
-
-- ✅ All requested features implemented
-- ✅ Comprehensive documentation for users and AI agents
-- ✅ Working examples
-- ✅ Proper build system
-- ✅ Ready for npm publishing
-- ✅ Integrated into monorepo
-
-The CLI is ready to use and can be published to npm whenever you're ready!
+Don't. The name is taken and the decision is the owner's. See
+[PUBLISHING.md](./PUBLISHING.md).
