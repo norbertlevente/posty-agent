@@ -1,28 +1,32 @@
 {
   "name": "posty",
-  "version": "2.0.12",
-  "description": "Social media automation CLI for scheduling posts, managing integrations, uploading media, and tracking analytics across 28+ platforms including X, LinkedIn, Reddit, YouTube, TikTok, Instagram, and more",
+  "version": "2.0.15",
+  "description": "Schedule and publish social posts from the command line. Channels: X (Twitter), Facebook, Instagram, Threads, Bluesky, with YouTube coming and LinkedIn, TikTok and Google Business Profile pending those platforms' approval.",
   "author": {
     "name": "Norbert Kiss",
     "email": "norbert@posty.hu",
     "url": "https://github.com/postyhq"
   },
-  "homepage": "https://docs.posty.hu/public-api/introduction",
+  "homepage": "https://posty.hu",
   "repository": "https://github.com/postyhq/posty-agent",
   "license": "AGPL-3.0",
-  "skills": ["./"],
+  "skills": [
+    "./"
+  ],
   "keywords": [
     "posty",
     "social-media",
     "scheduling",
     "automation",
     "ai-agent",
+    "x",
     "twitter",
-    "linkedin",
     "facebook",
     "instagram",
-    "tiktok",
+    "threads",
+    "bluesky",
     "youtube",
-    "reddit"
+    "linkedin",
+    "tiktok"
   ]
 }
