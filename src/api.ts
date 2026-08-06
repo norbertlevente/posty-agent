@@ -1,17 +1,19 @@
 import fetch, { FormData } from 'node-fetch';
 
-export interface PostizConfig {
+export interface PostyConfig {
   apiKey: string;
   apiUrl?: string;
 }
 
-export class PostizAPI {
+export class PostyAPI {
   private apiKey: string;
   private apiUrl: string;
 
-  constructor(config: PostizConfig) {
+  constructor(config: PostyConfig) {
     this.apiKey = config.apiKey;
-    this.apiUrl = config.apiUrl || 'https://api.postiz.com';
+    // `api.posty.hu` does not resolve. The API is served under `/api` on the
+    // main host; `posty auth:login` stores the real base in credentials.json.
+    this.apiUrl = config.apiUrl || 'https://posty.hu/api';
   }
 
   private async request(endpoint: string, options: any = {}) {

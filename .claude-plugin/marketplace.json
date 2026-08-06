@@ -1,16 +1,16 @@
 {
-  "name": "postiz-agent",
+  "name": "posty-agent",
   "owner": {
-    "name": "Nevo David",
-    "email": "nevo@postiz.com"
+    "name": "Norbert Kiss",
+    "email": "norbert@posty.hu"
   },
   "metadata": {
-    "description": "Postiz social media automation skill for scheduling posts across 28+ platforms",
+    "description": "Posty social media automation skill for scheduling posts across 28+ platforms",
     "version": "1.0.0"
   },
   "plugins": [
     {
-      "name": "postiz",
+      "name": "posty",
       "description": "Social media automation CLI for scheduling posts, managing integrations, uploading media, and tracking analytics across 28+ platforms including X, LinkedIn, Reddit, YouTube, TikTok, Instagram, and more",
       "source": "./",
       "strict": false,

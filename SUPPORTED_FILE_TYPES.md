@@ -1,292 +1,102 @@
-# Supported File Types for Upload
+# Supported file types for `posty upload`
 
-The Postiz CLI now correctly detects and uploads various media types.
+**Eight types. Nothing else.** If you are here because an upload returned
+`400 Unsupported file type.`, the answer is almost certainly on this page.
 
-## How It Works
+| MIME type | Extensions | Max size |
+|---|---|---|
+| `image/jpeg` | `.jpg`, `.jpeg` | 10 MB |
+| `image/png` | `.png` | 10 MB |
+| `image/gif` | `.gif` | 10 MB |
+| `image/webp` | `.webp` | 10 MB |
+| `image/avif` | `.avif` | 10 MB |
+| `image/bmp` | `.bmp` | 10 MB |
+| `image/tiff` | `.tif`, `.tiff` | 10 MB |
+| `video/mp4` | `.mp4` | 1 GB |
 
-The CLI automatically detects the MIME type based on the file extension:
+That is the complete list. Source of truth:
+`libraries/nestjs-libraries/src/upload/custom.upload.validation.ts` in the
+Posty server, where it is a literal `Set` of exactly these eight strings.
 
-```bash
-postiz upload video.mp4
-# ✅ Detected as: video/mp4
+## Not supported
 
-postiz upload image.png
-# ✅ Detected as: image/png
+**These will fail. They are listed because a previous version of this document
+promised them.**
 
-postiz upload audio.mp3
-# ✅ Detected as: audio/mpeg
-```
+| | Why |
+|---|---|
+| `.pdf`, `.doc`, `.docx`, `.ppt` | Not a social-media asset. Posty's media library is images and video. |
+| `.mp3`, `.wav`, `.ogg`, `.aac`, `.flac`, `.m4a` | No audio type is accepted. Posty has no audio-only post. |
+| `.mov`, `.mkv`, `.webm`, `.avi`, `.wmv`, `.flv`, `.3gp` | MP4 is the only accepted video container. Convert first — see below. |
+| `.svg` | Deliberately excluded. SVG is a document format that executes script; serving user-supplied SVG from Posty's own origin would be a stored-XSS vector. |
+| anything else | There is no `application/octet-stream` fallback. |
 
-## Supported File Types
+**Do not expect this list to widen.** The allowlist is narrow on purpose, and
+the type is decided by sniffing the file's magic bytes, not by its extension or
+by the `Content-Type` the client sends. Renaming `clip.mov` to `clip.mp4` does
+not work — the server reads the bytes, sees QuickTime, and rejects it. It is
+also checked twice: once by the upload interceptor as the bytes stream in, and
+again by a validation pipe over the sniffed type before anything is stored.
 
-### Images
-
-| Extension | MIME Type | Supported |
-|-----------|-----------|-----------|
-| `.png` | `image/png` | ✅ Yes |
-| `.jpg`, `.jpeg` | `image/jpeg` | ✅ Yes |
-| `.gif` | `image/gif` | ✅ Yes |
-
-**Examples:**
-```bash
-postiz upload photo.jpg
-postiz upload logo.png
-postiz upload animation.gif
-postiz upload icon.svg
-```
-
-### Videos
-
-| Extension | MIME Type | Supported |
-|-----------|-----------|-----------|
-| `.mp4` | `video/mp4` | ✅ Yes |
-
-**Examples:**
-```bash
-postiz upload video.mp4
-postiz upload clip.mov
-postiz upload recording.webm
-postiz upload movie.mkv
-```
-
-### Audio
-
-| Extension | MIME Type | Supported |
-|-----------|-----------|-----------|
-| `.mp3` | `audio/mpeg` | ✅ Yes |
-| `.wav` | `audio/wav` | ✅ Yes |
-| `.ogg` | `audio/ogg` | ✅ Yes |
-| `.aac` | `audio/aac` | ✅ Yes |
-| `.flac` | `audio/flac` | ✅ Yes |
-| `.m4a` | `audio/mp4` | ✅ Yes |
-
-**Examples:**
-```bash
-postiz upload podcast.mp3
-postiz upload song.wav
-postiz upload audio.ogg
-```
-
-### Documents
-
-| Extension | MIME Type | Supported |
-|-----------|-----------|-----------|
-| `.pdf` | `application/pdf` | ✅ Yes |
-| `.doc` | `application/msword` | ✅ Yes |
-| `.docx` | `application/vnd.openxmlformats-officedocument.wordprocessingml.document` | ✅ Yes |
-
-**Examples:**
-```bash
-postiz upload document.pdf
-postiz upload report.docx
-```
-
-### Other Files
-
-For file types not listed above, the CLI uses:
-- MIME type: `application/octet-stream`
-- This is a generic binary file type
-
-## Usage Examples
-
-### Upload an Image
+## Converting
 
 ```bash
-postiz upload ./images/photo.jpg
+# Any video container -> MP4 (H.264 + AAC, which every platform accepts)
+ffmpeg -i clip.mov -c:v libx264 -c:a aac clip.mp4
+posty upload clip.mp4
+
+# SVG -> PNG
+rsvg-convert -w 1200 logo.svg -o logo.png     # or: inkscape, imagemagick
+posty upload logo.png
 ```
 
-Response:
+## Usage
+
+```bash
+posty upload ./images/photo.jpg
+```
+
 ```json
 {
-  "id": "upload-123",
-  "path": "https://cdn.postiz.com/uploads/photo.jpg",
-  "url": "https://cdn.postiz.com/uploads/photo.jpg"
+  "id": "…",
+  "path": "https://…/uploads/photo.jpg"
 }
 ```
 
-### Upload a Video (MP4)
+Then use the returned `path` as the media reference on a post:
 
 ```bash
-postiz upload ./videos/promo.mp4
+PATH=$(posty upload ./videos/promo.mp4 | jq -r '.path')
+posty posts:create -c "Új videó!" -m "$PATH" -i "<integration-id>"
 ```
 
-Response:
-```json
-{
-  "id": "upload-456",
-  "path": "https://cdn.postiz.com/uploads/promo.mp4",
-  "url": "https://cdn.postiz.com/uploads/promo.mp4"
-}
-```
+The media reference **must** be a path returned by `posty upload`. Passing a
+local filename (`-m "screenshot.png"`) is not an upload shortcut; it produces a
+post with a broken media reference.
 
-### Upload and Use in Post
+## Errors
 
-```bash
-# 1. Upload the file
-RESULT=$(postiz upload video.mp4)
-echo $RESULT
+| Response | Meaning |
+|---|---|
+| `400 Unsupported file type.` | The sniffed type is not one of the eight above. Convert the file. |
+| `400 File size exceeds the maximum allowed size of N bytes.` | Over 10 MB for an image or 1 GB for a video. |
+| `400 File is too large.` | Rejected at the transport layer, before the body was read. Same cause. |
+| `401 Invalid API key` | The key is wrong, revoked, or expired. |
+| `403 … missing the required permission: media:write` | The key is valid but was not granted `media:write` — or its owner's role no longer permits it. Scoped keys are re-checked against their owner's current role on every request, so a role change can narrow a working key with nothing else having happened. |
+| `429` | Rate limit. Every public API route is limited per key. |
 
-# 2. Extract the path (you'll need jq or similar)
-PATH=$(echo $RESULT | jq -r '.path')
+## Platform limits are a separate thing
 
-# 3. Use in a post
-postiz posts:create \
-  -c "Check out my video!" \
-  -m "$PATH" \
-  -i "tiktok-123"
-```
+The eight types above are what **Posty** accepts. Each social platform then
+applies its own rules to what it will publish — X caps video at 512 MB,
+Instagram at 100 MB, TikTok at ~287 MB. An upload that Posty accepts can still
+be refused by a platform at publish time. Use
+`posty integrations:settings <id>` to read a channel's live rules rather than
+hard-coding any of these numbers.
 
-### Upload Multiple Files
+---
 
-```bash
-# Upload images
-postiz upload image1.jpg
-postiz upload image2.png
-postiz upload image3.gif
-
-# Upload videos
-postiz upload video1.mp4
-postiz upload video2.mov
-```
-
-## What Changed (Fix)
-
-### Before (❌ Bug)
-
-```bash
-postiz upload video.mp4
-# ❌ Was detected as: image/jpeg (WRONG!)
-```
-
-The problem: The CLI defaulted to `image/jpeg` for any unknown file type.
-
-### After (✅ Fixed)
-
-```bash
-postiz upload video.mp4
-# ✅ Correctly detected as: video/mp4
-
-postiz upload audio.mp3
-# ✅ Correctly detected as: audio/mpeg
-
-postiz upload document.pdf
-# ✅ Correctly detected as: application/pdf
-```
-
-## Platform-Specific Notes
-
-### TikTok
-- Supports: MP4, MOV, WEBM
-- Recommended: MP4
-
-### YouTube
-- Supports: MP4, MOV, AVI, WMV, FLV, 3GP, WEBM
-- Recommended: MP4
-
-### Instagram
-- Images: JPG, PNG
-- Videos: MP4, MOV
-- Recommended: MP4 for videos, JPG for images
-
-### Twitter/X
-- Images: PNG, JPG, GIF, WEBP
-- Videos: MP4, MOV
-- Max video size: 512MB
-
-### LinkedIn
-- Images: PNG, JPG, GIF
-- Videos: MP4, MOV, AVI
-- Documents: PDF, DOC, DOCX, PPT
-
-## Troubleshooting
-
-### "Upload failed: Unsupported file type"
-
-Some platforms may not accept certain file types. Check the platform's documentation.
-
-**Solution:** Convert the file to a supported format:
-
-```bash
-# Convert video to MP4
-ffmpeg -i video.avi video.mp4
-
-# Then upload
-postiz upload video.mp4
-```
-
-### File Size Limits
-
-Different platforms have different file size limits:
-
-- **Twitter/X**: Max 512MB for videos
-- **Instagram**: Max 100MB for videos
-- **TikTok**: Max 287.6MB for videos
-- **YouTube**: Max 128GB (but 256GB for verified)
-
-### "MIME type mismatch"
-
-If you renamed a file with the wrong extension:
-
-```bash
-# ❌ Wrong: PNG file renamed to .jpg
-mv image.png image.jpg
-postiz upload image.jpg  # Might fail
-
-# ✅ Correct: Keep original extension
-postiz upload image.png
-```
-
-## Testing File Upload
-
-```bash
-# Set API key
-export POSTIZ_API_KEY=your_key
-
-# Test image upload
-postiz upload test-image.jpg
-
-# Test video upload
-postiz upload test-video.mp4
-
-# Test audio upload
-postiz upload test-audio.mp3
-```
-
-## Error Messages
-
-### File Not Found
-```
-❌ ENOENT: no such file or directory
-```
-
-**Solution:** Check the file path is correct.
-
-### No Permission
-```
-❌ EACCES: permission denied
-```
-
-**Solution:** Check file permissions:
-```bash
-chmod 644 your-file.mp4
-```
-
-### Invalid API Key
-```
-❌ Upload failed (401): Unauthorized
-```
-
-**Solution:** Set your API key:
-```bash
-export POSTIZ_API_KEY=your_key
-```
-
-## Summary
-
-✅ **30+ file types supported**
-✅ **Automatic MIME type detection**
-✅ **Images, videos, audio, documents**
-✅ **Correct handling of MP4, MOV, MP3, etc.**
-✅ **No more defaulting to JPEG!**
-
-**The upload bug is fixed!** 🎉
+*Corrected 2026-08-06. The previous version of this file listed PDF, DOC, DOCX,
+MP3, WAV, OGG, AAC, FLAC, M4A, SVG, MOV, MKV, WEBM and AVI as supported, and
+claimed "30+ file types". None of them were, and an agent reading it would send
+one and get a 400 it had no way to anticipate.*

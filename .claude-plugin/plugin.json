@@ -1,18 +1,18 @@
 {
-  "name": "postiz",
+  "name": "posty",
   "version": "2.0.12",
   "description": "Social media automation CLI for scheduling posts, managing integrations, uploading media, and tracking analytics across 28+ platforms including X, LinkedIn, Reddit, YouTube, TikTok, Instagram, and more",
   "author": {
-    "name": "Nevo David",
-    "email": "nevo@postiz.com",
-    "url": "https://github.com/nevo-david"
+    "name": "Norbert Kiss",
+    "email": "norbert@posty.hu",
+    "url": "https://github.com/postyhq"
   },
-  "homepage": "https://docs.postiz.com/public-api/introduction",
-  "repository": "https://github.com/gitroomhq/postiz-agent",
+  "homepage": "https://docs.posty.hu/public-api/introduction",
+  "repository": "https://github.com/postyhq/posty-agent",
   "license": "AGPL-3.0",
   "skills": ["./"],
   "keywords": [
-    "postiz",
+    "posty",
     "social-media",
     "scheduling",
     "automation",

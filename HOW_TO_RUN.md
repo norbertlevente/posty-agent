@@ -1,4 +1,4 @@
-# How to Run the Postiz CLI
+# How to Run the Posty CLI
 
 There are several ways to run the CLI, depending on your needs.
 
@@ -14,13 +14,13 @@ node apps/cli/dist/index.js --help
 ./apps/cli/dist/index.js --help
 
 # Example command
-export POSTIZ_API_KEY=your_key
+export POSTY_API_KEY=your_key
 node apps/cli/dist/index.js posts:list
 ```
 
 ## Option 2: Link Globally (Recommended for Development) 🔗
 
-This creates a global `postiz` command you can use anywhere:
+This creates a global `posty` command you can use anywhere:
 
 ```bash
 # From the monorepo root
@@ -28,23 +28,23 @@ cd apps/cli
 pnpm link --global
 
 # Now you can use it anywhere!
-postiz --help
-postiz posts:list
-postiz posts:create -c "Hello!" -i "twitter-123"
+posty --help
+posty posts:list
+posty posts:create -c "Hello!" -i "twitter-123"
 
 # To unlink later
 pnpm unlink --global
 ```
 
-**After linking, you can use `postiz` from any directory!**
+**After linking, you can use `posty` from any directory!**
 
 ## Option 3: Use pnpm Filter (From Root) 📦
 
 ```bash
 # From the monorepo root
-pnpm --filter postiz start -- --help
-pnpm --filter postiz start -- posts:list
-pnpm --filter postiz start -- posts:create -c "Hello" -i "twitter-123"
+pnpm --filter posty start -- --help
+pnpm --filter posty start -- posts:list
+pnpm --filter posty start -- posts:create -c "Hello" -i "twitter-123"
 ```
 
 ## Option 4: Use npm/npx (After Publishing) 🌐
@@ -53,11 +53,11 @@ Once published to npm:
 
 ```bash
 # Install globally
-npm install -g postiz
+npm install -g posty
 
 # Or use with npx (no install)
-npx postiz --help
-npx postiz posts:list
+npx posty --help
+npx posty posts:list
 ```
 
 ## Quick Setup Guide
@@ -72,10 +72,10 @@ pnpm run build:cli
 ### Step 2: Set Your API Key
 
 ```bash
-export POSTIZ_API_KEY=your_api_key_here
+export POSTY_API_KEY=your_api_key_here
 
 # To make it permanent, add to your shell profile:
-echo 'export POSTIZ_API_KEY=your_api_key' >> ~/.bashrc
+echo 'export POSTY_API_KEY=your_api_key' >> ~/.bashrc
 # or ~/.zshrc if you use zsh
 ```
 
@@ -90,18 +90,18 @@ node apps/cli/dist/index.js --help
 ```bash
 cd apps/cli
 pnpm link --global
-postiz --help
+posty --help
 ```
 
 ## Troubleshooting
 
-### "Command not found: postiz"
+### "Command not found: posty"
 
 If you linked globally but still get this error:
 
 ```bash
 # Check if it's linked
-which postiz
+which posty
 
 # If not found, try linking again
 cd apps/cli
@@ -111,13 +111,13 @@ pnpm link --global
 echo $PATH
 ```
 
-### "POSTIZ_API_KEY is not set"
+### "POSTY_API_KEY is not set"
 
 ```bash
-export POSTIZ_API_KEY=your_key
+export POSTY_API_KEY=your_key
 
 # Verify it's set
-echo $POSTIZ_API_KEY
+echo $POSTY_API_KEY
 ```
 
 ### Permission Denied
@@ -147,20 +147,20 @@ If you linked globally, the changes will be reflected immediately (no need to re
 ### Test Help Command
 
 ```bash
-postiz --help
-postiz posts:create --help
+posty --help
+posty posts:create --help
 ```
 
 ### Test with Sample Command (requires API key)
 
 ```bash
-export POSTIZ_API_KEY=your_key
+export POSTY_API_KEY=your_key
 
 # List integrations
-postiz integrations:list
+posty integrations:list
 
 # Create a test post
-postiz posts:create \
+posty posts:create \
   -c "Test post from CLI" \
   -i "your-integration-id"
 ```
@@ -181,7 +181,7 @@ pnpm run build:cli
 
 ```bash
 # If linked globally
-postiz --help
+posty --help
 
 # Or direct execution
 node apps/cli/dist/index.js --help
@@ -194,35 +194,35 @@ node apps/cli/dist/index.js --help
 pnpm run dev
 
 # In another terminal, test your changes
-postiz --help
+posty --help
 ```
 
 ## Environment Variables
 
 ### Required
 
-- `POSTIZ_API_KEY` - Your Postiz API key (required for all operations)
+- `POSTY_API_KEY` - Your Posty API key (required for all operations)
 
 ### Optional
 
-- `POSTIZ_API_URL` - Custom API endpoint (default: `https://api.postiz.com`)
+- `POSTY_API_URL` - Custom API endpoint (default: `https://posty.hu/api`)
 
 ### Setting Environment Variables
 
 **Temporary (current session):**
 ```bash
-export POSTIZ_API_KEY=your_key
-export POSTIZ_API_URL=https://custom-api.com
+export POSTY_API_KEY=your_key
+export POSTY_API_URL=https://custom-api.com
 ```
 
 **Permanent (add to shell profile):**
 ```bash
 # For bash
-echo 'export POSTIZ_API_KEY=your_key' >> ~/.bashrc
+echo 'export POSTY_API_KEY=your_key' >> ~/.bashrc
 source ~/.bashrc
 
 # For zsh
-echo 'export POSTIZ_API_KEY=your_key' >> ~/.zshrc
+echo 'export POSTY_API_KEY=your_key' >> ~/.zshrc
 source ~/.zshrc
 ```
 
@@ -232,7 +232,7 @@ Create a convenient alias:
 
 ```bash
 # Add to ~/.bashrc or ~/.zshrc
-alias pz='postiz'
+alias pz='posty'
 
 # Now you can use
 pz posts:list
@@ -256,11 +256,11 @@ pnpm run publish
 
 ```bash
 # Global install
-npm install -g postiz
+npm install -g posty
 
 # Project-specific
-npm install postiz
-npx postiz --help
+npm install posty
+npx posty --help
 ```
 
 ## Summary of Methods
@@ -269,10 +269,10 @@ npx postiz --help
 |--------|---------|----------|
 | **Direct Node** | `node apps/cli/dist/index.js` | Quick testing, no installation |
 | **Direct Execution** | `./apps/cli/dist/index.js` | Same as above, slightly shorter |
-| **Global Link** | `postiz` (after `pnpm link --global`) | **Recommended** for development |
-| **pnpm Filter** | `pnpm --filter postiz start --` | From monorepo root |
-| **npm Global** | `postiz` (after `npm i -g postiz`) | After publishing to npm |
-| **npx** | `npx postiz` | One-off usage without installing |
+| **Global Link** | `posty` (after `pnpm link --global`) | **Recommended** for development |
+| **pnpm Filter** | `pnpm --filter posty start --` | From monorepo root |
+| **npm Global** | `posty` (after `npm i -g posty`) | After publishing to npm |
+| **npx** | `npx posty` | One-off usage without installing |
 
 ## Recommended Setup
 
@@ -287,14 +287,14 @@ cd apps/cli
 pnpm link --global
 
 # 3. Set API key
-export POSTIZ_API_KEY=your_key
+export POSTY_API_KEY=your_key
 
 # 4. Test
-postiz --help
-postiz integrations:list
+posty --help
+posty integrations:list
 
 # 5. Start using!
-postiz posts:create -c "My first post" -i "twitter-123"
+posty posts:create -c "My first post" -i "twitter-123"
 ```
 
-Now you can use `postiz` from anywhere! 🚀
+Now you can use `posty` from anywhere! 🚀

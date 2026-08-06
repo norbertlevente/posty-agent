@@ -3,10 +3,30 @@ import { join } from 'path';
 import { homedir } from 'os';
 import fetch from 'node-fetch';
 
-const CREDENTIALS_DIR = join(homedir(), '.postiz');
+const CREDENTIALS_DIR = join(homedir(), '.posty');
 const CREDENTIALS_FILE = join(CREDENTIALS_DIR, 'credentials.json');
 
-const DEFAULT_AUTH_SERVER = 'https://cli-auth.postiz.com';
+/**
+ * Where the device flow lives.
+ *
+ * It used to be `https://cli-auth.posty.hu`, a SEPARATE service (its own
+ * Postgres, its own OAuth app) that was never deployed — the hostname is
+ * NXDOMAIN, so `posty auth:login` could not work at all. The flow is now
+ * implemented inside Posty's own backend, which is what this points at:
+ * `POST /device/code`, `POST /device/token`, and an approval page on the web
+ * app where the human picks which workspace and channels the key may reach.
+ *
+ * Same wire contract as before, so nothing else in this file changed.
+ *
+ * `api.posty.hu` does not resolve yet either; the API answers under `/api` on
+ * the main host. Override with `POSTY_AUTH_SERVER` if that ever moves — and
+ * note the server tells the CLI its own API base in the token response
+ * (`api_url`), so a migration needs no CLI release.
+ */
+const DEFAULT_AUTH_SERVER = 'https://posty.hu/api';
+
+/** Fallback only. The token response carries the real one. */
+const DEFAULT_API_URL = 'https://posty.hu/api';
 
 interface StoredCredentials {
   accessToken: string;
@@ -58,7 +78,7 @@ function sleep(ms: number): Promise<void> {
 }
 
 export async function authLogin(argv: any) {
-  const authServer = argv.authServer || process.env.POSTIZ_AUTH_SERVER || DEFAULT_AUTH_SERVER;
+  const authServer = argv.authServer || process.env.POSTY_AUTH_SERVER || DEFAULT_AUTH_SERVER;
 
   console.log('🔐 Starting device authorization flow...\n');
 
@@ -73,6 +93,11 @@ export async function authLogin(argv: any) {
     const response = await fetch(`${authServer}/device/code`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      // Shown on the approval page, so somebody can tell the login they just
+      // started from one they did not.
+      body: JSON.stringify({
+        client_name: process.env.POSTY_CLIENT_NAME || 'Posty CLI',
+      }),
     });
 
     if (!response.ok) {
@@ -122,7 +147,7 @@ export async function authLogin(argv: any) {
       if (response.ok && data.access_token) {
         saveCredentials({
           accessToken: data.access_token,
-          apiUrl: data.api_url || 'https://api.postiz.com',
+          apiUrl: data.api_url || DEFAULT_API_URL,
           organizationId: data.organization_id,
         });
 
@@ -168,7 +193,7 @@ export async function authLogout() {
 }
 
 export async function authStatus() {
-  const envKey = process.env.POSTIZ_API_KEY;
+  const envKey = process.env.POSTY_API_KEY;
   const creds = loadCredentials();
 
   let apiKey: string | undefined;
@@ -188,12 +213,12 @@ export async function authStatus() {
     console.log('🔑 Authentication method: API Key (environment variable)');
     console.log(`🔑 Key: ${envKey.substring(0, 8)}...`);
     apiKey = envKey;
-    apiUrl = process.env.POSTIZ_API_URL || 'https://api.postiz.com';
+    apiUrl = process.env.POSTY_API_URL || DEFAULT_API_URL;
   } else {
     console.log('❌ Not authenticated.');
     console.log('\nOptions:');
-    console.log('  1. OAuth2: postiz auth:login');
-    console.log('  2. API Key: export POSTIZ_API_KEY=your_api_key');
+    console.log('  1. OAuth2: posty auth:login');
+    console.log('  2. API Key: export POSTY_API_KEY=your_api_key');
     return;
   }
 
@@ -214,9 +239,9 @@ export async function authStatus() {
     } else if (response.status === 401 || response.status === 403) {
       console.log('❌ Credentials are expired or invalid. Please re-authenticate.');
       if (creds) {
-        console.log('   Run: postiz auth:login');
+        console.log('   Run: posty auth:login');
       } else {
-        console.log('   Update your POSTIZ_API_KEY environment variable.');
+        console.log('   Update your POSTY_API_KEY environment variable.');
       }
     } else {
       const error = await response.text();
