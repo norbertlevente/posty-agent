@@ -33,8 +33,10 @@ the server. `posty integrations:list` is the truth for a given account.
 `posty upload`, never a local filename. Eight file types are accepted and the
 server decides by sniffing bytes, so renaming a `.mov` to `.mp4` does not work.
 
-**3. It is not on npm.** `npm install -g posty` installs an unrelated
-UK-postcode library by another author. Clone, `pnpm run build`, `npm link`.
+**3. The package is `posty-cli`; the command is `posty`.** They differ because
+`npm install -g posty` installs an unrelated UK-postcode library by another
+author. `posty-cli` is not published yet, so until it is: clone,
+`pnpm run build`, `npm link`.
 
 ## Commands
 

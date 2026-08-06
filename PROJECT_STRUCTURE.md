@@ -132,6 +132,6 @@ pnpm run dev        # watch
 
 ## Publishing
 
-**Do not.** The npm name `posty` belongs to somebody else's package, and
-publishing is the owner's decision and irreversible. See
-[PUBLISHING.md](./PUBLISHING.md).
+**Do not.** The package is `posty-cli` — the bare name `posty` belongs to
+somebody else's package — and publishing is the owner's decision and
+irreversible. See [PUBLISHING.md](./PUBLISHING.md).

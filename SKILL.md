@@ -7,11 +7,14 @@ metadata: {"openclaw":{"emoji":"🌎","requires":{"bins":[],"env":["POSTY_API_UR
 
 ## Install
 
-The CLI is not on the public npm registry. **`npm install -g posty` installs
-somebody else's package** — the name `posty` on npmjs.com belongs to an
-unrelated UK-postcode library. Do not run it and do not tell a user to.
+The npm package is **`posty-cli`**. The command it provides is `posty` — the
+package name and the command name are deliberately different, because
+**`npm install -g posty` installs somebody else's package**: the bare name
+`posty` on npmjs.com belongs to an unrelated UK-postcode library. Never run it
+and never tell a user to.
 
-Install from the repository the owner gives you:
+`posty-cli` is not on the public registry yet, so install from the repository
+the owner gives you:
 
 ```bash
 git clone <the posty-agent repo you were given>

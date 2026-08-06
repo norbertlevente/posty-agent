@@ -7,9 +7,12 @@ For the full picture read [SKILL.md](./SKILL.md); for installation detail,
 
 ## 1. Install
 
-**Not with `npm install -g posty`.** That name on npmjs.com is an unrelated
+The package is **`posty-cli`**; the command it installs is `posty`.
+**Never `npm install -g posty`** — that name on npmjs.com is an unrelated
 UK-postcode library by another author, and it installs cleanly, which is what
 makes the mistake hard to notice.
+
+`posty-cli` is not published yet, so build from source:
 
 ```bash
 git clone <this repository>

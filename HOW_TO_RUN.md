@@ -6,9 +6,16 @@ file described that layout; it does not exist here.
 
 ## Install
 
-**Not from npm.** The name `posty` on npmjs.com belongs to an unrelated
-UK-postcode library by another author. `npm install -g posty` installs that,
-successfully and silently. Do not run it.
+The package is **`posty-cli`**. The command it gives you is `posty` — the two
+names differ on purpose, because the bare name `posty` on npmjs.com belongs to
+an unrelated UK-postcode library by another author.
+
+**Never run `npm install -g posty`.** It installs that other package,
+successfully and silently, which is what makes the mistake hard to notice.
+
+`posty-cli` is not published yet either — publishing is the owner's decision,
+see [PUBLISHING.md](./PUBLISHING.md) — so `npm install -g posty-cli` will 404
+today. Build from source instead:
 
 ```bash
 git clone <this repository>
@@ -21,7 +28,8 @@ npm link                # makes `posty` available on your PATH
 posty --help
 ```
 
-`npm link` is reversible with `npm unlink -g posty` from the same directory.
+`npm link` is reversible with `npm unlink -g posty-cli` from the same directory
+— that takes the package name, not the command name.
 
 ### Without linking
 

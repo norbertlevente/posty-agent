@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **The npm package is now `posty-cli`.** It was `posty`, which on npmjs.com is
+  an unrelated UK-postcode library by another author — so `npm install -g posty`
+  installed that package, successfully and silently, and publishing under that
+  name could never have succeeded. `posty-cli` was confirmed available.
+  **The command is still `posty`**: it comes from `bin`, not from `name`, and
+  the command name was never the source of the conflict. Nothing a user types
+  changes.
 - **Documentation now describes Posty, not upstream Postiz.** Every markdown
   file claimed "28+ channels" including Reddit, Mastodon, Discord, Slack,
   Telegram, Kick, Twitch, Lemmy, Farcaster, Nostr, VK, Medium, Dev.to,
