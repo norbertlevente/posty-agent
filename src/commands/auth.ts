@@ -18,10 +18,12 @@ const CREDENTIALS_FILE = join(CREDENTIALS_DIR, 'credentials.json');
  *
  * Same wire contract as before, so nothing else in this file changed.
  *
- * `api.posty.hu` does not resolve yet either; the API answers under `/api` on
- * the main host. Override with `POSTY_AUTH_SERVER` if that ever moves — and
- * note the server tells the CLI its own API base in the token response
- * (`api_url`), so a migration needs no CLI release.
+ * `api.posty.hu` is live now (it answers 401 on `/public/v1/*`, which is the
+ * route existing and being guarded). The same API is also served under `/api`
+ * on the main host, which is what this default uses because it is the base the
+ * device flow itself is reached on. Override with `POSTY_AUTH_SERVER` if that
+ * ever moves — and note the server tells the CLI its own API base in the token
+ * response (`api_url`), so a migration needs no CLI release.
  */
 const DEFAULT_AUTH_SERVER = 'https://posty.hu/api';
 

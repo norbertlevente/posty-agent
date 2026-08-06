@@ -11,8 +11,9 @@ export class PostyAPI {
 
   constructor(config: PostyConfig) {
     this.apiKey = config.apiKey;
-    // `api.posty.hu` does not resolve. The API is served under `/api` on the
-    // main host; `posty auth:login` stores the real base in credentials.json.
+    // `api.posty.hu` is live and equivalent; the same API is also served under
+    // `/api` on the main host, which is the safer fallback for a key set by
+    // hand. `posty auth:login` stores the real base in credentials.json.
     this.apiUrl = config.apiUrl || 'https://posty.hu/api';
   }
 
