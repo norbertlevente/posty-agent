@@ -1,12 +1,12 @@
 {
   "type": "now",
-  "date": "2024-01-15T12:00:00Z",
-  "shortLink": true,
+  "date": "2026-01-15T12:00:00Z",
+  "shortLink": false,
   "tags": [],
   "posts": [
     {
       "integration": {
-        "id": "twitter-integration-id"
+        "id": "<your-x-integration-id>"
       },
       "value": [
         {
@@ -14,53 +14,54 @@
           "image": [
             {
               "id": "tutorial1",
-              "path": "https://example.com/tutorial-intro.jpg"
+              "path": "<the .path returned by: posty upload tutorial-intro.jpg>"
             }
           ]
         },
         {
-          "content": "Step 1: Install the CLI and set your API key\n\nexport POSTY_API_KEY=your_key\npnpm install -g posty (2/5)",
+          "content": "Step 1: authenticate\n\nposty auth:login (2/5)",
           "image": [
             {
               "id": "tutorial2",
-              "path": "https://example.com/tutorial-install.jpg"
+              "path": "<the .path returned by: posty upload tutorial-install.jpg>"
             }
           ],
-          "delay": 2000
+          "delay": 2
         },
         {
           "content": "Step 2: List your connected integrations to get their IDs\n\nposty integrations:list (3/5)",
           "image": [
             {
               "id": "tutorial3",
-              "path": "https://example.com/tutorial-integrations.jpg"
+              "path": "<the .path returned by: posty upload tutorial-integrations.jpg>"
             }
           ],
-          "delay": 2000
+          "delay": 2
         },
         {
-          "content": "Step 3: Create your first post\n\nposty posts:create -c \"Hello World!\" -i \"twitter-123\" (4/5)",
+          "content": "Step 3: Create your first post\n\nposty posts:create -c \"Hello World!\" -s \"2026-12-31T12:00:00Z\" -i \"$X_ID\" (4/5)",
           "image": [
             {
               "id": "tutorial4",
-              "path": "https://example.com/tutorial-create.jpg"
+              "path": "<the .path returned by: posty upload tutorial-create.jpg>"
             }
           ],
-          "delay": 2000
+          "delay": 2
         },
         {
           "content": "That's it! You can now automate your social media posts with ease. Check out our docs for more advanced features! 🚀 (5/5)",
           "image": [
             {
               "id": "tutorial5",
-              "path": "https://example.com/tutorial-done.jpg"
+              "path": "<the .path returned by: posty upload tutorial-done.jpg>"
             }
           ],
-          "delay": 2000
+          "delay": 2
         }
       ],
       "settings": {
-        "__type": "EmptySettings"
+        "__type": "x",
+        "who_can_reply_post": "everyone"
       }
     }
   ]

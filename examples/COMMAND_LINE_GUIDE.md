@@ -28,7 +28,7 @@ posty posts:create \
 ```bash
 posty posts:create \
   -c "Hello World!" \
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 ### 2. Post with Multiple Images
@@ -37,7 +37,7 @@ posty posts:create \
 posty posts:create \
   -c "Check out these photos!" \
   -m "photo1.jpg,photo2.jpg,photo3.jpg" \
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 **Result:**
@@ -53,7 +53,7 @@ posty posts:create \
   -m "comment1-image.jpg" \
   -c "Second comment 🎨" \
   -m "comment2-img1.jpg,comment2-img2.jpg" \
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 **Result:**
@@ -68,7 +68,7 @@ posty posts:create \
   -c "Main post" \
   -c "First comment; with a semicolon!" \
   -c "Second comment; with multiple; semicolons; works fine!" \
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 **No escaping needed!** Each `-c` is a separate argument, so special characters work perfectly.
@@ -88,7 +88,7 @@ posty posts:create \
   -c "Conclusion 🎉 (5/5)" \
   -m "thread5.jpg" \
   -d 2000 \
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 **Result:** 5-part thread with 2-second delays between tweets
@@ -102,7 +102,7 @@ posty posts:create \
   -c "Taken at 6:30 PM" \
   -c "Location: Santa Monica Beach" \
   -c "Camera: iPhone 15 Pro" \
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 **Result:**
@@ -116,7 +116,7 @@ posty posts:create \
   -c "Big announcement! 🎉" \
   -m "announcement.jpg" \
   -c "More details coming soon..." \
-  -i "twitter-123,linkedin-456,facebook-789"
+  -i "$X_ID,$FB_ID,$THREADS_ID"
 ```
 
 **Result:** Same post + comment posted to all 3 platforms
@@ -131,7 +131,7 @@ posty posts:create \
   -m "discount-banner.jpg" \
   -c "Limited to first 100 customers!" \
   -s "2024-12-25T09:00:00Z" \
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 **Result:** Scheduled main post with 2 follow-up comments
@@ -150,7 +150,7 @@ posty posts:create \
   -m "step3-screenshot.jpg" \
   -c "That's it! You're all set 🎉" \
   -d 3000 \
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 ## Options Reference
@@ -172,7 +172,7 @@ posty posts:create \
   -c "First content"  -m "first-media.jpg" \     # Pair 1 → Main post
   -c "Second content" -m "second-media.jpg" \    # Pair 2 → Comment 1
   -c "Third content"  -m "third-media.jpg" \     # Pair 3 → Comment 2
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 **Pairing logic:**
@@ -191,37 +191,29 @@ posty posts:create \
   -c "Comment 1" \
   -c "Comment 2" \
   -d 10 \       # 10 minutes between each
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 **Default:** 0 (no delay)
 
-## Comparison: Old vs New Syntax
+## Flags that do not exist
 
-### ❌ Old Way (Limited)
+`--comments` and `--image` appear in older documentation and in scripts written
+against it. **Neither is a flag on this CLI.** yargs ignores an unknown option,
+so a command using them does not error — it quietly posts without the comments
+and without the media.
 
-```bash
-# Could only do simple comments without custom media
-posty posts:create \
-  -c "Main post" \
-  --comments "Comment 1;Comment 2;Comment 3" \
-  --image "main-image.jpg" \
-  -i "twitter-123"
-```
+The real flags are `-c` (repeatable), `-m` (repeatable, paired with `-c`),
+`-i`, `-s`, `-t`, `-d`, `--settings`, `--shortLink` and `--json`.
 
-**Problems:**
-- Comments couldn't have their own media
-- Semicolons in content would break it
-- Less intuitive
-
-### ✅ New Way (Flexible)
+### The syntax that works
 
 ```bash
 posty posts:create \
   -c "Main post" -m "main.jpg" \
   -c "Comment 1; with semicolon!" -m "comment1.jpg" \
   -c "Comment 2" -m "comment2.jpg" \
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 **Benefits:**
@@ -257,7 +249,7 @@ posty posts:create \
   -m "img2.jpg" \
   -c "Tweet 3/3" \
   -m "img3.jpg" \
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 ### Escape Special Characters
@@ -268,12 +260,12 @@ In bash, you may need to escape some characters:
 # Single quotes prevent interpolation
 posty posts:create \
   -c 'Message with $variables and "quotes"' \
-  -i "twitter-123"
+  -i "$X_ID"
 
 # Or use backslashes
 posty posts:create \
   -c "Message with \$variables and \"quotes\"" \
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 ## Error Handling
@@ -290,7 +282,7 @@ posty posts:create -c "Post" -m "img.jpg"
 ### No Content
 
 ```bash
-posty posts:create -i "twitter-123"
+posty posts:create -i "$X_ID"
 # ❌ Error: Either --content or --json is required
 ```
 
@@ -304,7 +296,7 @@ posty posts:create \
   -c "Post 1" -m "img1.jpg" \
   -c "Post 2" \
   -c "Post 3" -m "img3.jpg" \
-  -i "twitter-123"
+  -i "$X_ID"
 
 # Result:
 # - Post 1 with img1.jpg
@@ -329,7 +321,7 @@ posty posts:create \
   -c "🔗 Get started: https://example.com/productx" \
   -s "2024-12-25T09:00:00Z" \
   -d 3600000 \
-  -i "twitter-123,linkedin-456,facebook-789"
+  -i "$X_ID,$FB_ID,$THREADS_ID"
 
 echo "✅ Product launch scheduled!"
 ```

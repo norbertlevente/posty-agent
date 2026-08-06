@@ -627,6 +627,28 @@ posty posts:create -c "Content" -s "2026-12-31T12:00:00Z" --settings '{"title":"
 Channels with **no settings of their own** — Threads and Bluesky — take an
 empty object. Do not invent fields for them.
 
+**You never have to write `__type` yourself.** The server stamps it from the
+integration's provider before validating, overwriting whatever you sent. An
+example file carrying `"__type": "EmptySettings"` still works for that reason —
+it is being replaced, not accepted.
+
+### Two behaviours that surprise people
+
+**1. A key without `posts:publish` silently produces a draft.** `posts:create`
+requires only `posts:draft`. If the key (or its owner's current role — a
+Közreműködő/DRAFTER) lacks `posts:publish`, the server coerces `type` to
+`draft` and creates a draft instead of refusing. It is not silent in the
+response: **read back the `type` you got, do not assume the one you sent.**
+If the user wanted it published, tell them the key cannot, rather than
+reporting success.
+
+**2. One X channel per post, always.** A single post may not target two X
+channels, whatever the content. X's Developer Policy forbids substantially
+similar content from multiple accounts through one developer app, and the
+account at risk is Posty's, shared by every customer. Split it into two posts.
+X alongside Facebook, Instagram, Threads, Bluesky, YouTube and the rest is
+unaffected — that combination is the entire point.
+
 ### Comments and Threading
 
 Posts can have comments (threads on Twitter/X, replies elsewhere). Each comment can have its own media:

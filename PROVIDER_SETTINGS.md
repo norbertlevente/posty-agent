@@ -74,8 +74,21 @@ posty posts:create --json post.json
 }
 ```
 
-In JSON mode you **do** write `__type`, and it must match the integration's
-provider identifier.
+You do not have to write `__type` even here: the server stamps it from the
+integration's provider before validating, overwriting whatever you sent. Write
+it for readability if you like — a stale or wrong value cannot break the
+request, because it is replaced, not checked.
+
+**Two behaviours worth knowing before you publish:**
+
+- **A key without the `posts:publish` scope produces a draft, not a refusal.**
+  `posts:create` needs only `posts:draft`; without `posts:publish` the server
+  coerces `type` to `draft` and creates one. Read back the `type` in the
+  response rather than assuming the one you sent.
+- **One X channel per post.** A single post may not target two X channels,
+  whatever the content — X's Developer Policy forbids it and the developer
+  account at risk is Posty's, shared by every customer. Any other combination
+  of channels is fine.
 
 ---
 

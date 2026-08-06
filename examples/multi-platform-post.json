@@ -1,7 +1,7 @@
 {
   "type": "schedule",
-  "date": "2024-12-25T12:00:00Z",
-  "shortLink": true,
+  "date": "2026-12-25T12:00:00Z",
+  "shortLink": false,
   "tags": [
     {
       "value": "holiday",
@@ -15,7 +15,7 @@
   "posts": [
     {
       "integration": {
-        "id": "twitter-integration-id"
+        "id": "<your-x-integration-id>"
       },
       "value": [
         {
@@ -23,23 +23,24 @@
           "image": [
             {
               "id": "holiday1",
-              "path": "https://example.com/holiday-twitter.jpg"
+              "path": "<the .path returned by: posty upload holiday-twitter.jpg>"
             }
           ]
         },
         {
           "content": "Limited time offer - 50% off! 🎁",
           "image": [],
-          "delay": 3600000
+          "delay": 60
         }
       ],
       "settings": {
-        "__type": "EmptySettings"
+        "__type": "x",
+        "who_can_reply_post": "everyone"
       }
     },
     {
       "integration": {
-        "id": "linkedin-integration-id"
+        "id": "<your-threads-integration-id>"
       },
       "value": [
         {
@@ -47,18 +48,18 @@
           "image": [
             {
               "id": "holiday2",
-              "path": "https://example.com/holiday-linkedin.jpg"
+              "path": "<the .path returned by: posty upload holiday-linkedin.jpg>"
             }
           ]
         }
       ],
       "settings": {
-        "__type": "EmptySettings"
+        "__type": "threads"
       }
     },
     {
       "integration": {
-        "id": "facebook-integration-id"
+        "id": "<your-facebook-integration-id>"
       },
       "value": [
         {
@@ -66,7 +67,7 @@
           "image": [
             {
               "id": "holiday3",
-              "path": "https://example.com/holiday-facebook-main.jpg"
+              "path": "<the .path returned by: posty upload holiday-facebook-main.jpg>"
             }
           ]
         },
@@ -75,14 +76,15 @@
           "image": [
             {
               "id": "holiday4",
-              "path": "https://example.com/holiday-sale-banner.jpg"
+              "path": "<the .path returned by: posty upload holiday-sale-banner.jpg>"
             }
           ],
-          "delay": 300000
+          "delay": 30
         }
       ],
       "settings": {
-        "__type": "EmptySettings"
+        "__type": "facebook",
+        "post_type": "post"
       }
     }
   ]

@@ -23,7 +23,7 @@ The Posty API supports a rich post structure:
         },
         // ... more comments
       ],
-      settings: { __type: 'EmptySettings' }
+      settings: { __type: 'x'   // stamped by the server from the integration }
     }
   ]
 }
@@ -36,25 +36,38 @@ The Posty API supports a rich post structure:
 ```bash
 posty posts:create \
   -c "Hello World!" \
-  -i "twitter-123"
+  -i "$X_ID"
 ```
 
 ### Post with Multiple Images
 
+There is no `--image` flag. Media goes on `-m`, comma-separated, and every
+value must be a `.path` returned by `posty upload`.
+
 ```bash
+A=$(posty upload img1.jpg | jq -r '.path')
+B=$(posty upload img2.jpg | jq -r '.path')
+C=$(posty upload img3.jpg | jq -r '.path')
+
 posty posts:create \
   -c "Check out these images!" \
-  --image "https://example.com/img1.jpg,https://example.com/img2.jpg,https://example.com/img3.jpg" \
-  -i "twitter-123"
+  -m "$A,$B,$C" \
+  -s "2026-12-31T12:00:00Z" \
+  -i "$X_ID"
 ```
 
-### Post with Comments (Simple)
+### Post with Comments
+
+There is no `--comments` flag either. Repeat `-c`: the first is the post, the
+rest are its comments, in order.
 
 ```bash
 posty posts:create \
   -c "Main post content" \
-  --comments "First comment;Second comment;Third comment" \
-  -i "twitter-123"
+  -c "First comment" \
+  -c "Second comment" \
+  -s "2026-12-31T12:00:00Z" \
+  -i "$X_ID"
 ```
 
 ### Scheduled Post
@@ -63,7 +76,7 @@ posty posts:create \
 posty posts:create \
   -c "Future post" \
   -s "2024-12-31T12:00:00Z" \
-  -i "twitter-123,linkedin-456"
+  -i "$X_ID,$FB_ID"
 ```
 
 ## Advanced JSON Examples
@@ -126,7 +139,7 @@ This creates a 5-part Twitter thread, with each tweet having its own image and a
 ```json
 {
   "integration": {
-    "id": "twitter-123"              // Get this from integrations:list
+    "id": "$X_ID"              // Get this from integrations:list
   },
   "value": [                         // Array of content (main + comments)
     {
@@ -141,7 +154,7 @@ This creates a 5-part Twitter thread, with each tweet having its own image and a
     }
   ],
   "settings": {
-    "__type": "EmptySettings"        // Platform-specific settings
+    "__type": "x"                     // stamped by the server; you need not send it
   }
 }
 ```
@@ -279,13 +292,13 @@ cat > thread.json << 'EOF'
   "shortLink": true,
   "tags": [],
   "posts": [{
-    "integration": { "id": "twitter-123" },
+    "integration": { "id": "$X_ID" },
     "value": [
       { "content": "Tweet 1", "image": [] },
       { "content": "Tweet 2", "image": [], "delay": 2000 },
       { "content": "Tweet 3", "image": [], "delay": 2000 }
     ],
-    "settings": { "__type": "EmptySettings" }
+    "settings": { "__type": "x" }
   }]
 }
 EOF

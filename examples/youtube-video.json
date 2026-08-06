@@ -1,33 +1,28 @@
 {
   "type": "schedule",
-  "date": "2024-12-25T09:00:00Z",
-  "shortLink": true,
-  "tags": [
-    { "value": "tutorial", "label": "Tutorial" },
-    { "value": "tech", "label": "Tech" }
-  ],
+  "date": "2026-12-25T09:00:00Z",
+  "shortLink": false,
+  "tags": [],
   "posts": [{
     "integration": {
-      "id": "your-youtube-integration-id"
+      "id": "<your-youtube-integration-id>"
     },
     "value": [{
-      "content": "In this video, I'll show you how to build a powerful CLI tool for social media automation.\n\n⏱️ Timestamps:\n0:00 - Introduction\n2:15 - Setting up the project\n5:30 - Building the API client\n10:45 - Creating commands\n15:20 - Testing and deployment\n\n📚 Resources:\n- GitHub: https://github.com/yourrepo\n- Documentation: https://docs.example.com\n\n🔔 Subscribe for more TypeScript tutorials!",
+      "content": "Ebben a videóban végigmegyünk azon, hogyan állítsd be a heti posztolási ritmusodat.\n\n⏱️ Fejezetek:\n0:00 – Bevezető\n2:15 – A naptár beállítása\n5:30 – Csatornánkénti finomhangolás\n10:45 – Ütemezés\n\n🔔 Iratkozz fel, ha hasznos volt!",
       "image": [{
-        "id": "thumbnail1",
-        "path": "https://cdn.example.com/thumbnail.jpg"
+        "id": "video1",
+        "path": "<the .path returned by: posty upload video.mp4>"
       }]
     }],
     "settings": {
       "__type": "youtube",
-      "title": "Building a Social Media CLI Tool with TypeScript",
+      "title": "Heti posztolási ritmus 15 perc alatt",
       "type": "public",
       "selfDeclaredMadeForKids": "no",
       "tags": [
-        { "value": "typescript", "label": "TypeScript" },
-        { "value": "cli", "label": "CLI" },
-        { "value": "tutorial", "label": "Tutorial" },
-        { "value": "programming", "label": "Programming" },
-        { "value": "nodejs", "label": "Node.js" }
+        { "value": "posty", "label": "Posty" },
+        { "value": "utemezes", "label": "Ütemezés" },
+        { "value": "kozossegi-media", "label": "Közösségi média" }
       ]
     }
   }]

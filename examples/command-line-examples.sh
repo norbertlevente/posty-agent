@@ -19,7 +19,7 @@ echo ""
 # Example 1: Simple post
 echo "📝 Example 1: Simple post"
 echo "Command:"
-echo 'posty posts:create -c "Hello World!" -i "twitter-123"'
+echo 'posty posts:create -c "Hello World!" -i "$X_ID"'
 echo ""
 
 # Example 2: Post with multiple images
@@ -28,7 +28,7 @@ echo "Command:"
 echo 'posty posts:create \'
 echo '  -c "Check out these amazing photos!" \'
 echo '  -m "photo1.jpg,photo2.jpg,photo3.jpg" \'
-echo '  -i "twitter-123"'
+echo '  -i "$X_ID"'
 echo ""
 
 # Example 3: Post with comments, each having their own media
@@ -41,7 +41,7 @@ echo '  -c "First comment with its own image 📸" \'
 echo '  -m "comment1-image.jpg" \'
 echo '  -c "Second comment with different images 🎨" \'
 echo '  -m "comment2-image1.jpg,comment2-image2.jpg" \'
-echo '  -i "twitter-123"'
+echo '  -i "$X_ID"'
 echo ""
 
 # Example 4: Comments with semicolons (no escaping needed!)
@@ -51,7 +51,7 @@ echo 'posty posts:create \'
 echo '  -c "Main post" \'
 echo '  -c "First comment; notice the semicolon!" \'
 echo '  -c "Second comment; with multiple; semicolons; works fine!" \'
-echo '  -i "twitter-123"'
+echo '  -i "$X_ID"'
 echo ""
 
 # Example 5: Twitter thread with custom delay
@@ -69,7 +69,7 @@ echo '  -m "step3-screenshot.jpg" \'
 echo '  -c "You'\''re all set! 🎉 (5/5)" \'
 echo '  -m "done.jpg" \'
 echo '  -d 2000 \'
-echo '  -i "twitter-123"'
+echo '  -i "$X_ID"'
 echo ""
 
 # Example 6: Scheduled post with comments
@@ -82,7 +82,7 @@ echo '  -c "Special launch offer - 50% off!" \'
 echo '  -m "discount-banner.jpg" \'
 echo '  -c "Limited time only!" \'
 echo '  -s "2024-12-25T09:00:00Z" \'
-echo '  -i "twitter-123,linkedin-456"'
+echo '  -i "$X_ID,$FB_ID"'
 echo ""
 
 # Example 7: Multi-platform with same content
@@ -93,7 +93,7 @@ echo '  -c "Exciting announcement! 🎉" \'
 echo '  -m "announcement.jpg" \'
 echo '  -c "More details in the comments..." \'
 echo '  -m "details-infographic.jpg" \'
-echo '  -i "twitter-123,linkedin-456,facebook-789"'
+echo '  -i "$X_ID,$FB_ID,$THREADS_ID"'
 echo ""
 
 # Example 8: Comments without media
@@ -104,7 +104,7 @@ echo '  -c "Check out this amazing view! 🏔️" \'
 echo '  -m "mountain-photo.jpg" \'
 echo '  -c "Taken at sunrise this morning" \'
 echo '  -c "Location: Swiss Alps" \'
-echo '  -i "twitter-123"'
+echo '  -i "$X_ID"'
 echo ""
 
 # Example 9: Product tutorial series
@@ -120,7 +120,7 @@ echo '  -m "signup-screen.jpg" \'
 echo '  -c "3. You'\''re ready to go! Start creating your first project" \'
 echo '  -m "dashboard-screen.jpg" \'
 echo '  -d 3000 \'
-echo '  -i "twitter-123"'
+echo '  -i "$X_ID"'
 echo ""
 
 # Example 10: Event coverage
@@ -136,7 +136,7 @@ echo '  -m "speaker2-photo.jpg" \'
 echo '  -c "Networking break! Great conversations happening" \'
 echo '  -m "networking-photo.jpg" \'
 echo '  -d 30000 \'
-echo '  -i "twitter-123,linkedin-456"'
+echo '  -i "$X_ID,$FB_ID"'
 echo ""
 
 echo "💡 Tips:"

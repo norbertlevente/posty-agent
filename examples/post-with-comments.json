@@ -1,12 +1,12 @@
 {
-  "type": "now",
-  "date": "2024-01-15T12:00:00Z",
-  "shortLink": true,
+  "type": "schedule",
+  "date": "2026-01-15T12:00:00Z",
+  "shortLink": false,
   "tags": [],
   "posts": [
     {
       "integration": {
-        "id": "your-integration-id-here"
+        "id": "<your-integration-id>"
       },
       "value": [
         {
@@ -14,11 +14,11 @@
           "image": [
             {
               "id": "img1",
-              "path": "https://example.com/main-image.jpg"
+              "path": "<the .path returned by: posty upload main-image.jpg>"
             },
             {
               "id": "img2",
-              "path": "https://example.com/secondary-image.jpg"
+              "path": "<the .path returned by: posty upload secondary-image.jpg>"
             }
           ]
         },
@@ -27,28 +27,28 @@
           "image": [
             {
               "id": "img3",
-              "path": "https://example.com/comment1-image.jpg"
+              "path": "<the .path returned by: posty upload comment1-image.jpg>"
             }
           ],
-          "delay": 5000
+          "delay": 5
         },
         {
           "content": "This is the second comment with different media 🎨",
           "image": [
             {
               "id": "img4",
-              "path": "https://example.com/comment2-image1.jpg"
+              "path": "<the .path returned by: posty upload comment2-image1.jpg>"
             },
             {
               "id": "img5",
-              "path": "https://example.com/comment2-image2.jpg"
+              "path": "<the .path returned by: posty upload comment2-image2.jpg>"
             }
           ],
-          "delay": 10000
+          "delay": 10
         }
       ],
       "settings": {
-        "__type": "EmptySettings"
+        "__type": "threads"
       }
     }
   ]
