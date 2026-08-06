@@ -1,18 +1,74 @@
-# Integration Settings Discovery
+# Discovering a channel's settings
 
-The CLI now has a powerful feature to discover what settings are available for each integration!
+`posty integrations:settings <integration-id>` returns, for one connected
+channel, the character limit, the provider's publishing rules, the JSON schema
+of its `--settings` payload, and its tools.
 
-## New Command: `integrations:settings`
-
-Get the settings schema, validation rules, and maximum character limits for any integration.
-
-## Usage
+**Prefer it to any document, including this one.** The schema is generated from
+the class-validator DTOs that actually validate the request, so it cannot drift
+from what the server will accept.
 
 ```bash
 posty integrations:settings <integration-id>
 ```
 
-## What It Returns
+```
+GET /public/v1/integration-settings/:id      scope: channels:read
+```
+
+---
+
+## What comes back
+
+```typescript
+{
+  output: {
+    rules: string;                                    // the provider's publishing rules
+    maxLength: number;                                // character limit for this channel
+    settings: JSONSchema | "No additional settings required";
+    tools: Array<{ methodName: string; description: string; dataSchema: any }>;
+  }
+}
+```
+
+Useful slices:
+
+```bash
+posty integrations:settings "$ID" | jq '.output.maxLength'
+posty integrations:settings "$ID" | jq '.output.settings.required // []'
+posty integrations:settings "$ID" | jq '.output.tools'
+posty integrations:settings "$ID" | jq -r '.output.rules'
+```
+
+---
+
+## Workflow
+
+### 1. List integrations
+
+```bash
+posty integrations:list
+```
+
+```json
+[
+  { "id": "…", "name": "@myhandle",     "identifier": "x" },
+  { "id": "…", "name": "My Page",       "identifier": "facebook" },
+  { "id": "…", "name": "My Channel",    "identifier": "youtube" }
+]
+```
+
+`identifier` is the provider. It is also the `__type` you write in JSON mode.
+
+**A channel that is not in this list cannot be posted to.** For LinkedIn,
+TikTok and Google Business Profile that is the expected state until those
+platforms approve Posty's app — the code is complete and waiting on them.
+
+### 2. Read the settings
+
+```bash
+posty integrations:settings "$X_ID"
+```
 
 ```json
 {
@@ -21,400 +77,127 @@ posty integrations:settings <integration-id>
     "settings": {
       "properties": {
         "who_can_reply_post": {
-          "enum": ["everyone", "following", "mentionedUsers", "subscribers", "verified"],
-          "description": "Who can reply to this post"
+          "enum": ["everyone", "following", "mentionedUsers", "subscribers", "verified"]
         },
-        "community": {
-          "pattern": "^(https://x.com/i/communities/\\d+)?$",
-          "description": "X community URL"
-        }
+        "community": { "pattern": "^(https://x\\.com/i/communities/\\d+)?$" },
+        "made_with_ai": { "type": "boolean" },
+        "paid_partnership": { "type": "boolean" }
       },
       "required": ["who_can_reply_post"]
-    }
+    },
+    "tools": []
   }
 }
 ```
 
-## Workflow
-
-### 1. List Your Integrations
-
-```bash
-posty integrations:list
-```
-
-Output:
-```json
-[
-  {
-    "id": "reddit-abc123",
-    "name": "My Reddit Account",
-    "identifier": "reddit",
-    "provider": "reddit"
-  },
-  {
-    "id": "youtube-def456",
-    "name": "My YouTube Channel",
-    "identifier": "youtube",
-    "provider": "youtube"
-  },
-  {
-    "id": "twitter-ghi789",
-    "name": "@myhandle",
-    "identifier": "x",
-    "provider": "x"
-  }
-]
-```
-
-### 2. Get Settings for Specific Integration
-
-```bash
-posty integrations:settings reddit-abc123
-```
-
-Output:
-```json
-{
-  "output": {
-    "maxLength": 40000,
-    "settings": {
-      "properties": {
-        "subreddit": {
-          "type": "array",
-          "items": {
-            "properties": {
-              "value": {
-                "properties": {
-                  "subreddit": {
-                    "type": "string",
-                    "minLength": 2,
-                    "description": "Subreddit name"
-                  },
-                  "title": {
-                    "type": "string",
-                    "minLength": 2,
-                    "description": "Post title"
-                  },
-                  "type": {
-                    "type": "string",
-                    "description": "Post type (text or link)"
-                  },
-                  "url": {
-                    "type": "string",
-                    "description": "URL for link posts"
-                  },
-                  "is_flair_required": {
-                    "type": "boolean",
-                    "description": "Whether flair is required"
-                  },
-                  "flair": {
-                    "properties": {
-                      "id": "string",
-                      "name": "string"
-                    }
-                  }
-                },
-                "required": ["subreddit", "title", "type", "is_flair_required"]
-              }
-            }
-          }
-        }
-      },
-      "required": ["subreddit"]
-    }
-  }
-}
-```
-
-### 3. Use the Settings in Your Post
-
-Now you know what settings are available and required!
+### 3. Post with what you found
 
 ```bash
 posty posts:create \
-  -c "My post content" \
-  -p reddit \
-  --settings '{
-    "subreddit": [{
-      "value": {
-        "subreddit": "programming",
-        "title": "Check this out!",
-        "type": "text",
-        "url": "",
-        "is_flair_required": false
-      }
-    }]
-  }' \
-  -i "reddit-abc123"
+  -c "My post" \
+  -s "2026-12-31T12:00:00Z" \
+  --settings '{"who_can_reply_post":"everyone"}' \
+  -i "$X_ID"
 ```
 
-## Examples by Platform
+---
 
-### Reddit
+## Character limits, per channel
 
-```bash
-posty integrations:settings reddit-abc123
-```
+Read off the providers' `maxLength()` implementations. Confirm with the command
+rather than hard-coding these — they are the current values, not a contract.
 
-Returns:
-- Max length: 40,000 characters
-- Required settings: subreddit, title, type
-- Optional: flair
+| Channel | `maxLength` |
+|---|---|
+| X (Twitter) | 280 — **4 000 if the account is marked Verified** |
+| Facebook | 63 206 |
+| Instagram / Instagram standalone | 2 200 |
+| Threads | 500 |
+| Bluesky | 300 |
+| YouTube | 5 000 (this is the video **description**; the `title` setting is capped separately at 100) |
+| LinkedIn / LinkedIn Page | 3 000 |
+| TikTok | 2 000 (the `title` setting is capped separately at 90) |
+| Google Business Profile | 1 500 |
 
-### YouTube
+X is the only channel whose limit depends on the account: the server reads a
+`Verified` flag from the channel's stored settings, so the same command can
+return 280 for one X channel and 4 000 for another.
 
-```bash
-posty integrations:settings youtube-def456
-```
+---
 
-Returns:
-- Max length: 5,000 characters (description)
-- Required settings: title, type (public/private/unlisted)
-- Optional: tags, thumbnail, selfDeclaredMadeForKids
+## Which channels have settings at all
 
-### X (Twitter)
+| Channel | `settings` |
+|---|---|
+| X | schema — `who_can_reply_post` required |
+| Facebook | schema — all optional |
+| Instagram, Instagram standalone | schema — `post_type` required |
+| **Threads** | `"No additional settings required"` |
+| **Bluesky** | `"No additional settings required"` |
+| YouTube | schema — `title` and `type` required |
+| LinkedIn, LinkedIn Page | schema — all optional |
+| TikTok | schema — `privacy_level` and `content_posting_method` required |
+| Google Business Profile | schema — all optional |
 
-```bash
-posty integrations:settings twitter-ghi789
-```
+Threads and Bluesky are the only two that take nothing. Full field lists are in
+[PROVIDER_SETTINGS.md](./PROVIDER_SETTINGS.md).
 
-Returns:
-- Max length: 280 characters (or 4,000 for verified)
-- Required settings: who_can_reply_post
-- Optional: community
+Those eleven identifiers are the whole supported set. Posty's server carries
+inherited code for other providers, none of which are enabled; do not ask for
+settings for one.
 
-### LinkedIn
+---
 
-```bash
-posty integrations:settings linkedin-jkl012
-```
+## For an agent
 
-Returns:
-- Max length: 3,000 characters
-- Optional settings: post_as_images_carousel, carousel_name
-
-### TikTok
-
-```bash
-posty integrations:settings tiktok-mno345
-```
-
-Returns:
-- Max length: 150 characters (caption)
-- Required settings: privacy_level, duet, stitch, comment, autoAddMusic, brand_content_toggle, brand_organic_toggle, content_posting_method
-- Optional: title, video_made_with_ai
-
-### Instagram
-
-```bash
-posty integrations:settings instagram-pqr678
-```
-
-Returns:
-- Max length: 2,200 characters
-- Required settings: post_type (post or story)
-- Optional: is_trial_reel, graduation_strategy, collaborators
-
-## No Additional Settings Required
-
-Some platforms don't require specific settings:
-
-```bash
-posty integrations:settings threads-stu901
-```
-
-Returns:
-```json
-{
-  "output": {
-    "maxLength": 500,
-    "settings": "No additional settings required"
-  }
-}
-```
-
-Platforms with no additional settings:
-- Threads
-- Mastodon
-- Bluesky
-- Telegram
-- Nostr
-- VK
-
-## Use Cases
-
-### 1. Discovery
-
-Find out what settings are available before posting:
-
-```bash
-# What settings does YouTube support?
-posty integrations:settings youtube-123
-
-# What settings does Reddit support?
-posty integrations:settings reddit-456
-```
-
-### 2. Validation
-
-Check maximum character limits:
-
-```bash
-posty integrations:settings twitter-789 | jq '.output.maxLength'
-# Output: 280
-```
-
-### 3. AI Agent Integration
-
-AI agents can call this endpoint to:
-- Discover available settings dynamically
-- Validate settings before posting
-- Adapt to platform-specific requirements
-
-```bash
-# Get settings schema
-INTEGRATION_ID="your-integration-id"
-SETTINGS=$(posty integrations:settings "$INTEGRATION_ID")
-
-# Extract max length
-MAX_LENGTH=$(echo "$SETTINGS" | jq '.output.maxLength')
-
-# Check and truncate content if needed
-CONTENT="Your post content"
-if [ ${#CONTENT} -gt "$MAX_LENGTH" ]; then
-  CONTENT="${CONTENT:0:$MAX_LENGTH}"
-fi
-
-# List required settings
-echo "$SETTINGS" | jq '.output.settings.required // []'
-```
-
-### 4. Form Generation
-
-Use the schema to generate UI forms:
-
-```bash
-# Inspect the settings schema for form generation
-posty integrations:settings reddit-123 | jq '.output.settings'
-
-# Extract specific field properties
-posty integrations:settings reddit-123 \
-  | jq '.output.settings.properties.subreddit.items.properties.value.properties'
-# → subreddit (text, minLength: 2)
-# → title (text, minLength: 2)
-# → type (select: text/link)
-# → etc.
-```
-
-## Combined Workflow
-
-Complete workflow for posting with correct settings:
+Discover, validate, then post. Handle the "no settings" case — two channels
+return a string where you might expect an object.
 
 ```bash
 #!/bin/bash
-export POSTY_API_KEY=your_key
+ID="$1"
+CONTENT="$2"
 
-# 1. List integrations
-echo "📋 Available integrations:"
-posty integrations:list
+SETTINGS=$(posty integrations:settings "$ID")
 
-# 2. Get settings for Reddit
-echo ""
-echo "⚙️  Reddit settings:"
-SETTINGS=$(posty integrations:settings reddit-123)
-echo $SETTINGS | jq '.output.maxLength'
-echo $SETTINGS | jq '.output.settings'
+MAX=$(echo "$SETTINGS" | jq -r '.output.maxLength')
+if [ "${#CONTENT}" -gt "$MAX" ]; then
+  echo "Content is ${#CONTENT} characters; this channel caps at $MAX." >&2
+  exit 1
+fi
 
-# 3. Create post with correct settings
-echo ""
-echo "📝 Creating post..."
-posty posts:create \
-  -c "My post content" \
-  -p reddit \
-  --settings '{
-    "subreddit": [{
-      "value": {
-        "subreddit": "programming",
-        "title": "Interesting post",
-        "type": "text",
-        "url": "",
-        "is_flair_required": false
-      }
-    }]
-  }' \
-  -i "reddit-123"
+# "No additional settings required" is a STRING, not an object.
+if [ "$(echo "$SETTINGS" | jq -r '.output.settings | type')" = "string" ]; then
+  echo "No settings needed."
+else
+  echo "Required: $(echo "$SETTINGS" | jq -c '.output.settings.required // []')"
+fi
 ```
 
-## API Endpoint
+Cache the result. `integrations:settings` is a read at the default allowance
+(600/h per key in production), but there is no reason to ask twice for a schema
+that changes on deploys, not on posts.
 
-The command calls:
-```
-GET /public/v1/integration-settings/:id
-```
+---
 
-Returns:
-```typescript
-{
-  output: {
-    maxLength: number;
-    settings: ValidationSchema | "No additional settings required";
-  }
-}
-```
+## Validating before publish
 
-## Error Handling
-
-### Integration Not Found
+The surest check is a draft. It runs the same validation as a scheduled post,
+so a bad payload fails immediately:
 
 ```bash
-posty integrations:settings invalid-id
-# ❌ Failed to get integration settings: Integration not found
+posty posts:create -c "…" -s "2026-12-31T12:00:00Z" -t draft --settings '…' -i "$ID"
+posty posts:status <post-id> --status schedule   # promote it
+posty posts:delete <post-id>                     # or bin it
 ```
 
-### API Key Not Set
+---
 
-```bash
-posty integrations:settings reddit-123
-# ❌ Error: POSTY_API_KEY environment variable is required
-```
+## Errors
 
-## Tips
-
-1. **Always check settings first** before creating posts with custom settings
-2. **Use the schema** to validate your settings object
-3. **Check maxLength** to avoid exceeding character limits
-4. **For AI agents**: Cache the settings to avoid repeated API calls
-5. **Required fields** must be included in your settings object
-
-## Comparison: Before vs After
-
-### Before ❌
-
-```bash
-# Had to guess what settings are available
-# Had to read documentation or source code
-# Didn't know character limits
-```
-
-### After ✅
-
-```bash
-# Discover settings programmatically
-posty integrations:settings reddit-123
-
-# See exactly what's required and optional
-# Know the exact character limits
-# Get validation schemas
-```
-
-## Summary
-
-✅ **Discover settings for any integration**
-✅ **Get character limits**
-✅ **See validation schemas**
-✅ **Know required vs optional fields**
-✅ **Perfect for AI agents**
-✅ **No more guesswork!**
-
-**Now you can discover what settings each platform supports!** 🎉
+| Response | Cause |
+|---|---|
+| `404 Integration not found` | Wrong id, or the channel is outside this key's grant |
+| `403 … missing the required permission: channels:read` | The key lacks the scope, or its owner's role no longer allows it |
+| `401 Invalid API key` | Wrong, revoked or expired key |
+| `429` | Rate limit — reads share the default per-key hourly allowance |

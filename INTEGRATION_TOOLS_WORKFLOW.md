@@ -1,432 +1,185 @@
-# Integration Tools Workflow
+# Integration tools workflow
 
-Some integrations require additional data (like IDs, tags, playlists, etc.) before you can post. The CLI supports a complete workflow to discover and use these tools.
+A "tool" is a method a provider exposes so you can fetch data that cannot be
+hard-coded — an id you have to look up before you can put it in a settings
+payload. `integrations:settings` lists them; `integrations:trigger` calls them.
 
-## The Complete Workflow
+## Read this before you plan around a tool
 
-### Step 1: List Integrations
+**Of the channels Posty supports, exactly one has a tool.**
+
+| Channel | Tools |
+|---|---|
+| Instagram (`instagram`) | `audioSearch` |
+| Instagram standalone, X, Facebook, Threads, Bluesky, YouTube, LinkedIn, LinkedIn Page, TikTok, Google Business Profile | *none* |
+
+That is the whole table. For every channel in the second row,
+`integrations:settings` returns `"tools": []` and `integrations:trigger`
+returns `404 Tool not found` whatever you pass it.
+
+An earlier version of this document described `getFlairs`, `searchSubreddits`,
+`getSubreddits`, `getPlaylists`, `getCategories`, `getChannels`,
+`getCompanies`, `getOrganizations`, `getListsowned`, `getCommunities`,
+`getBoards` and `getBoardSections`, with sample output for several of them.
+**None of those methods exist**, on any provider, under any name. If you are
+following a plan that calls one, the plan is wrong.
+
+There is also no `playlistId` on YouTube and no `companyId` on LinkedIn, so the
+lookups those fabricated tools existed to serve had nowhere to put their answer
+in the first place.
+
+---
+
+## The workflow
+
+### 1. List integrations
 
 ```bash
 posty integrations:list
 ```
 
-Get your integration IDs.
+Gives you the ids, and — for LinkedIn, TikTok and Google Business Profile,
+which are pending platform approval — tells you whether the channel is
+connectable at all yet.
 
-### Step 2: Get Integration Settings
+### 2. Read the channel's settings and tools
 
 ```bash
 posty integrations:settings <integration-id>
 ```
 
-This returns:
-- `maxLength` - Character limit
-- `settings` - Required/optional fields
-- **`tools`** - Callable methods to fetch additional data
+Returns:
 
-### Step 3: Trigger Tools (If Needed)
+| Key | What it is |
+|---|---|
+| `rules` | The provider's own publishing rules, as text |
+| `maxLength` | Character limit for this channel (higher if the account is verified) |
+| `settings` | JSON schema generated from the server's validation DTO, or the string `"No additional settings required"` |
+| `tools` | Array of `{ methodName, description, dataSchema }` — usually empty |
 
-If settings require IDs/data you don't have, use the tools:
-
-```bash
-posty integrations:trigger <integration-id> <method-name> -d '{"key":"value"}'
-```
-
-### Step 4: Create Post with Complete Settings
-
-Use the data from Step 3 in your post settings.
-
-## Real-World Example: Reddit
-
-### 1. Get Reddit Integration Settings
+**This route is the source of truth, not any document including this one.** The
+schema is generated from the DTOs that validate the request, so it cannot drift
+from what the server accepts.
 
 ```bash
-posty integrations:settings reddit-abc123
+posty integrations:settings "$ID" | jq '.output.tools'
+posty integrations:settings "$ID" | jq '.output.maxLength'
 ```
 
-**Output:**
-```json
-{
-  "output": {
-    "maxLength": 40000,
-    "settings": {
-      "properties": {
-        "subreddit": {
-          "type": "array",
-          "items": {
-            "properties": {
-              "subreddit": { "type": "string" },
-              "title": { "type": "string" },
-              "flair": {
-                "properties": {
-                  "id": { "type": "string" }  // ← Need flair ID!
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "tools": [
-      {
-        "methodName": "getFlairs",
-        "description": "Get available flairs for a subreddit",
-        "dataSchema": [
-          {
-            "key": "subreddit",
-            "description": "The subreddit name",
-            "type": "string"
-          }
-        ]
-      },
-      {
-        "methodName": "searchSubreddits",
-        "description": "Search for subreddits",
-        "dataSchema": [
-          {
-            "key": "query",
-            "description": "Search query",
-            "type": "string"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-### 2. Get Flairs for the Subreddit
+### 3. Call a tool, if there is one
 
 ```bash
-posty integrations:trigger reddit-abc123 getFlairs -d '{"subreddit":"programming"}'
-```
-
-**Output:**
-```json
-{
-  "output": [
-    {
-      "id": "flair-12345",
-      "name": "Discussion"
-    },
-    {
-      "id": "flair-67890",
-      "name": "Tutorial"
-    }
-  ]
-}
-```
-
-### 3. Create Post with Flair ID
-
-```bash
-posty posts:create \
-  -c "Check out my project!" \
-  -p reddit \
-  --settings '{
-    "subreddit": [{
-      "value": {
-        "subreddit": "programming",
-        "title": "My Cool Project",
-        "type": "text",
-        "url": "",
-        "is_flair_required": true,
-        "flair": {
-          "id": "flair-12345",
-          "name": "Discussion"
-        }
-      }
-    }]
-  }' \
-  -i "reddit-abc123"
-```
-
-## Example: YouTube Playlists
-
-### 1. Get YouTube Settings
-
-```bash
-posty integrations:settings youtube-123
-```
-
-**Output includes tools:**
-```json
-{
-  "tools": [
-    {
-      "methodName": "getPlaylists",
-      "description": "Get your YouTube playlists",
-      "dataSchema": []
-    },
-    {
-      "methodName": "getCategories",
-      "description": "Get available video categories",
-      "dataSchema": []
-    }
-  ]
-}
-```
-
-### 2. Get Playlists
-
-```bash
-posty integrations:trigger youtube-123 getPlaylists
-```
-
-**Output:**
-```json
-{
-  "output": [
-    {
-      "id": "PLxxxxxx",
-      "title": "My Tutorials"
-    },
-    {
-      "id": "PLyyyyyy",
-      "title": "Product Demos"
-    }
-  ]
-}
-```
-
-### 3. Post to Specific Playlist
-
-```bash
-posty posts:create \
-  -c "Video description" \
-  -p youtube \
-  --settings '{
-    "title": "My Video",
-    "type": "public",
-    "playlistId": "PLxxxxxx"
-  }' \
-  -i "youtube-123"
-```
-
-## Example: LinkedIn Companies
-
-### 1. Get LinkedIn Settings
-
-```bash
-posty integrations:settings linkedin-123
-```
-
-**Output includes tools:**
-```json
-{
-  "tools": [
-    {
-      "methodName": "getCompanies",
-      "description": "Get companies you can post to",
-      "dataSchema": []
-    }
-  ]
-}
-```
-
-### 2. Get Companies
-
-```bash
-posty integrations:trigger linkedin-123 getCompanies
-```
-
-**Output:**
-```json
-{
-  "output": [
-    {
-      "id": "company-123",
-      "name": "My Company"
-    },
-    {
-      "id": "company-456",
-      "name": "Other Company"
-    }
-  ]
-}
-```
-
-### 3. Post as Company
-
-```bash
-posty posts:create \
-  -c "Company announcement" \
-  -p linkedin \
-  --settings '{
-    "companyId": "company-123"
-  }' \
-  -i "linkedin-123"
-```
-
-## Understanding Tools
-
-### Tool Structure
-
-```json
-{
-  "methodName": "getFlairs",
-  "description": "Get available flairs for a subreddit",
-  "dataSchema": [
-    {
-      "key": "subreddit",
-      "description": "The subreddit name",
-      "type": "string"
-    }
-  ]
-}
-```
-
-- **methodName** - Use this in `integrations:trigger`
-- **description** - What the tool does
-- **dataSchema** - Required input parameters
-
-### Calling Tools
-
-```bash
-# No parameters
 posty integrations:trigger <integration-id> <methodName>
-
-# With parameters
 posty integrations:trigger <integration-id> <methodName> -d '{"key":"value"}'
 ```
 
-## Common Tool Methods
+`methodName` must be a string that appeared in the `tools` array. The server
+checks it against that list before dispatching, so a guessed name is a `404`,
+never an accidental call.
 
-### Reddit
-- `getFlairs` - Get flairs for a subreddit
-- `searchSubreddits` - Search for subreddits
-- `getSubreddits` - Get subscribed subreddits
+### 4. Use the result in the post
 
-### YouTube
-- `getPlaylists` - Get your playlists
-- `getCategories` - Get video categories
-- `getChannels` - Get your channels
+---
 
-### LinkedIn
-- `getCompanies` - Get companies you manage
-- `getOrganizations` - Get organizations
+## The one real example: Instagram audio
 
-### Twitter/X
-- `getListsowned` - Get your Twitter lists
-- `getCommunities` - Get communities you're in
+Attach music or an original sound to a Reel.
 
-### Pinterest
-- `getBoards` - Get your Pinterest boards
-- `getBoardSections` - Get sections in a board
+```bash
+IG_ID=$(posty integrations:list | jq -r '.[] | select(.identifier=="instagram") | .id')
 
-## AI Agent Workflow
+posty integrations:settings "$IG_ID" | jq '.output.tools'
+```
 
-For AI agents, this enables dynamic discovery and usage:
+```json
+[
+  {
+    "methodName": "audioSearch",
+    "description": "Search audio (music or original sounds) to attach to a Reel via the \"audio\" setting, an empty query returns trending audio",
+    "dataSchema": [
+      { "key": "q",    "type": "string", "description": "Search query, leave empty for trending audio" },
+      { "key": "type", "type": "string", "description": "Either \"music\" or \"original_sound\", defaults to \"music\"" }
+    ]
+  }
+]
+```
+
+```bash
+# Trending audio
+posty integrations:trigger "$IG_ID" audioSearch -d '{}'
+
+# Search
+AUDIO=$(posty integrations:trigger "$IG_ID" audioSearch -d '{"q":"lofi","type":"music"}')
+AUDIO_ID=$(echo "$AUDIO" | jq -r '.output[0].id')
+
+VIDEO=$(posty upload reel.mp4 | jq -r '.path')
+posty posts:create \
+  -c "Reel caption" \
+  -s "2026-12-31T12:00:00Z" \
+  --settings "{\"post_type\":\"post\",\"audio\":{\"id\":\"$AUDIO_ID\"}}" \
+  -m "$VIDEO" \
+  -i "$IG_ID"
+```
+
+The `audio` object also takes `title`, `artist`, `image`, `audio_volume` and
+`video_volume` (0–100). Only `id` is required.
+
+---
+
+## Generic discovery, for an agent
+
+Do not assume a tool exists. Ask, and handle the empty case — which is the
+common one.
 
 ```bash
 #!/bin/bash
+ID="$1"
 
-INTEGRATION_ID="your-integration-id"
+TOOLS=$(posty integrations:settings "$ID" | jq -r '.output.tools[]?.methodName')
 
-# 1. Get settings and tools
-SETTINGS=$(posty integrations:settings "$INTEGRATION_ID")
-echo "$SETTINGS" | jq '.output.tools'
+if [ -z "$TOOLS" ]; then
+  echo "This channel has no tools. Build the settings payload directly."
+  exit 0
+fi
 
-# 2. Get tool method names
-TOOLS=$(echo "$SETTINGS" | jq -r '.output.tools[]?.methodName')
-
-# 3. Call tools to get required data
 for METHOD in $TOOLS; do
-  RESULT=$(posty integrations:trigger "$INTEGRATION_ID" "$METHOD" -d '{}')
-  echo "Tool $METHOD returned: $RESULT"
+  echo "== $METHOD"
+  posty integrations:trigger "$ID" "$METHOD" -d '{}'
 done
-
-# 4. Create post with complete settings
-posty posts:create \
-  -c "Your content" \
-  --settings '{"key": "value"}' \
-  -i "$INTEGRATION_ID"
 ```
 
-## Error Handling
+Note the loop passes `-d '{}'`. A tool with a non-empty `dataSchema` may need
+real parameters; read the schema rather than calling blind.
 
-### Tool Not Found
+---
 
-```bash
-posty integrations:trigger reddit-123 invalidMethod
-# ❌ Failed to trigger tool: Tool not found
-```
+## Rate limit
 
-### Missing Required Data
+`integrations:trigger` reaches the provider's API, so it is throttled as a
+write: **60 calls per key per hour**. `integrations:settings` and
+`integrations:list` are reads, at the default allowance (600/h in production).
 
-```bash
-posty integrations:trigger reddit-123 getFlairs
-# ❌ Missing required parameter: subreddit
-```
+Cache tool results. They rarely change, and a `429` costs you the rest of the
+hour.
 
-### Integration Not Found
+---
 
-```bash
-posty integrations:trigger invalid-id getFlairs
-# ❌ Failed to trigger tool: Integration not found
-```
+## Errors
 
-## Tips
+| Response | Cause |
+|---|---|
+| `404 Tool not found` | The method is not in this provider's `tools` array. Almost always because the channel has no tools at all. |
+| `404 Integration not found` | Wrong id, or the channel belongs to a workspace this key was not granted. |
+| `401 Channel disconnected due to expired token` | The provider's token could not be refreshed. The user must reconnect the channel in the web app. |
+| `403 … missing the required permission: channels:read` | The key lacks the scope, or its owner's role no longer allows it. Scopes are re-checked against the owner's current role on every request. |
+| `429` | Rate limit. Back off; do not retry in a loop. |
 
-1. **Always check tools first** - Run `integrations:settings` to see available tools
-2. **Read dataSchema** - Know what parameters each tool needs
-3. **Parse JSON output** - Use `jq` or similar to extract data
-4. **Cache results** - Tool results don't change often
-5. **For AI agents** - Automate the entire workflow
-
-## Complete Example Script
-
-```bash
-#!/bin/bash
-export POSTY_API_KEY=your_key
-INTEGRATION_ID="reddit-abc123"
-
-# 1. Get settings
-echo "📋 Getting settings..."
-SETTINGS=$(posty integrations:settings $INTEGRATION_ID)
-echo $SETTINGS | jq '.output.tools'
-
-# 2. Get flairs
-echo ""
-echo "🏷️  Getting flairs..."
-FLAIRS=$(posty integrations:trigger $INTEGRATION_ID getFlairs -d '{"subreddit":"programming"}')
-FLAIR_ID=$(echo $FLAIRS | jq -r '.output[0].id')
-FLAIR_NAME=$(echo $FLAIRS | jq -r '.output[0].name')
-
-echo "Selected flair: $FLAIR_NAME ($FLAIR_ID)"
-
-# 3. Create post
-echo ""
-echo "📝 Creating post..."
-posty posts:create \
-  -c "My post content" \
-  -p reddit \
-  --settings "{
-    \"subreddit\": [{
-      \"value\": {
-        \"subreddit\": \"programming\",
-        \"title\": \"My Post Title\",
-        \"type\": \"text\",
-        \"url\": \"\",
-        \"is_flair_required\": true,
-        \"flair\": {
-          \"id\": \"$FLAIR_ID\",
-          \"name\": \"$FLAIR_NAME\"
-        }
-      }
-    }]
-  }" \
-  -i "$INTEGRATION_ID"
-
-echo "✅ Done!"
-```
+---
 
 ## Summary
 
-✅ **Discover available tools** with `integrations:settings`
-✅ **Call tools** to fetch required data with `integrations:trigger`
-✅ **Use tool results** in post settings
-✅ **Complete workflow** from discovery to posting
-✅ **Perfect for AI agents** - fully automated
-✅ **No guesswork** - know exactly what data you need
-
-**The CLI now supports the complete integration tools workflow!** 🎉
+- Read `integrations:settings` first. Always.
+- Expect `"tools": []`. Only Instagram has one.
+- Never invent a `methodName`.
+- The JSON schema in `.output.settings` is generated from the code that
+  validates your request — trust it over any document.

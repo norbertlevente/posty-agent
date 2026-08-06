@@ -1,472 +1,331 @@
-# Provider-Specific Settings
+# Provider-specific settings
 
-The Posty CLI supports platform-specific settings for each integration. Different platforms have different options and requirements.
+Every channel Posty supports, and every field its `--settings` payload accepts.
 
-## How to Use Provider Settings
+**The channels below are the whole list.** Posty's server carries inherited
+code for many other providers — Reddit, Mastodon, Pinterest, Discord, Slack,
+Telegram, Medium, Dev.to, Hashnode, WordPress, Lemmy, Nostr, VK, Tumblr,
+Dribbble, Farcaster and others. None of them are enabled or supported. Do not
+build a settings payload for one.
 
-### Method 1: Command Line Flags
+| Channel | `__type` | Has settings? | Status |
+|---|---|---|---|
+| X (Twitter) | `x` | yes | Publishing verified |
+| Facebook | `facebook` | yes, all optional | Publishing verified |
+| Instagram | `instagram` | yes | Publishing verified |
+| Instagram (standalone) | `instagram-standalone` | yes, same as `instagram` | Publishing verified |
+| Threads | `threads` | **no** | Publishing verified |
+| Bluesky | `bluesky` | **no** | Publishing verified |
+| YouTube | `youtube` | yes | Coming |
+| LinkedIn | `linkedin` | yes, all optional | Pending LinkedIn's app review |
+| LinkedIn Page | `linkedin-page` | same as `linkedin` | Pending LinkedIn's app review |
+| TikTok | `tiktok` | yes | Pending TikTok's app review |
+| Google Business Profile | `gmb` | yes, all optional | Pending Google's quota grant |
+
+Source of truth for everything on this page:
+`libraries/nestjs-libraries/src/dtos/posts/providers-settings/*.ts` in the Posty
+server. If this file and a DTO disagree, the DTO is right — and the
+`integrations:settings` route serves those DTOs as live JSON schema, so you can
+always ask instead of trusting a document:
+
+```bash
+posty integrations:settings <integration-id> | jq '.output.settings'
+```
+
+---
+
+## How to pass settings
+
+### Command line
 
 ```bash
 posty posts:create \
   -c "Your content" \
-  -p <provider-type> \
-  --settings '<json-settings>' \
-  -i "integration-id"
+  -s "2026-12-31T12:00:00Z" \
+  --settings '<json>' \
+  -i "<integration-id>"
 ```
 
-### Method 2: JSON File
+The backend fills in `__type` from the integration's provider. You do not send
+it on the command line.
+
+### JSON file
 
 ```bash
-posty posts:create --json post-with-settings.json
+posty posts:create --json post.json
 ```
 
-In the JSON file, specify settings per integration:
-
-```json
-{
-  "type": "now",
-  "date": "2024-01-15T12:00:00Z",
-  "shortLink": true,
-  "tags": [],
-  "posts": [{
-    "integration": { "id": "reddit-123" },
-    "value": [{ "content": "Post content", "image": [] }],
-    "settings": {
-      "__type": "reddit",
-      "subreddit": [{
-        "value": {
-          "subreddit": "programming",
-          "title": "My Post Title",
-          "type": "text",
-          "url": "",
-          "is_flair_required": false
-        }
-      }]
-    }
-  }]
-}
-```
-
-## Supported Platforms & Settings
-
-### Reddit (`reddit`)
-
-**Settings:**
-- `subreddit` (required): Subreddit name
-- `title` (required): Post title
-- `type` (required): `"text"` or `"link"`
-- `url` (required for links): URL if type is "link"
-- `is_flair_required` (boolean): Whether flair is required
-- `flair` (optional): Flair object with `id` and `name`
-
-**Example:**
-```bash
-posty posts:create \
-  -c "Post content here" \
-  -p reddit \
-  --settings '{
-    "subreddit": [{
-      "value": {
-        "subreddit": "programming",
-        "title": "Check out this cool project",
-        "type": "text",
-        "url": "",
-        "is_flair_required": false
-      }
-    }]
-  }' \
-  -i "reddit-123"
-```
-
-### YouTube (`youtube`)
-
-**Settings:**
-- `title` (required): Video title (2-100 characters)
-- `type` (required): `"public"`, `"private"`, or `"unlisted"`
-- `selfDeclaredMadeForKids` (optional): `"yes"` or `"no"`
-- `thumbnail` (optional): Thumbnail MediaDto object
-- `tags` (optional): Array of tag objects with `value` and `label`
-
-**Example:**
-```bash
-posty posts:create \
-  -c "Video description here" \
-  -p youtube \
-  --settings '{
-    "title": "My Awesome Video",
-    "type": "public",
-    "selfDeclaredMadeForKids": "no",
-    "tags": [
-      {"value": "tech", "label": "Tech"},
-      {"value": "tutorial", "label": "Tutorial"}
-    ]
-  }' \
-  -i "youtube-123"
-```
-
-### X / Twitter (`x`)
-
-**Settings:**
-- `community` (optional): X community URL (format: `https://x.com/i/communities/1234567890`)
-- `who_can_reply_post` (required): Who can reply
-  - `"everyone"` - Anyone can reply
-  - `"following"` - Only people you follow
-  - `"mentionedUsers"` - Only mentioned users
-  - `"subscribers"` - Only subscribers
-  - `"verified"` - Only verified users
-
-**Example:**
-```bash
-posty posts:create \
-  -c "Tweet content" \
-  -p x \
-  --settings '{
-    "who_can_reply_post": "everyone"
-  }' \
-  -i "twitter-123"
-```
-
-**With Community:**
-```bash
-posty posts:create \
-  -c "Community tweet" \
-  -p x \
-  --settings '{
-    "community": "https://x.com/i/communities/1493446837214187523",
-    "who_can_reply_post": "everyone"
-  }' \
-  -i "twitter-123"
-```
-
-### LinkedIn (`linkedin`)
-
-**Settings:**
-- `post_as_images_carousel` (boolean): Post as image carousel
-- `carousel_name` (optional): Carousel name if posting as carousel
-
-**Example:**
-```bash
-posty posts:create \
-  -c "LinkedIn post" \
-  -m "img1.jpg,img2.jpg,img3.jpg" \
-  -p linkedin \
-  --settings '{
-    "post_as_images_carousel": true,
-    "carousel_name": "Product Showcase"
-  }' \
-  -i "linkedin-123"
-```
-
-### Instagram (`instagram`)
-
-**Settings:**
-- `post_type` (required): `"post"` or `"story"`
-- `is_trial_reel` (optional): Boolean
-- `graduation_strategy` (optional): `"MANUAL"` or `"SS_PERFORMANCE"`
-- `collaborators` (optional): Array of collaborator objects with `label`
-
-**Example:**
-```bash
-posty posts:create \
-  -c "Instagram post" \
-  -m "photo.jpg" \
-  -p instagram \
-  --settings '{
-    "post_type": "post",
-    "is_trial_reel": false
-  }' \
-  -i "instagram-123"
-```
-
-**Story Example:**
-```bash
-posty posts:create \
-  -c "Story content" \
-  -m "story-image.jpg" \
-  -p instagram \
-  --settings '{
-    "post_type": "story"
-  }' \
-  -i "instagram-123"
-```
-
-### TikTok (`tiktok`)
-
-**Settings:**
-- `title` (optional): Video title (max 90 characters)
-- `privacy_level` (required): Privacy level
-  - `"PUBLIC_TO_EVERYONE"`
-  - `"MUTUAL_FOLLOW_FRIENDS"`
-  - `"FOLLOWER_OF_CREATOR"`
-  - `"SELF_ONLY"`
-- `duet` (boolean): Allow duets
-- `stitch` (boolean): Allow stitch
-- `comment` (boolean): Allow comments
-- `autoAddMusic` (required): `"yes"` or `"no"`
-- `brand_content_toggle` (boolean): Brand content toggle
-- `brand_organic_toggle` (boolean): Brand organic toggle
-- `video_made_with_ai` (optional): Boolean
-- `content_posting_method` (required): `"DIRECT_POST"` or `"UPLOAD"`
-
-**Example:**
-```bash
-posty posts:create \
-  -c "TikTok video description" \
-  -m "video.mp4" \
-  -p tiktok \
-  --settings '{
-    "title": "Check this out!",
-    "privacy_level": "PUBLIC_TO_EVERYONE",
-    "duet": true,
-    "stitch": true,
-    "comment": true,
-    "autoAddMusic": "no",
-    "brand_content_toggle": false,
-    "brand_organic_toggle": false,
-    "content_posting_method": "DIRECT_POST"
-  }' \
-  -i "tiktok-123"
-```
-
-### Facebook (`facebook`)
-
-Settings available - check the DTO for specifics.
-
-### Pinterest (`pinterest`)
-
-Settings available - check the DTO for specifics.
-
-### Discord (`discord`)
-
-Settings available - check the DTO for specifics.
-
-### Slack (`slack`)
-
-Settings available - check the DTO for specifics.
-
-### Medium (`medium`)
-
-Settings available - check the DTO for specifics.
-
-### Dev.to (`devto`)
-
-Settings available - check the DTO for specifics.
-
-### Hashnode (`hashnode`)
-
-Settings available - check the DTO for specifics.
-
-### WordPress (`wordpress`)
-
-Settings available - check the DTO for specifics.
-
-## Platforms Without Specific Settings
-
-These platforms use the default `EmptySettings`:
-- `threads`
-- `mastodon`
-- `bluesky`
-- `telegram`
-- `nostr`
-- `vk`
-
-For these, you don't need to specify settings or can use:
-```bash
--p threads  # or any of the above
-```
-
-## Using JSON Files for Complex Settings
-
-For complex settings, it's easier to use JSON files:
-
-### Reddit Example
-
-**reddit-post.json:**
-```json
-{
-  "type": "now",
-  "date": "2024-01-15T12:00:00Z",
-  "shortLink": true,
-  "tags": [],
-  "posts": [{
-    "integration": { "id": "reddit-123" },
-    "value": [{
-      "content": "Check out this cool project!",
-      "image": []
-    }],
-    "settings": {
-      "__type": "reddit",
-      "subreddit": [{
-        "value": {
-          "subreddit": "programming",
-          "title": "My Cool Project - Built with TypeScript",
-          "type": "text",
-          "url": "",
-          "is_flair_required": true,
-          "flair": {
-            "id": "flair-123",
-            "name": "Project"
-          }
-        }
-      }]
-    }
-  }]
-}
-```
-
-```bash
-posty posts:create --json reddit-post.json
-```
-
-### YouTube Example
-
-**youtube-video.json:**
 ```json
 {
   "type": "schedule",
-  "date": "2024-12-25T12:00:00Z",
-  "shortLink": true,
+  "date": "2026-12-31T12:00:00Z",
+  "shortLink": false,
   "tags": [],
   "posts": [{
-    "integration": { "id": "youtube-123" },
-    "value": [{
-      "content": "Full video description with timestamps...",
-      "image": [{
-        "id": "thumb1",
-        "path": "https://cdn.example.com/thumbnail.jpg"
-      }]
-    }],
+    "integration": { "id": "<youtube-integration-id>" },
+    "value": [{ "content": "Video description", "image": [{ "id": "…", "path": "https://…" }] }],
     "settings": {
       "__type": "youtube",
-      "title": "How to Build a CLI Tool",
+      "title": "Video title",
       "type": "public",
-      "selfDeclaredMadeForKids": "no",
-      "tags": [
-        { "value": "programming", "label": "Programming" },
-        { "value": "typescript", "label": "TypeScript" },
-        { "value": "tutorial", "label": "Tutorial" }
-      ]
+      "tags": [{ "value": "tech", "label": "Tech" }]
     }
   }]
 }
 ```
 
+In JSON mode you **do** write `__type`, and it must match the integration's
+provider identifier.
+
+---
+
+## X (Twitter) — `x`
+
+| Field | Required | Values |
+|---|---|---|
+| `who_can_reply_post` | **yes** | `everyone`, `following`, `mentionedUsers`, `subscribers`, `verified` |
+| `community` | no | A community URL matching `https://x.com/i/communities/<digits>`, or empty string |
+| `made_with_ai` | no | boolean |
+| `paid_partnership` | no | boolean |
+
 ```bash
-posty posts:create --json youtube-video.json
+posty posts:create \
+  -c "Announcement" \
+  -s "2026-12-31T12:00:00Z" \
+  --settings '{"who_can_reply_post":"everyone"}' \
+  -i "$X_ID"
 ```
 
-### Multi-Platform with Different Settings
+A malformed `community` fails validation with the expected format in the
+message. Anything other than the five reply values is a `400`.
 
-**multi-platform-campaign.json:**
-```json
-{
-  "type": "now",
-  "date": "2024-01-15T12:00:00Z",
-  "shortLink": true,
-  "tags": [],
-  "posts": [
-    {
-      "integration": { "id": "reddit-123" },
-      "value": [{ "content": "Reddit-specific content", "image": [] }],
-      "settings": {
-        "__type": "reddit",
-        "subreddit": [{
-          "value": {
-            "subreddit": "programming",
-            "title": "Post Title",
-            "type": "text",
-            "url": "",
-            "is_flair_required": false
-          }
-        }]
-      }
-    },
-    {
-      "integration": { "id": "twitter-123" },
-      "value": [{ "content": "Twitter-specific content", "image": [] }],
-      "settings": {
-        "__type": "x",
-        "who_can_reply_post": "everyone"
-      }
-    },
-    {
-      "integration": { "id": "linkedin-123" },
-      "value": [
-        {
-          "content": "LinkedIn post",
-          "image": [
-            { "id": "1", "path": "img1.jpg" },
-            { "id": "2", "path": "img2.jpg" }
-          ]
-        }
-      ],
-      "settings": {
-        "__type": "linkedin",
-        "post_as_images_carousel": true,
-        "carousel_name": "Product Launch"
-      }
-    }
-  ]
-}
+---
+
+## Facebook — `facebook`
+
+All fields optional.
+
+| Field | Values |
+|---|---|
+| `post_type` | `post`, `story` |
+| `url` | A URL to attach |
+| `text_format_preset_id` | A Facebook background preset id |
+
+`text_format_preset_id` applies to **text-only posts on Pages** and caps at
+about 130 characters. Facebook exposes no API to enumerate the presets, so the
+server carries a hardcoded catalogue; the ids are opaque strings.
+
+```bash
+IMG=$(posty upload photo.jpg | jq -r '.path')
+posty posts:create -c "Post text" -s "2026-12-31T12:00:00Z" \
+  --settings '{"post_type":"post"}' -m "$IMG" -i "$FB_ID"
 ```
 
-## Tips
+---
 
-1. **Use JSON files for complex settings** - Command-line JSON strings get messy fast
-2. **Validate your settings** - The API will return errors if settings are invalid
-3. **Check required fields** - Each platform has different required fields
-4. **Platform-specific content** - Different platforms may need different content/media
-5. **Test with drafts first** - Use `"type": "draft"` to test without posting
+## Instagram — `instagram` and `instagram-standalone`
 
-## Finding Your Provider Type
+Both identifiers take the same DTO. `instagram-standalone` is a different way
+of connecting the same account, not a different feature set.
 
-To find the correct provider type for your integration:
+| Field | Required | Values |
+|---|---|---|
+| `post_type` | **yes** | `post`, `story` |
+| `collaborators` | no | array of `{ "label": "<username>" }` |
+| `audio` | no | `{ id, title?, artist?, image?, audio_volume?, video_volume? }` — volumes 0–100 |
+| `is_trial_reel` | no | boolean |
+| `graduation_strategy` | no | `MANUAL`, `SS_PERFORMANCE` |
+
+`audio.id` comes from the `audioSearch` tool — the only tool any supported
+channel has:
+
+```bash
+posty integrations:trigger "$IG_ID" audioSearch -d '{"q":"lofi","type":"music"}'
+# type is "music" (default) or "original_sound"; an empty q returns trending audio
+```
+
+```bash
+STORY=$(posty upload story.jpg | jq -r '.path')
+posty posts:create -c "" -s "2026-12-31T12:00:00Z" \
+  --settings '{"post_type":"story"}' -m "$STORY" -i "$IG_ID"
+```
+
+---
+
+## Threads — `threads`
+
+**No settings.** Omit `--settings`. There are no fields to send and inventing
+one is a `400`.
+
+```bash
+posty posts:create -c "Post text" -s "2026-12-31T12:00:00Z" -i "$THREADS_ID"
+```
+
+---
+
+## Bluesky — `bluesky`
+
+**No settings.** Same as Threads.
+
+---
+
+## YouTube — `youtube`
+
+| Field | Required | Values |
+|---|---|---|
+| `title` | **yes** | 2–100 characters |
+| `type` | **yes** | `public`, `private`, `unlisted` |
+| `selfDeclaredMadeForKids` | no | `yes`, `no` |
+| `thumbnail` | no | A media object from `posty upload` |
+| `tags` | no | array of `{ value, label }` |
+
+The post's `-c` content becomes the **video description**. `title` is separate
+and is the video's title.
+
+**The tag budget is 500 characters in total across every tag**, not per tag.
+A tag containing whitespace costs two extra characters against that budget,
+because YouTube wraps it in quotes. Over the budget is a `400` naming the
+limit.
+
+There is **no `playlistId` field** and no way to add a video to a playlist
+through the API. Earlier documentation claimed otherwise.
+
+```bash
+VIDEO=$(posty upload video.mp4 | jq -r '.path')
+posty posts:create \
+  -c "Full video description…" \
+  -s "2026-12-31T12:00:00Z" \
+  --settings '{"title":"How to build a CLI","type":"public","selfDeclaredMadeForKids":"no","tags":[{"value":"tech","label":"Tech"},{"value":"tutorial","label":"Tutorial"}]}' \
+  -m "$VIDEO" \
+  -i "$YT_ID"
+```
+
+Only MP4 uploads. See [SUPPORTED_FILE_TYPES.md](./SUPPORTED_FILE_TYPES.md).
+
+---
+
+## LinkedIn — `linkedin` and `linkedin-page`
+
+*Connecting a LinkedIn channel is pending LinkedIn's app review. The code is
+complete; a user may not be able to connect one yet. Check
+`integrations:list`.*
+
+Both fields optional.
+
+| Field | Values |
+|---|---|
+| `post_as_images_carousel` | boolean |
+| `carousel_name` | string |
+
+There is **no `companyId`**. Posting as a company page is a separate connected
+channel with identifier `linkedin-page`, chosen at connect time — not a setting
+on a personal post.
+
+```bash
+posty posts:create -c "Content" -s "2026-12-31T12:00:00Z" \
+  --settings '{"post_as_images_carousel":true,"carousel_name":"Product launch"}' \
+  -m "$A,$B,$C" -i "$LI_ID"
+```
+
+---
+
+## TikTok — `tiktok`
+
+*Pending TikTok's app review.*
+
+| Field | Required | Values |
+|---|---|---|
+| `title` | no | ≤ 90 characters |
+| `privacy_level` | **yes for `DIRECT_POST`** | `PUBLIC_TO_EVERYONE`, `MUTUAL_FOLLOW_FRIENDS`, `FOLLOWER_OF_CREATOR`, `SELF_ONLY` |
+| `content_posting_method` | **yes** | `DIRECT_POST`, `UPLOAD` |
+| `duet` | yes | boolean — video only, `DIRECT_POST` only |
+| `stitch` | yes | boolean — video only, `DIRECT_POST` only |
+| `comment` | yes | boolean — `DIRECT_POST` only |
+| `autoAddMusic` | yes | `yes`, `no` — photo posts only, `DIRECT_POST` only |
+| `brand_content_toggle` | yes | boolean — `DIRECT_POST` only |
+| `brand_organic_toggle` | yes | boolean — `DIRECT_POST` only |
+| `video_made_with_ai` | no | boolean — video only, `DIRECT_POST` only |
+
+The field is `privacy_level`. Earlier documentation called it `privacy`; that
+name is silently ignored, which is worse than an error.
+
+**`UPLOAD` does not publish.** It sends the media to the user's TikTok app
+inbox as a draft, which they must finish and publish by hand within 24 hours or
+it is discarded — and TikTok ignores every setting above except `title`. Only
+use it when the user explicitly asks to finish the post inside the TikTok app.
+
+**`privacy_level` deliberately has no default.** TikTok's Content Sharing
+Guidelines require the person posting to choose it. Ask the user; do not pick
+one on their behalf.
+
+```bash
+VIDEO=$(posty upload video.mp4 | jq -r '.path')
+posty posts:create \
+  -c "Caption #fyp" \
+  -s "2026-12-31T12:00:00Z" \
+  --settings '{"title":"Caption","privacy_level":"PUBLIC_TO_EVERYONE","duet":true,"stitch":true,"comment":true,"autoAddMusic":"no","brand_content_toggle":false,"brand_organic_toggle":false,"content_posting_method":"DIRECT_POST"}' \
+  -m "$VIDEO" \
+  -i "$TT_ID"
+```
+
+---
+
+## Google Business Profile — `gmb`
+
+*Pending Google's API quota grant.*
+
+All fields optional.
+
+| Field | Values |
+|---|---|
+| `topicType` | `STANDARD`, `EVENT`, `OFFER` |
+| `callToActionType` | `NONE`, `BOOK`, `ORDER`, `SHOP`, `LEARN_MORE`, `SIGN_UP`, `GET_OFFER`, `CALL` |
+| `callToActionUrl` | URL — required once `callToActionType` is set |
+| `eventTitle`, `eventStartDate`, `eventEndDate`, `eventStartTime`, `eventEndTime` | strings — for `topicType: EVENT` |
+| `offerCouponCode`, `offerRedeemUrl`, `offerTerms` | strings — for `topicType: OFFER` |
+
+```bash
+posty posts:create \
+  -c "Nyári akció a boltban" \
+  -s "2026-12-31T12:00:00Z" \
+  --settings '{"topicType":"OFFER","callToActionType":"GET_OFFER","callToActionUrl":"https://example.com/akcio","offerCouponCode":"NYAR20"}' \
+  -i "$GMB_ID"
+```
+
+---
+
+## Finding your integration ids
 
 ```bash
 posty integrations:list
+# [{ "id": "…", "name": "…", "identifier": "instagram", … }]
+
+X_ID=$(posty integrations:list  | jq -r '.[] | select(.identifier=="x")        | .id')
+IG_ID=$(posty integrations:list | jq -r '.[] | select(.identifier=="instagram")| .id')
+YT_ID=$(posty integrations:list | jq -r '.[] | select(.identifier=="youtube")  | .id')
 ```
 
-This will show the `provider` field for each integration, which corresponds to the `__type` in settings.
+`identifier` is the provider; `__type` in JSON mode is the same string.
 
-## Common Errors
+If a channel is not in `integrations:list`, the user cannot post to it. For
+LinkedIn, TikTok and Google Business Profile that is the expected state until
+those platforms approve the app — say so rather than scheduling a post that
+will fail.
 
-### Missing __type
+---
 
-```json
-{
-  "settings": {
-    "title": "My Video"  // ❌ Missing __type
-  }
-}
-```
+## Validating before you publish
 
-**Fix:**
-```json
-{
-  "settings": {
-    "__type": "youtube",  // ✅ Add __type
-    "title": "My Video"
-  }
-}
-```
-
-### Wrong Provider Type
+Post as a draft first. A draft goes through the same validation as a scheduled
+post, so a bad settings payload fails immediately instead of at publish time:
 
 ```bash
-# ❌ Wrong
--p twitter  # Should be "x"
-
-# ✅ Correct
--p x
+posty posts:create -c "…" -s "2026-12-31T12:00:00Z" -t draft --settings '…' -i "$ID"
 ```
 
-### Invalid Settings for Platform
+Then promote it, or delete it:
 
-Each platform validates its own settings. Check the error message and refer to the platform's required fields above.
-
-## See Also
-
-- **EXAMPLES.md** - General usage examples
-- **COMMAND_LINE_GUIDE.md** - Command-line syntax
-- **SKILL.md** - AI agent patterns
-- Source DTOs in `libraries/nestjs-libraries/src/dtos/posts/providers-settings/`
+```bash
+posty posts:status <post-id> --status schedule
+posty posts:delete <post-id>
+```

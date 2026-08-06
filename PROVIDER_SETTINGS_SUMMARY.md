@@ -1,220 +1,104 @@
-# Provider-Specific Settings - Quick Reference
+# Provider settings — quick reference
 
-## ✅ What's Supported
+The full page, with every field and its accepted values, is
+[PROVIDER_SETTINGS.md](./PROVIDER_SETTINGS.md). This is the one-screen version.
 
-The CLI now supports **platform-specific settings** for all 28+ integrations!
+## The channels
 
-## Supported Platforms
+Eleven identifiers, and that is the complete list. Posty's server carries
+inherited code for many other providers; none are enabled or supported.
 
-### Platforms with Specific Settings
+| Channel | `__type` | Required settings | Status |
+|---|---|---|---|
+| X (Twitter) | `x` | `who_can_reply_post` | Publishing verified |
+| Facebook | `facebook` | — | Publishing verified |
+| Instagram | `instagram` | `post_type` | Publishing verified |
+| Instagram standalone | `instagram-standalone` | `post_type` | Publishing verified |
+| Threads | `threads` | *no settings at all* | Publishing verified |
+| Bluesky | `bluesky` | *no settings at all* | Publishing verified |
+| YouTube | `youtube` | `title`, `type` | Coming |
+| LinkedIn | `linkedin` | — | Pending LinkedIn's review |
+| LinkedIn Page | `linkedin-page` | — | Pending LinkedIn's review |
+| TikTok | `tiktok` | `privacy_level`, `content_posting_method` | Pending TikTok's review |
+| Google Business Profile | `gmb` | — | Pending Google's quota grant |
 
-| Platform | Type | Key Settings |
-|----------|------|--------------|
-| **Reddit** | `reddit` | subreddit, title, type, url, flair |
-| **YouTube** | `youtube` | title, type (public/private/unlisted), tags, thumbnail |
-| **X (Twitter)** | `x` | who_can_reply_post, community |
-| **LinkedIn** | `linkedin` | post_as_images_carousel, carousel_name |
-| **Instagram** | `instagram` | post_type (post/story), collaborators |
-| **TikTok** | `tiktok` | title, privacy_level, duet, stitch, comment, autoAddMusic |
-| **Facebook** | `facebook` | Platform-specific settings |
-| **Pinterest** | `pinterest` | Platform-specific settings |
-| **Discord** | `discord` | Platform-specific settings |
-| **Slack** | `slack` | Platform-specific settings |
-| **Medium** | `medium` | Platform-specific settings |
-| **Dev.to** | `devto` | Platform-specific settings |
-| **Hashnode** | `hashnode` | Platform-specific settings |
-| **WordPress** | `wordpress` | Platform-specific settings |
-| And 15+ more... | | See PROVIDER_SETTINGS.md |
+## The fields
 
-### Platforms with Default Settings
+| Channel | Fields |
+|---|---|
+| `x` | `who_can_reply_post` **(req)**, `community`, `made_with_ai`, `paid_partnership` |
+| `facebook` | `post_type`, `url`, `text_format_preset_id` |
+| `instagram`, `instagram-standalone` | `post_type` **(req)**, `collaborators`, `audio`, `is_trial_reel`, `graduation_strategy` |
+| `threads`, `bluesky` | none |
+| `youtube` | `title` **(req, 2–100)**, `type` **(req)**, `selfDeclaredMadeForKids`, `thumbnail`, `tags` (500 chars total) |
+| `linkedin`, `linkedin-page` | `post_as_images_carousel`, `carousel_name` |
+| `tiktok` | `title`, `privacy_level`, `content_posting_method`, `duet`, `stitch`, `comment`, `autoAddMusic`, `brand_content_toggle`, `brand_organic_toggle`, `video_made_with_ai` |
+| `gmb` | `topicType`, `callToActionType`, `callToActionUrl`, event fields, offer fields |
 
-These use `EmptySettings` (no special configuration needed):
-- Threads, Mastodon, Bluesky, Telegram, Nostr, VK
+## Examples
 
-## Usage
-
-### Method 1: Command Line
-
+**X**
 ```bash
-posty posts:create \
-  -c "Content" \
-  -p <provider-type> \
-  --settings '<json-settings>' \
-  -i "integration-id"
+posty posts:create -c "Announcement" -s "2026-12-31T12:00:00Z" \
+  --settings '{"who_can_reply_post":"everyone"}' -i "$X_ID"
 ```
 
-### Method 2: JSON File
-
-```json
-{
-  "posts": [{
-    "integration": { "id": "integration-id" },
-    "value": [...],
-    "settings": {
-      "__type": "provider-type",
-      ...
-    }
-  }]
-}
-```
-
-## Quick Examples
-
-### Reddit Post
-
+**YouTube** — `-c` is the description; `title` is separate and required.
 ```bash
-posty posts:create \
-  -c "Check out this project!" \
-  -p reddit \
-  --settings '{
-    "subreddit": [{
-      "value": {
-        "subreddit": "programming",
-        "title": "My Cool Project",
-        "type": "text",
-        "url": "",
-        "is_flair_required": false
-      }
-    }]
-  }' \
-  -i "reddit-123"
+VIDEO=$(posty upload video.mp4 | jq -r '.path')
+posty posts:create -c "Video description" -s "2026-12-31T12:00:00Z" \
+  --settings '{"title":"How to build a CLI","type":"public","tags":[{"value":"tech","label":"Tech"}]}' \
+  -m "$VIDEO" -i "$YT_ID"
 ```
 
-### YouTube Video
-
+**Instagram story**
 ```bash
-posty posts:create \
-  -c "Full video description..." \
-  -p youtube \
-  --settings '{
-    "title": "How to Build a CLI",
-    "type": "public",
-    "tags": [
-      {"value": "tech", "label": "Tech"},
-      {"value": "tutorial", "label": "Tutorial"}
-    ]
-  }' \
-  -i "youtube-123"
+STORY=$(posty upload story.jpg | jq -r '.path')
+posty posts:create -c "" -s "2026-12-31T12:00:00Z" \
+  --settings '{"post_type":"story"}' -m "$STORY" -i "$IG_ID"
 ```
 
-### Twitter/X with Reply Controls
-
+**Threads / Bluesky** — no `--settings`.
 ```bash
-posty posts:create \
-  -c "Important announcement!" \
-  -p x \
-  --settings '{
-    "who_can_reply_post": "verified"
-  }' \
-  -i "twitter-123"
+posty posts:create -c "Post text" -s "2026-12-31T12:00:00Z" -i "$THREADS_ID"
 ```
 
-### LinkedIn Carousel
-
+**LinkedIn carousel**
 ```bash
-posty posts:create \
-  -c "Product showcase" \
-  -m "img1.jpg,img2.jpg,img3.jpg" \
-  -p linkedin \
-  --settings '{
-    "post_as_images_carousel": true,
-    "carousel_name": "Product Launch"
-  }' \
-  -i "linkedin-123"
+posty posts:create -c "Product showcase" -m "$A,$B,$C" -s "2026-12-31T12:00:00Z" \
+  --settings '{"post_as_images_carousel":true,"carousel_name":"Product launch"}' -i "$LI_ID"
 ```
 
-### Instagram Story
-
+**TikTok** — `privacy_level`, not `privacy`. `UPLOAD` does not publish.
 ```bash
-posty posts:create \
-  -c "Story content" \
-  -m "story-image.jpg" \
-  -p instagram \
-  --settings '{
-    "post_type": "story"
-  }' \
-  -i "instagram-123"
+VIDEO=$(posty upload video.mp4 | jq -r '.path')
+posty posts:create -c "Caption #fyp" -s "2026-12-31T12:00:00Z" \
+  --settings '{"title":"Caption","privacy_level":"PUBLIC_TO_EVERYONE","duet":true,"stitch":true,"comment":true,"autoAddMusic":"no","brand_content_toggle":false,"brand_organic_toggle":false,"content_posting_method":"DIRECT_POST"}' \
+  -m "$VIDEO" -i "$TT_ID"
 ```
 
-### TikTok Video
+## Traps
 
-```bash
-posty posts:create \
-  -c "TikTok description #fyp" \
-  -m "video.mp4" \
-  -p tiktok \
-  --settings '{
-    "privacy_level": "PUBLIC_TO_EVERYONE",
-    "duet": true,
-    "stitch": true,
-    "comment": true,
-    "autoAddMusic": "no",
-    "brand_content_toggle": false,
-    "brand_organic_toggle": false,
-    "content_posting_method": "DIRECT_POST"
-  }' \
-  -i "tiktok-123"
-```
+1. **There is no `-p` / `--provider` flag.** Earlier versions of this file used
+   one in every example. `posts:create` takes `-c`, `-m`, `-i`, `-s`, `-t`,
+   `-d`, `--settings`, `--shortLink` and `--json`. The provider is inferred
+   from the integration id.
+2. **`-m` takes URLs from `posty upload`,** never a local filename. See
+   [SUPPORTED_FILE_TYPES.md](./SUPPORTED_FILE_TYPES.md).
+3. **`-s` is required.** Every post needs an ISO 8601 date.
+4. **Draft first.** `-t draft` runs the same validation as a scheduled post, so
+   a bad settings payload fails now rather than at publish time.
+5. **Ask the server, don't trust a document.**
+   `posty integrations:settings <id> | jq '.output.settings'` returns the live
+   JSON schema generated from the validation DTOs.
 
-## JSON File Examples
-
-We've created example JSON files for you:
-
-- **`reddit-post.json`** - Reddit post with subreddit settings
-- **`youtube-video.json`** - YouTube video with title, tags, thumbnail
-- **`tiktok-video.json`** - TikTok video with full settings
-- **`multi-platform-with-settings.json`** - Multi-platform campaign with different settings per platform
-
-## Finding Provider Types
+## Finding ids
 
 ```bash
 posty integrations:list
+X_ID=$(posty integrations:list | jq -r '.[] | select(.identifier=="x") | .id')
 ```
 
-Look at the `provider` field - this is your provider type!
-
-## Common Provider Types
-
-- `reddit` - Reddit
-- `youtube` - YouTube
-- `x` - X (Twitter)
-- `linkedin` or `linkedin-page` - LinkedIn
-- `instagram` or `instagram-standalone` - Instagram
-- `tiktok` - TikTok
-- `facebook` - Facebook
-- `pinterest` - Pinterest
-- `discord` - Discord
-- `slack` - Slack
-- `threads` - Threads (no specific settings)
-- `bluesky` - Bluesky (no specific settings)
-- `mastodon` - Mastodon (no specific settings)
-
-## Documentation
-
-📖 **[PROVIDER_SETTINGS.md](./PROVIDER_SETTINGS.md)** - Complete documentation with all platform settings
-
-Includes:
-- All available settings for each platform
-- Required vs optional fields
-- Validation rules
-- More examples
-- Common errors and solutions
-
-## Tips
-
-1. **Use JSON files for complex settings** - Easier to manage than command-line strings
-2. **Different settings per platform** - Each platform in a multi-platform post can have different settings
-3. **Validate before posting** - Use `"type": "draft"` to test
-4. **Check examples** - See `examples/` directory for working templates
-5. **Provider type matters** - Make sure `__type` matches your integration's provider
-
-## Summary
-
-✅ **28+ platforms supported**
-✅ **Platform-specific settings for Reddit, YouTube, TikTok, X, LinkedIn, Instagram, and more**
-✅ **Easy command-line interface**
-✅ **JSON file support for complex configs**
-✅ **Full type validation**
-✅ **Comprehensive examples included**
-
-**The CLI now supports the full power of each platform!** 🚀
+A channel that is not in that output cannot be posted to. For LinkedIn, TikTok
+and Google Business Profile that is the expected state until those platforms
+approve the app.
