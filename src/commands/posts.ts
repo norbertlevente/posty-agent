@@ -1,8 +1,31 @@
 import { PostyAPI } from '../api';
 import { getConfig } from '../config';
-import { resolveDateInput } from '../dates';
+import {
+  ResolvedDate,
+  ResolvedTimezone,
+  resolveDateInput,
+  resolveTimezone,
+} from '../dates';
 import { result, status, fail } from '../output';
 import { readFileSync, existsSync } from 'fs';
+
+/** Walk the timezone ladder for this invocation, or exit 1 with the reason. */
+function timezoneForArgs(args: any): ResolvedTimezone | null {
+  try {
+    return resolveTimezone(args.timezone);
+  } catch (error: any) {
+    console.error(`❌ ${error.message}`);
+    process.exit(1);
+  }
+}
+
+function echoInterpretation(input: string, resolved: ResolvedDate) {
+  if (resolved.appliedTimezone) {
+    status(
+      `ℹ️  Interpreted "${input}" as ${resolved.appliedTimezone.name} (via ${resolved.appliedTimezone.source}) → ${resolved.iso}`
+    );
+  }
+}
 
 export async function getMissingContent(args: any) {
   const config = getConfig();
@@ -127,14 +150,11 @@ export async function createPost(args: any) {
     if (!args.date && type === 'now') {
       dateIso = new Date().toISOString();
     } else {
+      const timezone = timezoneForArgs(args);
       try {
-        const resolved = resolveDateInput(args.date);
+        const resolved = resolveDateInput(args.date, timezone, '--date');
         dateIso = resolved.iso;
-        if (resolved.assumedTimezone) {
-          status(
-            `ℹ️  Interpreted "${args.date}" as ${resolved.assumedTimezone} → ${dateIso} (set POSTY_TIMEZONE or pass an explicit offset to override)`
-          );
-        }
+        echoInterpretation(args.date, resolved);
       } catch (error: any) {
         console.error(`❌ ${error.message}`);
         process.exit(1);
@@ -182,12 +202,19 @@ export async function listPosts(args: any) {
   const defaultEndDate = new Date();
   defaultEndDate.setDate(defaultEndDate.getDate() + 30);
 
+  // Only walk the ladder when a date was actually supplied — the defaults are
+  // computed instants and must not fail on, say, a typoed POSTY_TIMEZONE.
+  const timezone =
+    args.startDate || args.endDate ? timezoneForArgs(args) : null;
+
   const resolve = (label: string, value: string | undefined, fallback: Date) => {
     if (!value) return fallback.toISOString();
     try {
-      return resolveDateInput(value).iso;
+      const resolved = resolveDateInput(value, timezone, label);
+      echoInterpretation(value, resolved);
+      return resolved.iso;
     } catch (error: any) {
-      console.error(`❌ Invalid ${label}: ${error.message}`);
+      console.error(`❌ ${error.message}`);
       process.exit(1);
     }
   };

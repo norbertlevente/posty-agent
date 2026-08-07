@@ -8,13 +8,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Hungarian-friendly dates.** A `--date`/`--startDate`/`--endDate` value
-  without a timezone designator (`2026-12-31 12:00`, `2026-12-31`) is now
-  interpreted as Europe/Budapest local time (DST-aware) and converted to UTC
-  before it is sent; the resolved instant is echoed on stderr. Previously the
-  backend read such values in the server's clock (UTC), silently shifting
-  Hungarian posts by one or two hours. Override with `POSTY_TIMEZONE` or an
-  explicit offset.
+- **Explicit timezones, no guessing.** The backend reads a
+  `--date`/`--startDate`/`--endDate` value without a timezone designator in
+  the server's clock (UTC), silently shifting a Hungarian "12:00" by one or
+  two hours. The CLI now refuses that ambiguity instead of assuming a zone
+  (an earlier draft defaulted to Europe/Budapest; the owner rejected any
+  silent assumption). A date is resolved in priority order: an explicit
+  offset in the string (`Z`, `+01:00`) → the new `--timezone <IANA name>`
+  flag on `posts:create`/`posts:list` → `POSTY_TIMEZONE` → the `timezone`
+  saved in `~/.posty/config.json` → otherwise a naive date is a **hard
+  error** whose message names all four remedies. Conversion is DST-aware and
+  the resolved UTC instant is echoed on stderr whenever a timezone is
+  applied. Numeric offsets (`+02:00`, `UTC+2`, `Etc/GMT+2`) are rejected as
+  timezone *values* — LLMs and humans must not hand-compute DST; offsets
+  belong inside the date string. An invalid timezone at any rung is an
+  error, not a fall-through.
+- `posty config:set timezone <IANA>` / `posty config:get [key]` — persistent
+  CLI settings in `~/.posty/config.json` (kept separate from
+  `credentials.json`; survives `auth:logout`). On a TTY, `posty auth:login`
+  now detects the machine's timezone after a successful login and asks the
+  user to confirm saving it; off-TTY it never prompts.
 - `posts:create --type now` publishes immediately; `--date` becomes optional.
 - `posts:find-slot <integration-id>` — the next free publishing slot for a
   channel (`GET /public/v1/find-slot/:id`), usable directly as a

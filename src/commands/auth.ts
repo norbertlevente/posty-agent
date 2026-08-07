@@ -1,6 +1,9 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync, chmodSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
+import { createInterface } from 'readline';
+import { getSetting, saveSetting } from '../settings';
+import { assertIanaTimezone } from '../dates';
 
 const CREDENTIALS_DIR = join(homedir(), '.posty');
 const CREDENTIALS_FILE = join(CREDENTIALS_DIR, 'credentials.json');
@@ -76,6 +79,69 @@ function openBrowser(url: string): void {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function ask(question: string): Promise<string> {
+  const rl = createInterface({ input: process.stdin, output: process.stderr });
+  return new Promise((resolve) =>
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer);
+    })
+  );
+}
+
+/**
+ * One-time scheduling-timezone setup, run after a successful login.
+ *
+ * Dates written without an explicit offset are refused unless a timezone is
+ * configured (see dates.ts), so a fresh login on a TTY is the moment to set
+ * one: detect the machine's zone, ask the human to confirm it, save it to
+ * `~/.posty/config.json`. Skipped when a timezone is already saved, and
+ * skipped entirely off-TTY — scripts and agents must use `--timezone`,
+ * `POSTY_TIMEZONE` or `posty config:set timezone`.
+ */
+async function maybeConfigureTimezone(): Promise<void> {
+  if (getSetting('timezone')) return;
+  if (!process.stdin.isTTY || !process.stderr.isTTY) return;
+
+  const detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  const answer = (await ask(`\nScheduling timezone: ${detected} — OK? [Y/n] `))
+    .trim()
+    .toLowerCase();
+
+  let timezone = detected;
+  if (answer === 'n' || answer === 'no') {
+    const typed = (
+      await ask('Enter an IANA timezone name (e.g. Europe/Budapest), or leave empty to skip: ')
+    ).trim();
+    if (!typed) {
+      console.error(
+        'Skipped. Dates without an explicit offset will be refused until you run: posty config:set timezone <IANA name>'
+      );
+      return;
+    }
+    try {
+      timezone = assertIanaTimezone(typed, 'auth:login');
+    } catch (error: any) {
+      console.error(`${error.message}`);
+      console.error(
+        'Skipped. Set it later with: posty config:set timezone <IANA name>'
+      );
+      return;
+    }
+  } else if (answer && answer !== 'y' && answer !== 'yes') {
+    console.error(
+      'Skipped. Set it later with: posty config:set timezone <IANA name>'
+    );
+    return;
+  }
+
+  saveSetting('timezone', timezone);
+  console.error(
+    `✅ Scheduling timezone saved: ${timezone} (change it with "posty config:set timezone <IANA name>")`
+  );
 }
 
 export async function authLogin(argv: any) {
@@ -157,6 +223,7 @@ export async function authLogin(argv: any) {
         if (data.organization_id) {
           console.log(`🏢 Organization ID: ${data.organization_id}`);
         }
+        await maybeConfigureTimezone();
         return;
       }
 

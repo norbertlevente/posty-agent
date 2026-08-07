@@ -205,6 +205,12 @@ directory) and take priority over `POSTY_API_KEY`. The token response also
 carries the API base, so the CLI points itself at the right host without a
 release.
 
+On a TTY, a successful login also offers to save a **scheduling timezone**
+(detected from the machine, confirmed by the human) into
+`~/.posty/config.json`. Off-TTY — i.e. when you, an agent, run it — no prompt
+appears: pass `--timezone` on date-taking commands, or run
+`posty config:set timezone Europe/Budapest` once. See "Date Handling".
+
 **Option 2: API Key**
 ```bash
 export POSTY_API_KEY=your_api_key_here
@@ -704,17 +710,45 @@ Internally creates (note: every URL is a Posty-uploaded `.path`, not a raw filen
 
 ### Date Handling
 
-- Full ISO 8601 with a timezone is always safe: `-s "2026-12-31T12:00:00Z"`,
-  `-s "2026-12-31T13:00:00+01:00"`.
-- **A datetime WITHOUT a timezone (`-s "2026-12-31 12:00"` or
-  `-s "2026-12-31T12:00"`) is interpreted as Europe/Budapest local time**,
-  DST included, and converted to UTC before it is sent. The CLI prints the
-  resolved UTC instant on stderr. Override the zone with `POSTY_TIMEZONE`
-  (an IANA name) or by writing an explicit offset. This is what a Hungarian
-  user means by "délben" — never re-interpret their local time as UTC.
-- A bare date (`-s "2026-12-31"`) means midnight Budapest time that day.
-- `posts:list --startDate/--endDate` accept the same shapes; defaults are
-  30 days ago to 30 days from now.
+**The contract: ALWAYS pass an explicit offset, or pass `--timezone` with an
+IANA name.** The CLI never guesses a timezone. The server reads a naive
+datetime as UTC, which silently shifts a Hungarian "12:00" by one or two
+hours — so the CLI refuses ambiguity instead.
+
+The two safe forms:
+
+```bash
+-s "2026-12-31T12:00:00Z"                                  # explicit UTC
+-s "2026-12-31 12:00" --timezone Europe/Budapest           # wall-clock + IANA zone
+```
+
+How a date is resolved, in priority order:
+
+1. **Explicit offset in the string** (`Z`, `+01:00`) — used as written.
+2. **`--timezone <IANA name>`** on `posts:create` / `posts:list`.
+3. **`POSTY_TIMEZONE`** environment variable (IANA name).
+4. **The saved config** — `posty config:set timezone Europe/Budapest`
+   (also offered interactively during `posty auth:login` on a TTY).
+5. **None of the above and the date is naive → hard error, exit 1.** The
+   error names all four fixes. Do not retry the same naive date; add a
+   timezone.
+
+Rules and behaviors:
+
+- Timezone values must be IANA names (`Europe/Budapest`, `UTC`). **Numeric
+  offsets (`+02:00`, `UTC+2`, `Etc/GMT+2`) are rejected as timezone values**
+  — never hand-compute DST; put an offset inside the date string only when
+  you are certain of it, otherwise use the IANA name and let the CLI convert
+  (DST-aware).
+- Whenever a timezone is applied (steps 2–4), the CLI echoes the resolved
+  UTC instant on stderr:
+  `ℹ️  Interpreted "2026-12-24 18:00" as Europe/Budapest (via --timezone) → 2026-12-24T17:00:00.000Z`
+- A bare date (`"2026-12-31"`) means midnight in the resolved timezone.
+- `posts:list --startDate/--endDate` accept the same shapes and the same
+  `--timezone` flag; the defaults (30 days back / 30 days forward) never
+  need a timezone.
+- `posty config:get` / `posty config:get timezone` shows what is saved;
+  settings live in `~/.posty/config.json` and survive `auth:logout`.
 - `posty posts:find-slot <integration-id>` returns `{"date": "..."}` — the
   next free slot on that channel's schedule; pass it straight back to
   `posts:create -s`.
@@ -927,7 +961,7 @@ State these plainly rather than attempting a workaround.
 3. **Settings schema mismatch** - Check `integrations:settings` for required fields
 4. **Media MUST be uploaded to Posty first** - ⚠️ **CRITICAL (Rule 2):** Every value passed to `-m` or to an `image`/media field in JSON mode must be a `.path` returned by `posty upload`. Raw local filenames (`image.jpg`) and external URLs (`https://...`) will be rejected — TikTok, Instagram, YouTube and most other providers only accept Posty-verified URLs. No exceptions: even a "quick test post" needs the upload step.
 5. **JSON escaping in shell** - Use single quotes for JSON: `--settings '{...}'`
-6. **Date format** - ISO 8601 (`"2026-12-31T12:00:00Z"`). A datetime without a timezone is read as Europe/Budapest. Required except with `-t now` or `--json`.
+6. **Date format** - ISO 8601 with an explicit offset (`"2026-12-31T12:00:00Z"`), or a naive datetime plus `--timezone <IANA name>`. A naive datetime with no timezone configured is a hard error. Required except with `-t now` or `--json`.
 7. **Tool not found** - Check available tools in `integrations:settings` output
 8. **Character limits** - Each platform has different limits, check `maxLength` in settings
 9. **Required settings** - YouTube requires `title` and `type`; X requires `who_can_reply_post`; Instagram requires `post_type`; TikTok requires `privacy_level` and `content_posting_method`. Threads and Bluesky require nothing.
@@ -945,6 +979,10 @@ posty auth:login                                              # OAuth2 device fl
 posty auth:logout                                             # Remove credentials
 export POSTY_API_KEY=key                                      # Or use API key
 
+# Settings (~/.posty/config.json — survives logout)
+posty config:set timezone Europe/Budapest         # Timezone for dates without an offset
+posty config:get                                  # Show saved settings as JSON
+
 # Discovery (only after auth is confirmed)
 posty integrations:list                           # Get integration IDs
 posty integrations:list --group <group-id>        # Get integration IDs in a group
@@ -952,9 +990,9 @@ posty integrations:groups                         # List groups (customers)
 posty integrations:settings <id>                  # Get settings schema
 posty integrations:trigger <id> <method> -d '{}'  # Fetch dynamic data
 
-# Posting (date required unless -t now or --json)
+# Posting (date required unless -t now or --json; explicit offset or --timezone — never naive)
 posty posts:create -c "text" -s "2026-12-31T12:00:00Z" -i "id"                  # Simple (UTC)
-posty posts:create -c "Jó reggelt!" -s "2026-12-31 08:00" -i "id"              # Budapest local time
+posty posts:create -c "Jó reggelt!" -s "2026-12-31 08:00" --timezone Europe/Budapest -i "id"  # Local wall-clock
 posty posts:create -c "text" -t now -i "id"                                     # Publish immediately
 posty posts:create -c "text" -s "2026-12-31T12:00:00Z" -t draft -i "id"        # Draft
 posty posts:create -c "text" -m "$(posty upload img.jpg | jq -r '.path')" -s "2026-12-31T12:00:00Z" -i "id"  # With media (upload first — Rule 2)

@@ -5,6 +5,7 @@ import { listIntegrations, listGroups, getIntegrationSettings, triggerIntegratio
 import { getAnalytics, getPostAnalytics } from './commands/analytics';
 import { uploadFile } from './commands/upload';
 import { authLogin, authLogout, authStatus } from './commands/auth';
+import { configSet, configGet } from './commands/config';
 import type { Argv } from 'yargs';
 
 yargs(hideBin(process.argv))
@@ -33,7 +34,12 @@ yargs(hideBin(process.argv))
         .option('date', {
           alias: 's',
           describe:
-            'Publish date. ISO 8601 with timezone ("2026-12-31T12:00:00Z"), or a naive datetime ("2026-12-31 12:00") interpreted in Europe/Budapest (override with POSTY_TIMEZONE). Required unless --type now or --json.',
+            'Publish date. ALWAYS give ISO 8601 with an explicit offset ("2026-12-31T12:00:00Z" / "+01:00"), or a datetime without offset ("2026-12-31 12:00") together with a timezone (--timezone / POSTY_TIMEZONE / posty config:set timezone). A naive date with no timezone configured is an error. Required unless --type now or --json.',
+          type: 'string',
+        })
+        .option('timezone', {
+          describe:
+            'IANA timezone name (e.g. Europe/Budapest) used to interpret --date when it has no explicit offset. Numeric offsets are not accepted here — put those in the date string.',
           type: 'string',
         })
         .option('type', {
@@ -80,8 +86,8 @@ yargs(hideBin(process.argv))
           'Simple scheduled post (explicit UTC)'
         )
         .example(
-          '$0 posts:create -c "Boldog karácsonyt! 🎄" -s "2026-12-24 18:00" -i "integration-id"',
-          'Naive datetime — interpreted as Europe/Budapest local time'
+          '$0 posts:create -c "Boldog karácsonyt! 🎄" -s "2026-12-24 18:00" --timezone Europe/Budapest -i "integration-id"',
+          'Local wall-clock time with an explicit IANA timezone'
         )
         .example(
           '$0 posts:create -c "Ez most azonnal megy ki" -t now -i "integration-id"',
@@ -124,11 +130,16 @@ yargs(hideBin(process.argv))
     (yargs: Argv) => {
       return yargs
         .option('startDate', {
-          describe: 'Start date (ISO 8601; naive datetimes read as Europe/Budapest). Default: 30 days ago',
+          describe: 'Start date (ISO 8601 with explicit offset, or use --timezone). Default: 30 days ago',
           type: 'string',
         })
         .option('endDate', {
-          describe: 'End date (ISO 8601; naive datetimes read as Europe/Budapest). Default: 30 days from now',
+          describe: 'End date (ISO 8601 with explicit offset, or use --timezone). Default: 30 days from now',
+          type: 'string',
+        })
+        .option('timezone', {
+          describe:
+            'IANA timezone name (e.g. Europe/Budapest) used to interpret --startDate/--endDate when they have no explicit offset',
           type: 'string',
         })
         .option('customer', {
@@ -374,6 +385,40 @@ yargs(hideBin(process.argv))
     uploadFile as any
   )
   .command(
+    'config:set <key> <value>',
+    'Save a CLI setting to ~/.posty/config.json',
+    (yargs: Argv) => {
+      return yargs
+        .positional('key', {
+          describe: 'Setting name. Known: "timezone" (an IANA name)',
+          type: 'string',
+        })
+        .positional('value', {
+          describe: 'Setting value',
+          type: 'string',
+        })
+        .example(
+          '$0 config:set timezone Europe/Budapest',
+          'Interpret dates written without an explicit offset in Budapest time'
+        );
+    },
+    configSet as any
+  )
+  .command(
+    'config:get [key]',
+    'Show saved CLI settings (all, or one key)',
+    (yargs: Argv) => {
+      return yargs
+        .positional('key', {
+          describe: 'Setting name. Known: "timezone"',
+          type: 'string',
+        })
+        .example('$0 config:get', 'Show all saved settings as JSON')
+        .example('$0 config:get timezone', 'Show the saved timezone');
+    },
+    configGet as any
+  )
+  .command(
     'auth:login',
     'Authenticate using the OAuth2 device flow (opens a browser)',
     (yargs: Argv) => {
@@ -409,6 +454,6 @@ yargs(hideBin(process.argv))
   .alias('v', 'version')
   .wrap(Math.min(110, process.stdout.columns || 110))
   .epilogue(
-    'Output contract: results are JSON on stdout; status and errors go to stderr. Every failure exits 1.\n\nAuthentication:\n  Device login: posty auth:login\n  API Key: export POSTY_API_KEY=your_api_key\n\nDates: naive datetimes ("2026-12-31 12:00") are interpreted in Europe/Budapest (override with POSTY_TIMEZONE or an explicit offset).\n\nFor more information, visit: https://posty.hu'
+    'Output contract: results are JSON on stdout; status and errors go to stderr. Every failure exits 1.\n\nAuthentication:\n  Device login: posty auth:login\n  API Key: export POSTY_API_KEY=your_api_key\n\nDates: ALWAYS pass an explicit offset ("2026-12-31T12:00:00Z" / "+01:00"), or pass --timezone with an IANA name (e.g. Europe/Budapest). A date without either is resolved via POSTY_TIMEZONE, then the timezone saved by "posty config:set timezone" — and is an ERROR when none of those is set. Numeric offsets are never accepted as timezone values.\n\nFor more information, visit: https://posty.hu'
   )
   .parse();
