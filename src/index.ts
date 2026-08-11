@@ -86,11 +86,11 @@ yargs(hideBin(process.argv))
           'Simple scheduled post (explicit UTC)'
         )
         .example(
-          '$0 posts:create -c "Boldog karácsonyt! 🎄" -s "2026-12-24 18:00" --timezone Europe/Budapest -i "integration-id"',
+          '$0 posts:create -c "Merry Christmas! 🎄" -s "2026-12-24 18:00" --timezone Europe/Budapest -i "integration-id"',
           'Local wall-clock time with an explicit IANA timezone'
         )
         .example(
-          '$0 posts:create -c "Ez most azonnal megy ki" -t now -i "integration-id"',
+          '$0 posts:create -c "This goes out right now" -t now -i "integration-id"',
           'Publish immediately (no --date needed)'
         )
         .example(
