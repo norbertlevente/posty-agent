@@ -1,6 +1,6 @@
 ---
 name: posty
-description: Posty schedules and publishes social posts from the command line. Channels you can publish to today - X (Twitter), Facebook, Instagram, Threads, Bluesky. Coming - YouTube. Awaiting platform approval, connectable but not yet publishing - LinkedIn, TikTok, Google Business Profile.
+description: Posty schedules and publishes social posts from the command line to X (Twitter), Facebook, Instagram, Threads and Bluesky.
 homepage: https://posty.hu
 metadata: {"openclaw":{"emoji":"🌎","requires":{"bins":[],"env":[]}}}
 ---
@@ -36,35 +36,29 @@ API base: https://api.posty.hu (also served at https://posty.hu/api)
 
 ---
 
-## Which channels actually work
+## Which channels you can publish to
 
-This is the single most important table in this file. **Do not offer a user a
-channel that is not in it, and do not try to post to one.** Posty's server
-carries inherited code for many more providers; that code is not enabled, not
-supported, and not documented here.
+**Only these. Do not offer a user anything else, and do not try to post to it.**
+Posty's server carries inherited code for many more providers; that code is not
+enabled and not supported.
 
-| Channel | `identifier` | Status |
-|---|---|---|
-| X (Twitter) | `x` | **Working.** Connect and publish verified against live accounts. |
-| Facebook | `facebook` | **Working.** Pages. Verified against live accounts. |
-| Instagram | `instagram` | **Working.** Verified against live accounts. |
-| Instagram (standalone login) | `instagram-standalone` | **Working.** Same settings as `instagram`. |
-| Threads | `threads` | **Working.** Verified against live accounts. |
-| Bluesky | `bluesky` | **Working.** Verified against live accounts. |
-| YouTube | `youtube` | **Coming.** Treat as supported when writing plans and copy; confirm the channel is connected with `integrations:list` before you publish to it. |
-| LinkedIn | `linkedin`, `linkedin-page` | **Blocked on LinkedIn's app review.** The code is complete. A user may not be able to connect one yet. |
-| TikTok | `tiktok` | **Blocked on TikTok's app review.** Same as LinkedIn. |
-| Google Business Profile | `gmb` | **Blocked on Google's API quota grant.** Same as LinkedIn. |
+| Channel | `identifier` |
+|---|---|
+| X (Twitter) | `x` |
+| Facebook (Pages) | `facebook` |
+| Instagram | `instagram` |
+| Instagram (standalone login) | `instagram-standalone` |
+| Threads | `threads` |
+| Bluesky | `bluesky` |
 
-For the three blocked channels: `integrations:list` is the truth. If it is not
-in that output, the user cannot post to it, and no amount of retrying will
-change that. Say so plainly rather than scheduling a post that will fail.
+**`integrations:list` is the truth.** The table says what Posty supports; that
+command says what THIS user has actually connected. Check it before you
+schedule anything, and never post to an id that is not in its output.
 
-**Never assume any other provider exists.** If a user asks for Mastodon,
-Reddit, Pinterest, Discord, Telegram, Slack, Medium, Dev.to, Hashnode,
-WordPress, Mastodon, Lemmy, Nostr, VK, Tumblr, Warpcast/Farcaster, Dribbble or
-anything else, the answer is that Posty does not offer it. Do not construct a
-`--settings` payload for it.
+**Never assume another provider exists.** If a user asks for Mastodon, Reddit,
+Pinterest, Discord, Telegram, Slack, Medium, Dev.to, WordPress, Tumblr,
+Farcaster or anything else, the answer is that Posty does not offer it. Do not
+build a `--settings` payload for it.
 
 ---
 
@@ -848,78 +842,6 @@ posty posts:create -c "Post text" -s "2026-12-31T12:00:00Z" -i "$THREADS_ID"
 ```
 No provider settings. Omit `--settings` entirely.
 
-### YouTube — `youtube`
-```bash
-# Upload the video first — Rule 2
-VIDEO=$(posty upload video.mp4 | jq -r '.path')
-
-posty posts:create \
-  -c "Video description" \
-  -s "2026-12-31T12:00:00Z" \
-  --settings '{"title":"Video Title","type":"public","selfDeclaredMadeForKids":"no","tags":[{"value":"tech","label":"Tech"}]}' \
-  -m "$VIDEO" \
-  -i "$YT_ID"
-```
-`title` is **required**, 2–100 characters. `type` is **required**: `public` |
-`private` | `unlisted`. The `-c` content becomes the video **description**.
-Optional: `selfDeclaredMadeForKids` (`yes` | `no`), `thumbnail` (a media object
-from `posty upload`), `tags`.
-
-**The tag budget is 500 characters total across all tags**, not per tag, and
-a tag containing a space costs two extra characters because YouTube quotes it.
-Exceeding it is a `400`.
-
-There is no `playlistId` field. Do not send one.
-
-### TikTok — `tiktok` *(pending TikTok's approval)*
-```bash
-VIDEO=$(posty upload video.mp4 | jq -r '.path')
-
-posty posts:create \
-  -c "Video caption #fyp" \
-  -s "2026-12-31T12:00:00Z" \
-  --settings '{"title":"Caption","privacy_level":"PUBLIC_TO_EVERYONE","duet":true,"stitch":true,"comment":true,"autoAddMusic":"no","brand_content_toggle":false,"brand_organic_toggle":false,"content_posting_method":"DIRECT_POST"}' \
-  -m "$VIDEO" \
-  -i "$TT_ID"
-```
-The field is `privacy_level`, not `privacy`. `content_posting_method` is
-**required**: `DIRECT_POST` publishes; **`UPLOAD` does not publish** — it drops
-the media into the user's TikTok inbox as a draft they must finish by hand
-within 24 hours, and TikTok discards every other setting. Only use `UPLOAD`
-when the user explicitly asks to finish the post inside the TikTok app.
-
-`privacy_level` has **no default on purpose** — TikTok's content-sharing rules
-require the human to choose. Ask; do not pick one for them.
-
-### LinkedIn — `linkedin` / `linkedin-page` *(pending LinkedIn's approval)*
-```bash
-posty posts:create -c "Content" -s "2026-12-31T12:00:00Z" -i "$LI_ID"
-
-# Image carousel
-posty posts:create -c "Content" -s "2026-12-31T12:00:00Z" \
-  --settings '{"post_as_images_carousel":true,"carousel_name":"Product Launch"}' \
-  -m "$A,$B,$C" -i "$LI_ID"
-```
-Both fields optional. There is no `companyId` field — posting as a company page
-is a separate connected channel (`linkedin-page`), not a setting.
-
-### Google Business Profile — `gmb` *(pending Google's quota grant)*
-```bash
-posty posts:create \
-  -c "Post text" \
-  -s "2026-12-31T12:00:00Z" \
-  --settings '{"topicType":"OFFER","callToActionType":"GET_OFFER","callToActionUrl":"https://example.com","offerCouponCode":"NYAR20"}' \
-  -i "$GMB_ID"
-```
-All optional. `topicType`: `STANDARD` | `EVENT` | `OFFER`. `callToActionType`:
-`NONE` | `BOOK` | `ORDER` | `SHOP` | `LEARN_MORE` | `SIGN_UP` | `GET_OFFER` |
-`CALL`, with `callToActionUrl` required once it is set. Event fields
-(`eventTitle`, `eventStartDate`, `eventEndDate`, `eventStartTime`,
-`eventEndTime`) apply to `EVENT`; offer fields (`offerCouponCode`,
-`offerRedeemUrl`, `offerTerms`) to `OFFER`.
-
----
-
 ## What Posty does NOT do
 
 State these plainly rather than attempting a workaround.
@@ -939,13 +861,7 @@ State these plainly rather than attempting a workaround.
 ## Supporting Resources
 
 **This file is the command reference.** Everything the CLI accepts is
-documented above; there is no second syntax guide to consult. A separate
-`COMMAND_LINE_GUIDE.md` and `EXAMPLES.md` used to live in `examples/` and were
-deleted before the first release rather than corrected — they named a
-`--schedule` flag that does not exist, omitted the required `--date` from
-nearly every example, and described `-d` delays in seconds when the unit is
-minutes. Documentation that confidently produces failing commands is worse
-than none, and an agent reading it would have emitted broken posts.
+documented above; there is no second syntax guide to consult.
 
 **Deep-dive documentation** (shipped in the npm package, and in the repo):
 - [HOW_TO_RUN.md](./HOW_TO_RUN.md) - Installing and running the CLI
