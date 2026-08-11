@@ -41,11 +41,11 @@
   "license": "AGPL-3.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/postyhq/posty-agent.git"
+    "url": "https://github.com/norbertlevente/posty-agent.git"
   },
-  "homepage": "https://github.com/postyhq/posty-agent#readme",
+  "homepage": "https://github.com/norbertlevente/posty-agent#readme",
   "bugs": {
-    "url": "https://github.com/postyhq/posty-agent/issues"
+    "url": "https://github.com/norbertlevente/posty-agent/issues"
   },
   "engines": {
     "node": ">=18.0.0"
