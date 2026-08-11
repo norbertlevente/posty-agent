@@ -1,6 +1,6 @@
 {
   "name": "posty",
-  "version": "2.0.15",
+  "version": "1.0.0",
   "description": "Schedule and publish social posts from the command line. Channels: X (Twitter), Facebook, Instagram, Threads, Bluesky, with YouTube coming and LinkedIn, TikTok and Google Business Profile pending those platforms' approval.",
   "author": {
     "name": "Norbert Kiss",

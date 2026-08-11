@@ -82,15 +82,23 @@ npm publish --access public
 
 ## Versioning
 
-`package.json` is at `2.0.15`. `.claude-plugin/plugin.json` carries its own
-version, currently also `2.0.15`; it has drifted before. Whatever gets
-released, check they still match — two version numbers for one artefact is how
-a bug report becomes unreproducible.
+`package.json` is at `1.0.0`, and so is `.claude-plugin/plugin.json`. They have
+drifted before; whatever gets released, check they still match — two version
+numbers for one artefact is how a bug report becomes unreproducible.
+
+**It was `2.0.15` and was reset on the owner's call.** Nothing was ever
+published, so the 2.x numbers only ever described builds that existed on one
+laptop. Shipping a first public release as `2.0.15` tells a user there were
+fourteen patches and a major break they could have installed and cannot find,
+and it spends the one version number that means *this is the first one*. The
+CHANGELOG still records the 2.x development history under its old headings —
+that is deliberate, it is the honest record of what changed, and none of it
+was ever a release.
 
 ```bash
-npm version patch    # 2.0.15 → 2.0.16
-npm version minor    # 2.0.15 → 2.1.0
-npm version major    # 2.0.15 → 3.0.0
+npm version patch    # 1.0.0 → 1.0.1
+npm version minor    # 1.0.0 → 1.1.0
+npm version major    # 1.0.0 → 2.0.0
 ```
 
 ## If a publish fails
