@@ -15,7 +15,12 @@
   },
   "files": [
     "dist",
+    "README.md",
     "SKILL.md",
+    "HOW_TO_RUN.md",
+    "PROVIDER_SETTINGS.md",
+    "SUPPORTED_FILE_TYPES.md",
+    "examples",
     "CHANGELOG.md",
     "LICENSE"
   ],

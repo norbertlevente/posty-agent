@@ -2,7 +2,7 @@
 name: posty
 description: Posty schedules and publishes social posts from the command line. Channels you can publish to today - X (Twitter), Facebook, Instagram, Threads, Bluesky. Coming - YouTube. Awaiting platform approval, connectable but not yet publishing - LinkedIn, TikTok, Google Business Profile.
 homepage: https://posty.hu
-metadata: {"openclaw":{"emoji":"🌎","requires":{"bins":[],"env":["POSTY_API_URL"]}}}
+metadata: {"openclaw":{"emoji":"🌎","requires":{"bins":[],"env":[]}}}
 ---
 
 ## Install
@@ -938,16 +938,24 @@ State these plainly rather than attempting a workaround.
 
 ## Supporting Resources
 
-**Deep-dive documentation:**
+**This file is the command reference.** Everything the CLI accepts is
+documented above; there is no second syntax guide to consult. A separate
+`COMMAND_LINE_GUIDE.md` and `EXAMPLES.md` used to live in `examples/` and were
+deleted before the first release rather than corrected — they named a
+`--schedule` flag that does not exist, omitted the required `--date` from
+nearly every example, and described `-d` delays in seconds when the unit is
+minutes. Documentation that confidently produces failing commands is worse
+than none, and an agent reading it would have emitted broken posts.
+
+**Deep-dive documentation** (shipped in the npm package, and in the repo):
 - [HOW_TO_RUN.md](./HOW_TO_RUN.md) - Installing and running the CLI
-- [examples/COMMAND_LINE_GUIDE.md](./examples/COMMAND_LINE_GUIDE.md) - Complete command syntax reference
 - [PROVIDER_SETTINGS.md](./PROVIDER_SETTINGS.md) - Settings schema for every supported channel
 - [SUPPORTED_FILE_TYPES.md](./SUPPORTED_FILE_TYPES.md) - The eight accepted media types
 
-**Ready-to-use examples:**
-- [examples/EXAMPLES.md](./examples/EXAMPLES.md) - Comprehensive examples
-- [examples/basic-usage.sh](./examples/basic-usage.sh) - Shell script basics
+**Ready-to-use `--json` payloads** (all verified against the current CLI):
 - [examples/post-with-comments.json](./examples/post-with-comments.json) - Threading example
+- [examples/thread-post.json](./examples/thread-post.json) - Multi-part thread
+- [examples/multi-platform-post.json](./examples/multi-platform-post.json) - One post, several channels
 - [examples/multi-platform-with-settings.json](./examples/multi-platform-with-settings.json) - Campaign example
 - [examples/youtube-video.json](./examples/youtube-video.json) - YouTube with tags
 - [examples/tiktok-video.json](./examples/tiktok-video.json) - TikTok with privacy

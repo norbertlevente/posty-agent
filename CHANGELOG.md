@@ -5,7 +5,9 @@ All notable changes to the Posty CLI are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0] - 2026-08-11
+
+First public release.
 
 ### Added
 - **Explicit timezones, no guessing.** The backend reads a
@@ -72,7 +74,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   "what Posty does not do" section still described the deleted AI-video
   routes.
 
-## Earlier unreleased work
+---
+
+## Pre-release development history
+
+Nothing below was ever published to npm. These headings describe builds that
+existed only in development, before the package was first released as 1.0.0
+above -- including a 2.x line that no user could ever have installed. They are
+kept because they are an accurate record of what changed, and rewriting them
+to look tidy would be the dishonest option.
+
+## Earlier development work
 
 ### Changed
 - **The npm package is now `posty-cli`.** It was `posty`, which on npmjs.com is
@@ -121,14 +133,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SUPPORTED_FILE_TYPES.md` had promised PDF, DOC, MP3, SVG, MOV, MKV, WEBM and
   AVI. The server accepts eight MIME types, sniffed from magic bytes.
 
-## [2.0.15]
+## [2.0.15-dev] (never published)
 
 ### Fixed
 - `auth:login` pointed at `cli-auth.posty.hu`, a service that was never deployed
   and whose hostname does not resolve, so the device flow could not work at all.
   It now points at Posty's own backend, which serves the same wire contract.
 
-## [1.0.0] - 2026-02-13
+## [1.0.0-dev] - 2026-02-13 (never published)
 
 ### Added
 - Initial release of the Posty CLI, forked from Postiz's agent.

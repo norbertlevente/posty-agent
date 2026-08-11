@@ -36,3 +36,36 @@ coverage/
 # Temporary files
 *.tmp
 *.temp
+
+# ---------------------------------------------------------------------------
+# THIS REPOSITORY IS PUBLIC. Everything below is here because committing it
+# once is enough to leak it -- git history is not a draft.
+# ---------------------------------------------------------------------------
+
+# npm auth. .npmrc carries the publish token; a leaked one lets anyone push a
+# release of posty-cli to every user who installs it.
+.npmrc
+
+# The CLI's own credential store, in case anyone ever runs it from inside a
+# checkout with HOME pointed here.
+.posty/
+credentials.json
+
+# Keys and certificates, whatever they are called.
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+
+# Any .env, not only the three spellings listed above.
+.env*
+!.env.example
+
+# Build and release artefacts
+*.tgz
+
+# Agent and tooling scratch that has no business in a public history
+.claude/
+.firecrawl/
+.aider*

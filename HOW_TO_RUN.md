@@ -13,12 +13,20 @@ an unrelated UK-postcode library by another author.
 **Never run `npm install -g posty`.** It installs that other package,
 successfully and silently, which is what makes the mistake hard to notice.
 
-`posty-cli` is not published yet either — publishing is the owner's decision,
-see [PUBLISHING.md](./PUBLISHING.md) — so `npm install -g posty-cli` will 404
-today. Build from source instead:
+Once a release exists on npm, that is the short way in:
 
 ```bash
-git clone <this repository>
+npm install -g posty-cli
+posty --help
+```
+
+Publishing is the owner's decision — see
+[PUBLISHING.md](https://github.com/norbertlevente/posty-agent/blob/main/PUBLISHING.md).
+If the install above 404s, no release has been cut yet; build from source,
+which works either way:
+
+```bash
+git clone https://github.com/norbertlevente/posty-agent.git
 cd posty-agent
 
 pnpm install
