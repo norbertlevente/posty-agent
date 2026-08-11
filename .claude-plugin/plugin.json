@@ -1,14 +1,14 @@
 {
   "name": "posty",
   "version": "1.0.0",
-  "description": "Schedule and publish social posts from the command line. Channels: X (Twitter), Facebook, Instagram, Threads, Bluesky, with YouTube coming and LinkedIn, TikTok and Google Business Profile pending those platforms' approval.",
+  "description": "Schedule and publish social posts from the command line to X (Twitter), Facebook, Instagram, Threads and Bluesky.",
   "author": {
     "name": "Norbert Kiss",
     "email": "norbert@posty.hu",
-    "url": "https://github.com/postyhq"
+    "url": "https://github.com/norbertlevente"
   },
   "homepage": "https://posty.hu",
-  "repository": "https://github.com/postyhq/posty-agent",
+  "repository": "https://github.com/norbertlevente/posty-agent",
   "license": "AGPL-3.0",
   "skills": [
     "./"
@@ -24,9 +24,6 @@
     "facebook",
     "instagram",
     "threads",
-    "bluesky",
-    "youtube",
-    "linkedin",
-    "tiktok"
+    "bluesky"
   ]
 }

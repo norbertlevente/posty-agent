@@ -5,13 +5,13 @@
     "email": "norbert@posty.hu"
   },
   "metadata": {
-    "description": "Schedule and publish social posts from the command line. Channels: X (Twitter), Facebook, Instagram, Threads, Bluesky, with YouTube coming and LinkedIn, TikTok and Google Business Profile pending those platforms' approval.",
+    "description": "Schedule and publish social posts from the command line to X (Twitter), Facebook, Instagram, Threads and Bluesky.",
     "version": "1.0.0"
   },
   "plugins": [
     {
       "name": "posty",
-      "description": "Schedule and publish social posts from the command line. Channels: X (Twitter), Facebook, Instagram, Threads, Bluesky, with YouTube coming and LinkedIn, TikTok and Google Business Profile pending those platforms' approval.",
+      "description": "Schedule and publish social posts from the command line to X (Twitter), Facebook, Instagram, Threads and Bluesky.",
       "source": "./",
       "strict": false,
       "skills": [
