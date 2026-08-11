@@ -1,9 +1,9 @@
 Posty CLI (posty-cli)
 Copyright (C) 2026 Kiss Industries
 
-Built on Postiz (https://github.com/gitroomhq/postiz-app), also AGPL-3.0.
-Parts of this program come from there and stay under the copyright of the
-Postiz project and its contributors.
+Built on work from Postiz (https://github.com/gitroomhq/postiz-app), also
+AGPL-3.0. Those parts stay under the copyright of the Postiz project and its
+contributors.
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU Affero General Public License as published by the Free
