@@ -1,11 +1,9 @@
 Posty CLI (posty-cli)
-Copyright (C) 2026 Norbert Kiss
+Copyright (C) 2026 Kiss Industries
 
-This program is a derivative work of Postiz
-(https://github.com/gitroomhq/postiz-app), which is likewise distributed under
-the GNU Affero General Public License, version 3. Copyright in the upstream
-portions remains with the Postiz project and its contributors; this notice
-does not claim it.
+Built on Postiz (https://github.com/gitroomhq/postiz-app), also AGPL-3.0.
+Parts of this program come from there and stay under the copyright of the
+Postiz project and its contributors.
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU Affero General Public License as published by the Free
