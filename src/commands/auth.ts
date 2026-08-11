@@ -64,17 +64,35 @@ function deleteCredentials(): void {
   }
 }
 
-function openBrowser(url: string): void {
-  const { exec } = require('child_process');
-  const platform = process.platform;
+/*
+  SPAWNED WITH THE URL AS AN ARGUMENT, NEVER INTERPOLATED INTO A SHELL STRING.
 
-  if (platform === 'darwin') {
-    exec(`open "${url}"`);
-  } else if (platform === 'win32') {
-    exec(`start "" "${url}"`);
-  } else {
-    exec(`xdg-open "${url}"`);
-  }
+  This used to build `open "${url}"` and hand it to exec(), which runs it
+  through a shell. The url is not ours -- it comes from whatever
+  POSTY_AUTH_SERVER points at -- so a hostile or intercepted auth server could
+  close the quote and append a command that runs on the machine of whoever
+  typed `posty auth:login`. Better quoting is not the fix; the shell is.
+
+  spawn() with an argv array involves no shell, so the url stays one argument
+  whatever it contains. Windows is the exception: `start` is a cmd builtin
+  rather than a program, so it needs cmd -- and there the url is passed AS AN
+  ARGUMENT to cmd rather than pasted into the command string.
+*/
+function openBrowser(url: string): void {
+  const { spawn } = require('child_process');
+  const opts = { stdio: 'ignore' as const, detached: true };
+
+  const child =
+    process.platform === 'darwin'
+      ? spawn('open', [url], opts)
+      : process.platform === 'win32'
+      ? spawn('cmd', ['/c', 'start', '', url], opts)
+      : spawn('xdg-open', [url], opts);
+
+  // A machine with no browser (a server, a container) must not take the login
+  // down with it. The url is printed for the user either way.
+  child.on('error', () => {});
+  child.unref();
 }
 
 function sleep(ms: number): Promise<void> {

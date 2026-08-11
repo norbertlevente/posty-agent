@@ -9,6 +9,66 @@ import {
 import { result, status, fail } from '../output';
 import { readFileSync, existsSync } from 'fs';
 
+/**
+ * Read `--content`/`--media` off the raw argv, keeping the order they were
+ * written in, so each `-m` belongs to the `-c` it follows.
+ *
+ * Exported for the tests, and separate from the handler because it is pure:
+ * argv in, pairs out, no process state.
+ *
+ * Accepts `-c X`, `--content X` and `--content=X`. Repeating `-m` under one
+ * `-c` appends, matching the comma syntax a single `-m` already supports.
+ */
+export const pairContentsWithMedia = (
+  argv: string[]
+): { content: string; media?: string }[] => {
+  const read = (
+    token: string,
+    next: string | undefined,
+    long: string,
+    short: string
+  ): { value: string; consumed: number } | null => {
+    if (token === `--${long}` || token === `-${short}`) {
+      return next === undefined ? null : { value: next, consumed: 2 };
+    }
+    if (token.startsWith(`--${long}=`)) {
+      return { value: token.slice(long.length + 3), consumed: 1 };
+    }
+    return null;
+  };
+
+  const pairs: { content: string; media?: string }[] = [];
+
+  for (let i = 0; i < argv.length; ) {
+    const content = read(argv[i], argv[i + 1], 'content', 'c');
+    if (content) {
+      pairs.push({ content: content.value });
+      i += content.consumed;
+      continue;
+    }
+
+    const media = read(argv[i], argv[i + 1], 'media', 'm');
+    if (media) {
+      /*
+        An -m before any -c has nothing to attach to. Guessing (first
+        content? all of them?) is how the old bug behaved, so refuse instead.
+      */
+      if (!pairs.length) {
+        console.error('❌ --media/-m must come after the --content/-c it belongs to');
+        process.exit(1);
+      }
+      const last = pairs[pairs.length - 1];
+      last.media = last.media ? `${last.media},${media.value}` : media.value;
+      i += media.consumed;
+      continue;
+    }
+
+    i += 1;
+  }
+
+  return pairs;
+};
+
 /** Walk the timezone ladder for this invocation, or exit 1 with the reason. */
 function timezoneForArgs(args: any): ResolvedTimezone | null {
   try {
@@ -100,32 +160,47 @@ export async function createPost(args: any) {
       process.exit(1);
     }
 
-    // Support multiple -c and -m flags
-    // Normalize to arrays
     const contents = Array.isArray(args.content) ? args.content : [args.content];
-    const medias = Array.isArray(args.media) ? args.media : (args.media ? [args.media] : []);
 
     if (!contents[0]) {
       console.error('❌ At least one -c/--content is required');
       process.exit(1);
     }
 
-    // Build value array by pairing contents with their media
-    const values = contents.map((content: string, index: number) => {
-      const mediaForThisContent = medias[index];
-      const images = mediaForThisContent
-        ? mediaForThisContent.split(',').map((img: string) => ({
-            id: Math.random().toString(36).substring(7),
-            path: img.trim(),
-          }))
-        : [];
+    /*
+      PAIRED BY POSITION ON THE COMMAND LINE, NOT BY ARRAY INDEX.
 
-      return {
-        content: content,
-        image: images,
+      yargs collects every -c into one array and every -m into another, and
+      this used to pair them by index. The two arrays only line up when every
+      -c has an -m, so
+
+        -c "A" -m one.jpg -c "B" -c "C" -m three.jpg
+
+      produced medias ["one","three"] and attached three.jpg to comment B.
+      Silently, and to a live social account. Reading the real argv is the
+      only way to know which -c an -m was written under.
+    */
+    const pairs = pairContentsWithMedia(process.argv);
+
+    if (pairs.length && pairs.length !== contents.length) {
+      console.error(
+        `❌ Could not match --media to --content reliably (parsed ${pairs.length} content flags, yargs saw ${contents.length}).`
+      );
+      console.error('Pass the post structure with --json instead.');
+      process.exit(1);
+    }
+
+    const values = (pairs.length ? pairs : contents.map((content: string) => ({ content, media: undefined })))
+      .map(({ content, media }: { content: string; media?: string }) => ({
+        content,
+        image: media
+          ? media.split(',').filter((img: string) => img.trim()).map((img: string) => ({
+              id: Math.random().toString(36).substring(7),
+              path: img.trim(),
+            }))
+          : [],
         delay: args?.delay || 0,
-      };
-    });
+      }));
 
     // Parse provider-specific settings if provided
     // Note: __type is automatically added by the backend based on integration ID
