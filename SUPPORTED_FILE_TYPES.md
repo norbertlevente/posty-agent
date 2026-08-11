@@ -67,7 +67,7 @@ Then use the returned `path` as the media reference on a post:
 
 ```bash
 PATH=$(posty upload ./videos/promo.mp4 | jq -r '.path')
-posty posts:create -c "Új videó!" -m "$PATH" -i "<integration-id>"
+posty posts:create -c "New video!" -m "$PATH" -i "<integration-id>"
 ```
 
 The media reference **must** be a path returned by `posty upload`. Passing a

@@ -119,7 +119,7 @@ so they may not appear even though the code is complete.
 IMG=$(posty upload ./photo.jpg | jq -r '.path')
 
 posty posts:create \
-  -c "Első poszt a CLI-ből" \
+  -c "First post from the CLI" \
   -m "$IMG" \
   -s "2026-12-31T12:00:00Z" \
   -t draft \

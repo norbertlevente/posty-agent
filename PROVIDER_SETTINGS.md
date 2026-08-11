@@ -299,9 +299,9 @@ All fields optional.
 
 ```bash
 posty posts:create \
-  -c "Nyári akció a boltban" \
+  -c "Summer sale at the store" \
   -s "2026-12-31T12:00:00Z" \
-  --settings '{"topicType":"OFFER","callToActionType":"GET_OFFER","callToActionUrl":"https://example.com/akcio","offerCouponCode":"NYAR20"}' \
+  --settings '{"topicType":"OFFER","callToActionType":"GET_OFFER","callToActionUrl":"https://example.com/sale","offerCouponCode":"SUMMER20"}' \
   -i "$GMB_ID"
 ```
 

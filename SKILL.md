@@ -483,9 +483,9 @@ JSON mode takes the API's real request body — `type`, `date`, `shortLink`,
 [examples/multi-platform-post.json](./examples/multi-platform-post.json).
 
 ```bash
-IMG=$(posty upload akcio.jpg | jq -r '.path')
+IMG=$(posty upload sale.jpg | jq -r '.path')
 
-cat > kampany.json << EOF
+cat > campaign.json << EOF
 {
   "type": "schedule",
   "date": "2026-12-01T09:00:00Z",
@@ -495,14 +495,14 @@ cat > kampany.json << EOF
     {
       "integration": { "id": "<x-id>" },
       "value": [
-        { "content": "Karácsonyi akció! 🎄 -20% minden csomagra. #akcio", "image": [ { "id": "a", "path": "$IMG" } ] }
+        { "content": "Holiday sale! 🎄 20% off every plan. #sale", "image": [ { "id": "a", "path": "$IMG" } ] }
       ],
       "settings": { "who_can_reply_post": "everyone" }
     },
     {
       "integration": { "id": "<facebook-id>" },
       "value": [
-        { "content": "Elindult a karácsonyi akciónk — december végéig minden csomag 20% kedvezménnyel. Részletek a weboldalon!", "image": [ { "id": "b", "path": "$IMG" } ] }
+        { "content": "Our holiday sale is live — 20% off every plan until the end of December. Details on the website!", "image": [ { "id": "b", "path": "$IMG" } ] }
       ],
       "settings": { "post_type": "post" }
     }
@@ -510,7 +510,7 @@ cat > kampany.json << EOF
 }
 EOF
 
-posty posts:create --json kampany.json
+posty posts:create --json campaign.json
 ```
 
 ### Pattern 5: Validate Settings Before Posting
@@ -992,7 +992,7 @@ posty integrations:trigger <id> <method> -d '{}'  # Fetch dynamic data
 
 # Posting (date required unless -t now or --json; explicit offset or --timezone — never naive)
 posty posts:create -c "text" -s "2026-12-31T12:00:00Z" -i "id"                  # Simple (UTC)
-posty posts:create -c "Jó reggelt!" -s "2026-12-31 08:00" --timezone Europe/Budapest -i "id"  # Local wall-clock
+posty posts:create -c "Good morning!" -s "2026-12-31 08:00" --timezone Europe/Budapest -i "id"  # Local wall-clock
 posty posts:create -c "text" -t now -i "id"                                     # Publish immediately
 posty posts:create -c "text" -s "2026-12-31T12:00:00Z" -t draft -i "id"        # Draft
 posty posts:create -c "text" -m "$(posty upload img.jpg | jq -r '.path')" -s "2026-12-31T12:00:00Z" -i "id"  # With media (upload first — Rule 2)

@@ -10,18 +10,18 @@
       "integration": { "id": "<your-x-integration-id>" },
       "value": [
         {
-          "content": "🚀 Elindult az új funkciónk!\n\nA részletek a szálban 👇",
+          "content": "🚀 Our new feature is live!\n\nDetails in the thread 👇",
           "image": [
             { "id": "t1", "path": "<the .path returned by: posty upload banner.jpg>" }
           ]
         },
         {
-          "content": "1️⃣ Egy naptár az összes csatornádnak: X, Facebook, Instagram, Threads, Bluesky.",
+          "content": "1️⃣ One calendar for all your channels: X, Facebook, Instagram, Threads, Bluesky.",
           "image": [],
           "delay": 3
         },
         {
-          "content": "2️⃣ Csatornánként külön szöveg, ugyanabból a posztból.",
+          "content": "2️⃣ Different text per channel, from the same post.",
           "image": [],
           "delay": 3
         }
@@ -34,7 +34,7 @@
     {
       "integration": { "id": "<your-facebook-integration-id>" },
       "value": [{
-        "content": "Elindult az új funkciónk. Egy naptár, minden csatornád – a részletek a weboldalunkon.",
+        "content": "Our new feature is live. One calendar, every channel — details on our website.",
         "image": [
           { "id": "f1", "path": "<the .path returned by: posty upload facebook.jpg>" }
         ]
@@ -47,7 +47,7 @@
     {
       "integration": { "id": "<your-instagram-integration-id>" },
       "value": [{
-        "content": "🚀 Új funkció!\n\nEgy naptár, minden csatornád.\n\n#kozossegimedia #utemezes",
+        "content": "🚀 New feature!\n\nOne calendar, every channel.\n\n#socialmedia #scheduling",
         "image": [
           { "id": "i1", "path": "<the .path returned by: posty upload instagram.jpg>" }
         ]
@@ -60,7 +60,7 @@
     {
       "integration": { "id": "<your-threads-integration-id>" },
       "value": [{
-        "content": "Elindult az új funkciónk. Egy naptár, minden csatornád.",
+        "content": "Our new feature is live. One calendar, every channel.",
         "image": []
       }],
       "settings": {

@@ -8,7 +8,7 @@
       "id": "<your-youtube-integration-id>"
     },
     "value": [{
-      "content": "Ebben a videóban végigmegyünk azon, hogyan állítsd be a heti posztolási ritmusodat.\n\n⏱️ Fejezetek:\n0:00 – Bevezető\n2:15 – A naptár beállítása\n5:30 – Csatornánkénti finomhangolás\n10:45 – Ütemezés\n\n🔔 Iratkozz fel, ha hasznos volt!",
+      "content": "In this video we walk through setting up your weekly posting rhythm.\n\n⏱️ Chapters:\n0:00 – Intro\n2:15 – Setting up the calendar\n5:30 – Fine-tuning per channel\n10:45 – Scheduling\n\n🔔 Subscribe if this was useful!",
       "image": [{
         "id": "video1",
         "path": "<the .path returned by: posty upload video.mp4>"
@@ -16,13 +16,13 @@
     }],
     "settings": {
       "__type": "youtube",
-      "title": "Heti posztolási ritmus 15 perc alatt",
+      "title": "Weekly posting rhythm in 15 minutes",
       "type": "public",
       "selfDeclaredMadeForKids": "no",
       "tags": [
         { "value": "posty", "label": "Posty" },
-        { "value": "utemezes", "label": "Ütemezés" },
-        { "value": "kozossegi-media", "label": "Közösségi média" }
+        { "value": "scheduling", "label": "Scheduling" },
+        { "value": "social-media", "label": "Social media" }
       ]
     }
   }]
