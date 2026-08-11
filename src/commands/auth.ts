@@ -3,6 +3,7 @@ import { join } from 'path';
 import { homedir } from 'os';
 import { createInterface } from 'readline';
 import { getSetting, saveSetting } from '../settings';
+import { result, status } from '../output';
 import { assertIanaTimezone } from '../dates';
 
 const CREDENTIALS_DIR = join(homedir(), '.posty');
@@ -278,38 +279,64 @@ export async function authLogout() {
   console.log('✅ Credentials removed.');
 }
 
+/**
+ * Report who we are authenticated as, and whether those credentials still work.
+ *
+ * OBEYS THE OUTPUT CONTRACT, which it used to break in both directions: it
+ * printed its human report to STDOUT and returned 0 even when the credentials
+ * were invalid. SKILL.md tells an agent to run this first and pipe it to `jq`,
+ * so the emoji went straight into the parser, and a caller that checked the
+ * exit code was told "fine" about an expired token.
+ *
+ * Now the prose goes to stderr, a machine-readable verdict goes to stdout, and
+ * anything short of working credentials exits 1.
+ *
+ * ONLY THE KEY PREFIX IS EVER SHOWN. `psty_mcp_` keys are eight characters of
+ * literal prefix, so the old `substring(0, 8)` revealed nothing — but for a
+ * `pos_` OAuth token those same eight characters were four real secret ones.
+ * The prefix is enough to tell two keys apart, which is all this is for.
+ */
 export async function authStatus() {
   const envKey = process.env.POSTY_API_KEY;
   const creds = loadCredentials();
 
+  /** Enough to identify a key, never enough to use one. */
+  const hint = (token: string) => `${token.split('_')[0]}_…`;
+
   let apiKey: string | undefined;
   let apiUrl: string;
+  let method: 'oauth2' | 'api-key';
 
   if (creds) {
-    console.log('🔐 Authentication method: OAuth2');
-    console.log(`📡 API URL: ${creds.apiUrl}`);
-    console.log(`🔑 Token: ${creds.accessToken.substring(0, 8)}...`);
-    if (creds.organizationId) {
-      console.log(`🏢 Organization: ${creds.organizationId}`);
-    }
-    console.log(`📁 Credentials file: ${CREDENTIALS_FILE}`);
+    method = 'oauth2';
     apiKey = creds.accessToken;
     apiUrl = creds.apiUrl;
+    status('🔐 Authentication method: OAuth2');
+    status(`📡 API URL: ${creds.apiUrl}`);
+    status(`🔑 Token: ${hint(creds.accessToken)}`);
+    if (creds.organizationId) {
+      status(`🏢 Organization: ${creds.organizationId}`);
+    }
+    status(`📁 Credentials file: ${CREDENTIALS_FILE}`);
   } else if (envKey) {
-    console.log('🔑 Authentication method: API Key (environment variable)');
-    console.log(`🔑 Key: ${envKey.substring(0, 8)}...`);
+    method = 'api-key';
     apiKey = envKey;
     apiUrl = process.env.POSTY_API_URL || DEFAULT_API_URL;
+    status('🔑 Authentication method: API Key (environment variable)');
+    status(`🔑 Key: ${hint(envKey)}`);
   } else {
-    console.log('❌ Not authenticated.');
-    console.log('\nOptions:');
-    console.log('  1. OAuth2: posty auth:login');
-    console.log('  2. API Key: export POSTY_API_KEY=your_api_key');
-    return;
+    status('❌ Not authenticated.');
+    status('');
+    status('Options:');
+    status('  1. OAuth2: posty auth:login');
+    status('  2. API Key: export POSTY_API_KEY=your_api_key');
+    result({ authenticated: false, reason: 'no-credentials' });
+    process.exit(1);
   }
 
-  // Verify credentials by calling the integrations endpoint
-  console.log('\n🔄 Verifying credentials...');
+  status('');
+  status('🔄 Verifying credentials...');
+
   try {
     const response = await fetch(`${apiUrl}/public/v1/integrations`, {
       method: 'GET',
@@ -321,19 +348,47 @@ export async function authStatus() {
 
     if (response.ok) {
       const integrations = (await response.json()) as any[];
-      console.log(`✅ Credentials are valid. ${integrations.length} integration(s) connected.`);
-    } else if (response.status === 401 || response.status === 403) {
-      console.log('❌ Credentials are expired or invalid. Please re-authenticate.');
-      if (creds) {
-        console.log('   Run: posty auth:login');
-      } else {
-        console.log('   Update your POSTY_API_KEY environment variable.');
-      }
-    } else {
-      const error = await response.text();
-      console.log(`⚠️  Could not verify credentials (HTTP ${response.status}): ${error}`);
+      status(
+        `✅ Credentials are valid. ${integrations.length} integration(s) connected.`
+      );
+      result({
+        authenticated: true,
+        method,
+        apiUrl,
+        integrations: integrations.length,
+      });
+      return;
     }
+
+    if (response.status === 401 || response.status === 403) {
+      status('❌ Credentials are expired or invalid. Please re-authenticate.');
+      status(
+        creds
+          ? '   Run: posty auth:login'
+          : '   Update your POSTY_API_KEY environment variable.'
+      );
+      result({ authenticated: false, method, apiUrl, reason: 'rejected' });
+      process.exit(1);
+    }
+
+    const error = await response.text();
+    status(`⚠️  Could not verify credentials (HTTP ${response.status}): ${error}`);
+    /*
+      UNKNOWN, NOT INVALID. A 500 or a proxy error says nothing about the
+      credentials, so this reports that it could not check rather than
+      claiming they are bad -- but it still exits 1, because a caller that
+      asked "are these good?" did not get a yes.
+    */
+    result({
+      authenticated: null,
+      method,
+      apiUrl,
+      reason: `http-${response.status}`,
+    });
+    process.exit(1);
   } catch (error: any) {
-    console.log(`⚠️  Could not reach API to verify credentials: ${error.message}`);
+    status(`⚠️  Could not reach API to verify credentials: ${error.message}`);
+    result({ authenticated: null, method, apiUrl, reason: 'unreachable' });
+    process.exit(1);
   }
 }
