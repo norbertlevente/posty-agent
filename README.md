@@ -1,11 +1,11 @@
 ## Használat AI-ügynökkel
 
-A csomag tartalmazza a [`SKILL.md`](./SKILL.md) fájlt: ez a teljes
-parancsreferencia, kifejezetten ügynököknek írva. Telepítés után irányítsd rá az
-ügynököt, és további magyarázat nélkül használja az egész CLI-t.
+A csomagban megtalálod a teljes, kifejezetten ügynököknek szánt
+parancsreferenciát, a [`SKILL.md`](./SKILL.md) fájlt. Telepítés után mutasd meg
+az ügynöknek, és további magyarázat nélkül tudja használni az egész CLI-t.
 
-Ez a repó Claude Code pluginként is be van állítva
-(`.claude-plugin/`), ugyanezzel a skillel.
+A repót Claude Code-pluginként is használhatod (`.claude-plugin/`), ugyanezzel
+a skillel.
 
 ---
 
@@ -13,19 +13,20 @@ Ez a repó Claude Code pluginként is be van állítva
 
 **Közösségimédia-ütemezés a parancssorból — vagy az AI-ügynöködből.**
 
-A Posty magyar közösségimédia-ütemező. Ez a parancssori felülete: ugyanazt a
-nyilvános API-t használja, mint a webes alkalmazás, tehát amit itt ütemezel,
-megjelenik a Posty naptáradban, és amit ott ütemezel, azt itt is látod.
+A Posty magyar közösségimédia-ütemező, ez pedig a parancssori felülete.
+Ugyanazt a nyilvános API-t használja, mint a webes alkalmazás: amit itt
+ütemezel, megjelenik a Posty naptáradban, és amit ott ütemezel, azt itt is
+látod.
 
-A Postyban **szándékosan nincs AI szövegíró**. Úgyis fizetsz egy jó modellért;
-a CLI azért van, hogy az a modell közvetlenül a naptáradba dolgozhasson, ahelyett
-hogy két ablak között másolgatnál. A [`SKILL.md`](./SKILL.md) kifejezetten
-AI-ügynököknek íródott: ha ráirányítod a Claude-ot, a ChatGPT-t, a Codexet, a
-Muse-t, az OpenClaw-t vagy a Hermest, további magyarázat nélkül használják az
-egész CLI-t.
+A Postyban **szándékosan nincs beépített AI-szövegíró**. Úgyis fizetsz egy jó
+modellért; a CLI-vel ez a modell közvetlenül a naptáradba dolgozhat, így nem kell
+két ablak között másolgatnod. A [`SKILL.md`](./SKILL.md) kifejezetten
+AI-ügynököknek készült. Ha megmutatod a Claude-nak, a ChatGPT-nek, a Codexnek,
+a Muse-nak, az OpenClaw-nak vagy a Hermesnek, további magyarázat nélkül tudják
+használni az egész CLI-t.
 
-> A parancsok, a kapcsolók és a kimenet angolul vannak. Ez szándékos: a
-> parancssort fejlesztők és ügynökök használják. Maga a termék magyar.
+> A parancsok, a kapcsolók és a kimenet szándékosan angol nyelvű: a
+> parancssort fejlesztők és ügynökök használják, maga a termék viszont magyar.
 
 ## Telepítés
 
@@ -36,9 +37,9 @@ pnpm install -g posty-cli
 ```
 
 > **A csomag neve `posty-cli`, a parancsé `posty`.**
-> Ez a kettő szándékosan tér el. Az npm-en a sima `posty` név egy tőlünk
-> független projekté, tehát az `npm install -g posty` valaki más csomagját
-> telepíti — sikeresen és némán, és pont ezért érdemes kimondani.
+> A két név szándékosan tér el. Az npm-en a sima `posty` egy tőlünk független
+> projekt neve, ezért az `npm install -g posty` sikeresen, figyelmeztetés nélkül
+> valaki más csomagját telepíti.
 
 ## Hitelesítés
 
@@ -50,9 +51,10 @@ posty auth:status    # ellenőrzi, hogy még érvényes-e
 posty auth:logout    # törli a tárolt hitelesítő adatokat
 ```
 
-A hitelesítő adatok a `~/.posty/credentials.json` fájlba kerülnek `0600`
-jogosultsággal, egy `0700` könyvtárban, a beállításoktól elkülönítve — így a
-`logout` a titkokat törli, a konfigurációdat békén hagyja.
+A CLI a hitelesítő adatokat a `~/.posty/credentials.json` fájlban tárolja,
+`0600` jogosultsággal, egy `0700` jogosultságú könyvtárban. A fájl elkülönül a
+beállításoktól, így a `logout` törli a titkokat, de a konfigurációdat békén
+hagyja.
 
 **2. lehetőség: API-kulcs** — szerverhez, CI-hez, ügynökhöz:
 
@@ -118,8 +120,8 @@ posty analytics:platform <integration-id> -d 30  # csatorna, 30 nap
 posty analytics:post <post-id>                   # poszt, 7 nap
 ```
 
-Ha az `analytics:post` `{"missing": true}` értéket ad vissza, a poszt megjelent,
-de a platform nem adott vissza használható azonosítót. Ilyenkor:
+Ha az `analytics:post` `{"missing": true}` értéket ad vissza, a poszt már
+megjelent, de a platformtól nem érkezett használható azonosító. Ilyenkor:
 
 ```bash
 posty posts:missing <post-id>                     # elérhető tartalmak a szolgáltatótól
@@ -133,9 +135,9 @@ posty analytics:post <post-id>                    # most már működik
 posty upload fajl.jpg
 ```
 
-**Minden `-m`-nek átadott értéknek a `posty upload`-ból kell származnia.** A
-nyers fájlnevek (`kep.jpg`) és a külső URL-ek (`https://...`) nem működnek: a
-platformok csak a Posty által kiszolgált címeket fogadják el.
+**A `-m` értékeként csak a `posty upload` által visszaadott elérési utat adhatod
+meg.** A sima fájlnevek (`kep.jpg`) és a külső URL-ek (`https://...`) nem
+működnek, mert a platformok csak a Posty által kiszolgált címeket fogadják el.
 
 ### Beállítások
 
@@ -146,7 +148,7 @@ posty config:get
 
 ## Csatornaspecifikus beállítások
 
-A pontos sémát mindig a `posty integrations:settings <id>` adja. Röviden:
+A pontos sémát mindig a `posty integrations:settings <id>` mutatja. Röviden:
 
 ### X (Twitter) — `x`
 
@@ -166,7 +168,8 @@ posty posts:create -c "Tartalom" -m "$IMG" --date "2026-12-31T12:00:00Z" \
   --settings '{"post_type":"post"}' -i "<facebook-id>"
 ```
 
-`post_type`: `post` vagy `story`. Oldalakra publikál, nem személyes profilra.
+`post_type`: `post` vagy `story`. Csak oldalakra publikálhatsz, személyes profilra
+nem.
 
 ### Instagram — `instagram`, `instagram-standalone`
 
@@ -186,22 +189,25 @@ Teljes séma: [PROVIDER_SETTINGS.md](./PROVIDER_SETTINGS.md).
 
 ## AI-ügynököknek
 
-**Felderítés.** Az ügynök ne tippeljen: `integrations:list` adja a valóban
-összekötött csatornákat, `integrations:settings <id>` pedig azt, hogy mit fogad
-el. Ami nincs az `integrations:list` kimenetében, arra nem lehet posztolni.
+**Felderítés.** Ne hagyd, hogy az ügynök találgasson. Az `integrations:list`
+megmutatja a valóban összekötött csatornákat, az `integrations:settings <id>`
+pedig az elfogadott beállításokat. Amelyik csatorna nem szerepel az
+`integrations:list` kimenetében, arra nem lehet posztolni.
 
-**Kimeneti szerződés.** Az eredmény **JSON a stdout-on**, az állapot és a hiba a
-**stderr**-en, és minden hiba nem nulla kilépési kóddal zárul:
+**Kimeneti szerződés.** A parancs az eredményt **JSON-ként a stdout-ra**, az
+állapotüzeneteket és a hibákat pedig a **stderr-re** írja. Hiba esetén nem nulla
+kilépési kóddal áll le:
 
 ```bash
 posty integrations:list | jq -r '.[].id'
 ```
 
-**JSON mód.** Összetett kampányhoz írd meg a posztot fájlba, és add át
-`--json`-nal. Működő példák: [`examples/`](./examples).
+**JSON mód.** Összetett kampánynál írd a posztot fájlba, majd add át
+`--json`-nal. Működő példákat az [`examples/`](./examples) könyvtárban találsz.
 
-**Szálak.** A `-c` ismétlésével épül a szál — az első a poszt, a többi a
-hozzászólás. Minden `-m` ahhoz a `-c`-hez tartozik, amelyik előtte áll:
+**Szálak.** A `-c` kapcsoló ismétlésével építhetsz szálat: az első elem a
+poszt, a többi a hozzászólás. Minden `-m` az előtte álló `-c` kapcsolóhoz
+tartozik:
 
 ```bash
 posty posts:create \
@@ -216,8 +222,8 @@ A `-d` **percben** értendő, nem másodpercben.
 
 ## Gyakori munkamenetek
 
-**Kampány több csatornára, csatornánként más szöveggel** — írd JSON-ba, és
-add át `--json`-nal; lásd
+**Kampány több csatornára, csatornánként más szöveggel** — írd JSON-fájlba,
+majd add át `--json`-nal; lásd
 [`examples/multi-platform-with-settings.json`](./examples/multi-platform-with-settings.json).
 
 **Heti ütemezés szkriptből:**
@@ -242,33 +248,34 @@ MAX=$(posty integrations:settings "<id>" | jq '.output.maxLength')
 | Változó | Kötelező | Alapérték | Mire való |
 |---|---|---|---|
 | `POSTY_API_KEY` | nem | — | API-kulcs az `auth:login` helyett |
-| `POSTY_API_URL` | nem | `https://posty.hu/api` | Az API végpont felülírása |
+| `POSTY_API_URL` | nem | `https://posty.hu/api` | Ezzel felülírhatod az API-végpontot |
 | `POSTY_TIMEZONE` | nem | — | IANA időzóna az eltolás nélküli dátumokhoz |
 | `POSTY_AUTH_SERVER` | nem | `https://posty.hu` | OAuth2 szerver (saját üzemeltetéshez) |
-| `POSTY_CLIENT_NAME` | nem | `posty-cli` | A device flow-ban megjelenő kliensnév |
+| `POSTY_CLIENT_NAME` | nem | `posty-cli` | Az eszközengedélyezéskor megjelenő kliensnév |
 
 ## Dátumok és időzónák
 
-A puszta `"2026-12-31 12:00"` kétértelmű, és a CLI **inkább hibát ad**, mint hogy
-csendben egy órával máskor publikáljon. A feloldás sorrendje:
+Az önmagában megadott `"2026-12-31 12:00"` kétértelmű. A CLI **inkább hibával
+leáll**, mint hogy csendben egy órával eltérő időpontban publikáljon. Ebben a
+sorrendben keresi az időzónát:
 
-1. explicit eltolás a dátumban — `2026-12-31T12:00:00Z` vagy `+01:00`
+1. a dátumban egyértelműen megadott eltolás — `2026-12-31T12:00:00Z` vagy `+01:00`
 2. `--timezone Europe/Budapest`
 3. `POSTY_TIMEZONE`
 4. `posty config:set timezone Europe/Budapest`
 
-Ha egyik sincs, a parancs hibával áll le, és a hibaüzenet mind a négy megoldást
-megnevezi. Számokban megadott eltolás időzónaként nem fogadható el.
+Ha egyik sincs megadva, a parancs hibával leáll, a hibaüzenet pedig mind a négy
+megoldást felsorolja. Időzónaként nem adhatsz meg számokkal jelölt eltolást.
 
 ## Hibakezelés
 
-Minden hiba a stderr-re megy, és a kilépési kód nem nulla — a stdout így
-gépi feldolgozásra tiszta marad.
+A CLI minden hibát a stderr-re ír, és nem nulla kilépési kóddal áll le. A
+stdout így tisztán, géppel feldolgozható marad.
 
 | Hiba | Jelentése |
 |---|---|
 | `--date is required...` | Ütemezéshez dátum kell, vagy használj `-t now`-t |
-| `--integrations is required...` | Nincs megadva csatorna; `integrations:list` |
+| `--integrations is required...` | Nem adtál meg csatornát; `integrations:list` |
 | naiv dátum hibája | Nincs időzóna sehol; lásd fentebb |
 | `Integration not found` | Rossz azonosító, vagy a csatorna már nincs összekötve |
 | 401 / 403 | Lejárt vagy visszavont hitelesítés; `posty auth:login` |
@@ -295,9 +302,9 @@ node dist/index.js --help
 
 | Szkript | Mit csinál |
 |---|---|
-| `pnpm run build` | Fordítás `dist/`-be |
-| `pnpm run dev` | Fordítás figyeléssel |
-| `pnpm run release:check` | Csomag- és publikálás-ellenőrzés (nem publikál) |
+| `pnpm run build` | Lefordítja a kódot a `dist/` könyvtárba |
+| `pnpm run dev` | Figyeli és újrafordítja a kódot |
+| `pnpm run release:check` | Ellenőrzi a csomagot és a publikálást (nem publikál) |
 
 ## Gyorsreferencia
 
@@ -350,15 +357,15 @@ posty posts:connect <id> --release-id "<rid>"
 | Threads | `threads` | nincs |
 | Bluesky | `bluesky` | nincs |
 
-Amit ténylegesen használni tudsz, azt az `integrations:list` mondja meg — a
-táblázat azt mutatja, mit támogat a Posty, a parancs azt, hogy te mit kötöttél
-össze.
+Az `integrations:list` mutatja meg, melyik csatornákat használhatod ténylegesen.
+A táblázatban a Posty által támogatott csatornákat látod, a parancs kimenetében
+pedig azokat, amelyeket te is összekötöttél.
 
 ## Hozzájárulás
 
 1. Forkold a projektet
-2. Készíts branchet (`git checkout -b feature/valami`)
-3. Fordíts és próbáld ki: `pnpm run build && node dist/index.js --help`
+2. Hozz létre egy branchet (`git checkout -b feature/valami`)
+3. Fordítsd le, majd próbáld ki: `pnpm run build && node dist/index.js --help`
 4. Nyiss pull requestet
 
 ## Linkek
