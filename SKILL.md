@@ -13,14 +13,20 @@ package name and the command name are deliberately different, because
 `posty` on npmjs.com belongs to an unrelated UK-postcode library. Never run it
 and never tell a user to.
 
-`posty-cli` is not on the public registry yet, so install from the repository
-the owner gives you:
+Install it from npm:
 
 ```bash
-git clone <the posty-agent repo you were given>
+npm install -g posty-cli
+posty auth:login          # opens the browser to approve the login
+```
+
+To work from a clone instead — only if you are changing the CLI itself:
+
+```bash
+git clone https://github.com/norbertlevente/posty-agent.git
 cd posty-agent
 pnpm install && pnpm run build
-npm link            # provides the `posty` command
+npm link                  # provides the `posty` command
 ```
 
 official website: https://posty.hu
