@@ -162,6 +162,9 @@ posty integrations:trigger <integration-id> <method> -d '{"key":"value"}'
 
 # 4. Prepare
 posty upload image.jpg
+#    or, when the file is on the person's phone / not on this machine:
+posty upload:link            # show the url to the person, they drop the files
+posty upload:files <id>      # what arrived; use each .path in -m
 
 # 5. Post
 posty posts:create -c "Content" -m "image.jpg" -i "<integration-id>"
@@ -226,6 +229,31 @@ export POSTY_API_URL=https://api.posty.hu
 may have read about `docs.posty.hu`, `cdn.posty.hu` or `mcp.posty.hu` is
 wrong — those hostnames do not resolve.
 
+### Upload link — when the file is not on this machine
+
+`posty upload` needs the file on disk. When the person has it on their phone,
+or you cannot see their filesystem, do NOT ask them to host it somewhere
+public. Mint a link:
+
+```bash
+posty upload:link
+# → {"id":"kR3mQ7xP2nLa","url":"https://posty.hu/feltoltes/…","expiresAt":"…"}
+```
+
+Show the `url` to the person verbatim and say: open it, drop the image or
+video, come back and tell me it is done. It works signed out and on a phone.
+When they say done:
+
+```bash
+posty upload:files kR3mQ7xP2nLa
+# → {"status":"ready","count":1,"files":[{"id":"…","name":"clip.mp4","path":"https://…","type":"video"}]}
+```
+
+Pass each `path` to `posts:create -m`. `status: "empty"` is not an error: they
+have not finished, or spoke before the last file landed. Ask them to check the
+page says "uploaded" and run it again. The link lives two hours; mint a new one
+if it expires.
+
 ### Rate limits
 
 Tiered, **per key, per route, per hour**. Each route keeps its own bucket, so a
@@ -237,6 +265,7 @@ polling loop on `posts:list` cannot starve `posts:create`.
 | Publish and delete — `posts:create`, `posts:delete`, `posts:status`, `integrations:trigger` | 60/h |
 | Analytics and channel refresh — `analytics:platform`, `analytics:post`, `/social/:integration` | 30/h |
 | Uploads — `upload`, `upload-from-url` | 30/h |
+| Upload links — `upload:link` 60/h, `upload:files` 600/h | |
 
 The bucket is keyed on the hash of the presented key, so rotating a key starts
 a fresh allowance and the old secret's allowance dies with it. Exceeding a

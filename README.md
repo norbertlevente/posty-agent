@@ -331,6 +331,8 @@ posty posts:delete <id>
 posty posts:status <id> --status draft
 posty posts:find-slot <id>
 posty upload <fajl>
+posty upload:link
+posty upload:files <id>
 
 # Analitika
 posty analytics:platform <id> -d 30
@@ -338,6 +340,22 @@ posty analytics:post <id>
 posty posts:missing <id>
 posty posts:connect <id> --release-id "<rid>"
 ```
+
+## Ha a fájl nem ezen a gépen van
+
+A `posty upload` a lemezen lévő fájlt tölti fel. Ha a kép vagy videó a
+telefonodon van, vagy az ügynök, amelyik a CLI-t futtatja, nem látja a
+fájlrendszeredet, kérj feltöltési linket:
+
+```bash
+posty upload:link            # {id, url, expiresAt}
+# nyisd meg az url-t bárhol (bejelentkezés nélkül is megy), húzd rá a fájlokat
+posty upload:files <id>      # {status, count, files:[{id, name, path, type}]}
+```
+
+A visszakapott elemek `path` értéke megy a `posts:create -m` kapcsolóba. A
+link két óráig él, több fájlt fogad, és csak feltölteni tud abba az egy
+munkaterületbe, amelyikhez készült.
 
 ## Dokumentáció
 

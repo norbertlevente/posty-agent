@@ -23,6 +23,21 @@ export class ApiError extends Error {
   }
 }
 
+/** `POST /public/v1/upload-link`: the page to show the person, and its id. */
+export interface UploadLink {
+  id: string;
+  url: string;
+  expiresAt: string;
+}
+
+/** `GET /public/v1/upload-link/:id`: what arrived through the link so far. */
+export interface UploadLinkFiles {
+  id: string;
+  status: 'empty' | 'ready';
+  count: number;
+  files: Array<{ id: string; name: string; path: string; type: string }>;
+}
+
 export class PostyAPI {
   private apiKey: string;
   private apiUrl: string;
@@ -208,5 +223,23 @@ export class PostyAPI {
       method: 'POST',
       body: JSON.stringify({ methodName, data }),
     });
+  }
+
+  /**
+   * A browser upload link for a file this process does not hold. `upload`
+   * covers the file on disk; this covers the one on the person's phone.
+   */
+  async createUploadLink(): Promise<UploadLink> {
+    return (await this.request('/public/v1/upload-link', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    })) as UploadLink;
+  }
+
+  async getUploadLinkFiles(id: string): Promise<UploadLinkFiles> {
+    return (await this.request(
+      `/public/v1/upload-link/${encodeURIComponent(id)}`,
+      { method: 'GET' }
+    )) as UploadLinkFiles;
   }
 }

@@ -5,6 +5,15 @@ All notable changes to the Posty CLI are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-09-08
+
+### Added
+- `posty upload:link` and `posty upload:files <id>`: a browser upload link for
+  a file that is not on this machine. The person opens the link signed out,
+  drops the files, and `upload:files` returns what arrived with the `path` to
+  pass to `posts:create -m`. Backed by `POST /public/v1/upload-link` and
+  `GET /public/v1/upload-link/:id`.
+
 ## [1.0.0] - 2026-08-11
 
 First public release.

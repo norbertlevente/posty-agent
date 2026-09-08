@@ -3,7 +3,7 @@ import { hideBin } from 'yargs/helpers';
 import { createPost, listPosts, deletePost, getMissingContent, connectPost, changePostStatus, findSlot } from './commands/posts';
 import { listIntegrations, listGroups, getIntegrationSettings, triggerIntegrationTool } from './commands/integrations';
 import { getAnalytics, getPostAnalytics } from './commands/analytics';
-import { uploadFile } from './commands/upload';
+import { uploadFile, createUploadLink, listUploadLinkFiles } from './commands/upload';
 import { authLogin, authLogout, authStatus } from './commands/auth';
 import { configSet, configGet } from './commands/config';
 import type { Argv } from 'yargs';
@@ -383,6 +383,33 @@ yargs(hideBin(process.argv))
         .example('$0 upload ./image.png', 'Upload an image; use the returned .path in posts:create -m');
     },
     uploadFile as any
+  )
+  .command(
+    'upload:link',
+    'Get a browser upload link for a file that is not on this machine (e.g. on a phone)',
+    (yargs: Argv) => {
+      return yargs.example(
+        '$0 upload:link',
+        'Returns {id, url, expiresAt}. Show the url to the person; they drop files on it, signed out. Then run upload:files <id>'
+      );
+    },
+    createUploadLink as any
+  )
+  .command(
+    'upload:files <id>',
+    'List the files that arrived through an upload link; each .path goes to posts:create -m',
+    (yargs: Argv) => {
+      return yargs
+        .positional('id', {
+          describe: 'The id returned by "posty upload:link"',
+          type: 'string',
+        })
+        .example(
+          '$0 upload:files kR3mQ7xP2nLa',
+          'Returns {status, count, files:[{id,name,path,type}]}; status "empty" means nothing has arrived yet'
+        );
+    },
+    listUploadLinkFiles as any
   )
   .command(
     'config:set <key> <value>',
