@@ -40,7 +40,11 @@
     "bluesky",
     "youtube",
     "linkedin",
-    "tiktok"
+    "tiktok",
+    "mcp",
+    "scheduler",
+    "social-media-scheduler",
+    "posts"
   ],
   "author": "Kiss Industries",
   "license": "AGPL-3.0",
@@ -48,7 +52,7 @@
     "type": "git",
     "url": "git+https://github.com/norbertlevente/posty-agent.git"
   },
-  "homepage": "https://github.com/norbertlevente/posty-agent#readme",
+  "homepage": "https://posty.hu",
   "bugs": {
     "url": "https://github.com/norbertlevente/posty-agent/issues"
   },
