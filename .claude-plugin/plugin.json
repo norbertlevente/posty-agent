@@ -1,7 +1,7 @@
 {
   "name": "posty",
-  "version": "1.0.0",
-  "description": "Schedule and publish social posts from the command line to X (Twitter), Facebook, Instagram, Threads and Bluesky.",
+  "version": "1.1.0",
+  "description": "Posty: schedule and publish social posts to Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord and Slack, from the command line or straight from the chat over MCP.",
   "author": {
     "name": "Norbert Kiss",
     "email": "norbert@posty.hu",
@@ -10,20 +10,37 @@
   "homepage": "https://posty.hu",
   "repository": "https://github.com/norbertlevente/posty-agent",
   "license": "AGPL-3.0",
-  "skills": [
-    "./"
-  ],
   "keywords": [
     "posty",
     "social-media",
     "scheduling",
     "automation",
     "ai-agent",
+    "mcp",
     "x",
     "twitter",
     "facebook",
     "instagram",
+    "linkedin",
+    "tiktok",
+    "youtube",
     "threads",
-    "bluesky"
-  ]
+    "bluesky",
+    "telegram",
+    "discord",
+    "slack"
+  ],
+  "skills": [
+    "./"
+  ],
+  "mcpServers": "./.mcp.json",
+  "userConfig": {
+    "mcp_key": {
+      "type": "string",
+      "title": "Posty MCP key",
+      "description": "Create one in Posty under Beállítások → Fejlesztők → MCP. It starts with psty_mcp_ and is shown once. The plugin talks to Posty with it; the CLI signs in separately with posty auth:login.",
+      "sensitive": true,
+      "required": true
+    }
+  }
 }

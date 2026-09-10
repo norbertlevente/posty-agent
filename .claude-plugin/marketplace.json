@@ -5,18 +5,15 @@
     "email": "norbert@posty.hu"
   },
   "metadata": {
-    "description": "Schedule and publish social posts from the command line to X (Twitter), Facebook, Instagram, Threads and Bluesky.",
-    "version": "1.0.0"
+    "description": "Posty: schedule and publish social posts to Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord and Slack, from the command line or straight from the chat over MCP.",
+    "version": "1.1.0"
   },
   "plugins": [
     {
       "name": "posty",
-      "description": "Schedule and publish social posts from the command line to X (Twitter), Facebook, Instagram, Threads and Bluesky.",
+      "description": "Posty: schedule and publish social posts to Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord and Slack, from the command line or straight from the chat over MCP.",
       "source": "./",
-      "strict": false,
-      "skills": [
-        "./"
-      ]
+      "strict": true
     }
   ]
 }

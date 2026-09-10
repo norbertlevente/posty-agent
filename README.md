@@ -4,8 +4,19 @@ A csomagban megtalálod a teljes, kifejezetten ügynököknek szánt
 parancsreferenciát, a [`SKILL.md`](./SKILL.md) fájlt. Telepítés után mutasd meg
 az ügynöknek, és további magyarázat nélkül tudja használni az egész CLI-t.
 
-A repót Claude Code-pluginként is használhatod (`.claude-plugin/`), ugyanezzel
-a skillel.
+A repó egyben Claude Code-plugin is, és a plugin a Posty MCP-szerverét is
+hozza, tehát a Claude Code közvetlenül, CLI nélkül is tud ütemezni:
+
+```bash
+claude plugin marketplace add norbertlevente/posty-agent
+claude plugin install posty@posty-agent
+```
+
+Telepítéskor a Claude Code elkéri a Posty MCP-kulcsodat (Beállítások →
+Fejlesztők → MCP, `psty_mcp_…` kezdetű). Ezután a `/posty:posty` skill és a
+Posty MCP-eszközei (`preview_post`, `create_post`, `create_upload_link` és a
+többi) elérhetők a munkamenetben. A Claude appban ugyanez a szerver egyéni
+konnektorként: https://posty.hu/ai/claude
 
 ---
 
