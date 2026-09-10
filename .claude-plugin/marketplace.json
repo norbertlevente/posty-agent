@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Posty: schedule and publish social posts to Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord and Slack, from the command line or straight from the chat over MCP.",
-    "version": "1.1.0"
+    "version": "1.2.0"
   },
   "plugins": [
     {

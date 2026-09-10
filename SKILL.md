@@ -8,8 +8,10 @@ metadata: {"openclaw":{"emoji":"🌎","requires":{"bins":[],"env":[]}}}
 ## MCP instead of the CLI
 
 If this skill arrived as the Claude Code plugin, the Posty MCP server is
-already connected (it was configured with the user's `psty_mcp_` key at
-install). Prefer the MCP tools for scheduling: `get_workspace_context`,
+already configured and signs the user in through the browser on first use
+(`/mcp` → posty → Authenticate, or `claude mcp login posty`); there is no key
+to paste. If a tool call reports that the server needs authentication, tell
+the user to run that, then retry. Prefer the MCP tools for scheduling: `get_workspace_context`,
 `list_integrations`, `get_integration_schema`, `preview_post`, `create_post`,
 `list_posts`, `delete_post`, `upload_media_from_url`, `create_upload_link`,
 `list_upload_link_files`. Always call `preview_post` and show the result before
