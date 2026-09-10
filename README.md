@@ -4,20 +4,22 @@ A csomagban megtalálod a teljes, kifejezetten ügynököknek szánt
 parancsreferenciát, a [`SKILL.md`](./SKILL.md) fájlt. Telepítés után mutasd meg
 az ügynöknek, és további magyarázat nélkül tudja használni az egész CLI-t.
 
-A repó egyben Claude Code-plugin is, és a plugin a Posty MCP-szerverét is
-hozza, tehát a Claude Code közvetlenül, CLI nélkül is tud ütemezni:
+A repó két Claude Code-plugint ad, szándékosan külön:
+
+- **`posty`**, az MCP-konnektor beszélgetéshez (Claude app, Cowork, Claude Code).
+  Bekötés böngészős belépéssel, kulcs nélkül; a Posty MCP-eszközeit használja,
+  a gépedre semmit nem telepít.
+- **`posty-cli`**, a parancssori eszköz és a teljes referenciája programozó
+  ügynököknek (Claude Code, Codex, OpenClaw, Hermes), ahol a terminál a
+  munkaeszköz.
 
 ```bash
 claude plugin marketplace add norbertlevente/posty-agent
-claude plugin install posty@posty-agent
+claude plugin install posty@posty-agent        # MCP, beszélgetéshez
+claude plugin install posty-cli@posty-agent    # CLI, terminálhoz és szkriptekhez
 ```
 
-Kulcs nincs. Az első használatkor a Claude Code megnyitja a böngészőt, a
-Postyban jóváhagyod, és kész (`/mcp` → posty → Authenticate, vagy a
-terminálból `claude mcp login posty`). Ezután a `/posty:posty` skill és a Posty
-MCP-eszközei (`preview_post`, `create_post`, `create_upload_link` és a többi)
-elérhetők a munkamenetben. A Claude appban ugyanez a szerver egyéni
-konnektorként: https://posty.hu/ai/claude
+A ChatGPT-ben ugyanez az MCP-szerver a hivatalos bővítmény: https://posty.hu/ai/chatgpt
 
 ---
 

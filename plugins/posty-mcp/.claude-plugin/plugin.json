@@ -1,7 +1,7 @@
 {
-  "name": "posty-cli",
+  "name": "posty",
   "version": "1.3.0",
-  "description": "Posty CLI for coding agents: the posty command line tool and its full reference, for scheduling and publishing social posts from a terminal, a script or an agent with a shell (Claude Code, Codex, OpenClaw, Hermes).",
+  "description": "Posty for chat: connect Claude to Posty's MCP server and schedule or publish social posts to Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord and Slack from the conversation. Browser sign-in, no key.",
   "author": {
     "name": "Norbert Kiss",
     "email": "norbert@posty.hu",
@@ -12,15 +12,9 @@
   "license": "AGPL-3.0",
   "keywords": [
     "posty",
-    "cli",
+    "mcp",
     "social-media",
     "scheduling",
-    "automation",
-    "ai-agent",
-    "claude-code",
-    "codex",
-    "openclaw",
-    "hermes",
     "facebook",
     "instagram",
     "x",
@@ -33,5 +27,6 @@
     "telegram",
     "discord",
     "slack"
-  ]
+  ],
+  "mcpServers": "./.mcp.json"
 }

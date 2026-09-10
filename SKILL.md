@@ -1,22 +1,9 @@
 ---
 name: posty
-description: Posty schedules and publishes social posts to Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord and Slack, from the command line or over MCP.
+description: Posty schedules and publishes social posts from the command line to X (Twitter), Facebook, Instagram, Threads and Bluesky.
 homepage: https://posty.hu
 metadata: {"openclaw":{"emoji":"🌎","requires":{"bins":[],"env":[]}}}
 ---
-
-## MCP instead of the CLI
-
-If this skill arrived as the Claude Code plugin, the Posty MCP server is
-already configured and signs the user in through the browser on first use
-(`/mcp` → posty → Authenticate, or `claude mcp login posty`); there is no key
-to paste. If a tool call reports that the server needs authentication, tell
-the user to run that, then retry. Prefer the MCP tools for scheduling: `get_workspace_context`,
-`list_integrations`, `get_integration_schema`, `preview_post`, `create_post`,
-`list_posts`, `delete_post`, `upload_media_from_url`, `create_upload_link`,
-`list_upload_link_files`. Always call `preview_post` and show the result before
-`create_post`. The CLI below is the second route, for shells and scripts, and
-signs in separately with `posty auth:login`.
 
 ## Install
 
