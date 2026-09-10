@@ -2,10 +2,7 @@
   "mcpServers": {
     "posty": {
       "type": "http",
-      "url": "https://api.posty.hu/mcp-oauth",
-      "oauth": {
-        "callbackPort": 8765
-      }
+      "url": "https://api.posty.hu/mcp-oauth"
     }
   }
 }
