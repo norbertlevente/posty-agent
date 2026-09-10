@@ -1,6 +1,6 @@
 {
   "name": "posty",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Posty: schedule and publish social posts to Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord and Slack, from the command line or straight from the chat over MCP.",
   "author": {
     "name": "Norbert Kiss",
@@ -29,9 +29,6 @@
     "telegram",
     "discord",
     "slack"
-  ],
-  "skills": [
-    "./"
   ],
   "mcpServers": "./.mcp.json"
 }
