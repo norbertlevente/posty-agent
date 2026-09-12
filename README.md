@@ -185,7 +185,7 @@ posty posts:create -c "Tartalom" -m "$IMG" --date "2026-12-31T12:00:00Z" \
 `post_type`: `post` vagy `story`. Csak oldalakra publikálhatsz, személyes profilra
 nem.
 
-### Instagram — `instagram`, `instagram-standalone`
+### Instagram — `instagram`
 
 ```bash
 IMG=$(posty upload kep.jpg | jq -r '.path')
@@ -385,9 +385,14 @@ munkaterületbe, amelyikhez készült.
 | X (Twitter) | `x` | `who_can_reply_post` kötelező |
 | Facebook (oldalak) | `facebook` | `post_type` |
 | Instagram | `instagram` | `post_type` kötelező |
-| Instagram (önálló belépés) | `instagram-standalone` | `post_type` kötelező |
+| LinkedIn | `linkedin` | nincs kötelező |
+| TikTok | `tiktok` | `privacy_level`, `content_posting_method` kötelező |
+| YouTube | `youtube` | `title`, `type` kötelező |
 | Threads | `threads` | nincs |
 | Bluesky | `bluesky` | nincs |
+| Telegram | `telegram` | nincs |
+| Discord | `discord` | `channel` kötelező (a `channels` eszközből) |
+| Slack | `slack` | `channel` kötelező (a `channels` eszközből) |
 
 Az `integrations:list` mutatja meg, melyik csatornákat használhatod ténylegesen.
 A táblázatban a Posty által támogatott csatornákat látod, a parancs kimenetében

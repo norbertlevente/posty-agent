@@ -3,24 +3,23 @@
 Every channel Posty supports, and every field its `--settings` payload accepts.
 
 **The channels below are the whole list.** Posty's server carries inherited
-code for many other providers — Reddit, Mastodon, Pinterest, Discord, Slack,
-Telegram, Medium, Dev.to, Hashnode, WordPress, Lemmy, Nostr, VK, Tumblr,
-Dribbble, Farcaster and others. None of them are enabled or supported. Do not
-build a settings payload for one.
+code for many other providers — Reddit, Mastodon, Pinterest, Medium, Dev.to,
+Hashnode, WordPress, Lemmy, Nostr, VK, Tumblr, Dribbble, Farcaster and others.
+None of them are enabled or supported. Do not build a settings payload for one.
 
 | Channel | `__type` | Has settings? | Status |
 |---|---|---|---|
 | X (Twitter) | `x` | yes | Publishing verified |
 | Facebook | `facebook` | yes, all optional | Publishing verified |
 | Instagram | `instagram` | yes | Publishing verified |
-| Instagram (standalone) | `instagram-standalone` | yes, same as `instagram` | Publishing verified |
 | Threads | `threads` | **no** | Publishing verified |
 | Bluesky | `bluesky` | **no** | Publishing verified |
-| YouTube | `youtube` | yes | Coming |
-| LinkedIn | `linkedin` | yes, all optional | Pending LinkedIn's app review |
-| LinkedIn Page | `linkedin-page` | same as `linkedin` | Pending LinkedIn's app review |
+| LinkedIn | `linkedin` | yes, all optional | Publishing verified |
+| Telegram | `telegram` | **no** | Publishing verified |
+| Discord | `discord` | yes, `channel` required | Publishing verified |
+| Slack | `slack` | yes, `channel` required | Publishing verified |
+| YouTube | `youtube` | yes | Approved by Google, quota-limited |
 | TikTok | `tiktok` | yes | Pending TikTok's app review |
-| Google Business Profile | `gmb` | yes, all optional | Pending Google's quota grant |
 
 Source of truth for everything on this page:
 `libraries/nestjs-libraries/src/dtos/posts/providers-settings/*.ts` in the Posty
@@ -136,10 +135,7 @@ posty posts:create -c "Post text" -s "2026-12-31T12:00:00Z" \
 
 ---
 
-## Instagram — `instagram` and `instagram-standalone`
-
-Both identifiers take the same DTO. `instagram-standalone` is a different way
-of connecting the same account, not a different feature set.
+## Instagram — `instagram`
 
 | Field | Required | Values |
 |---|---|---|
@@ -217,7 +213,7 @@ Only MP4 uploads. See [SUPPORTED_FILE_TYPES.md](./SUPPORTED_FILE_TYPES.md).
 
 ---
 
-## LinkedIn — `linkedin` and `linkedin-page`
+## LinkedIn — `linkedin`
 
 *Connecting a LinkedIn channel is pending LinkedIn's app review. The code is
 complete; a user may not be able to connect one yet. Check
@@ -283,26 +279,41 @@ posty posts:create \
 
 ---
 
-## Google Business Profile — `gmb`
+## Telegram — `telegram`
 
-*Pending Google's API quota grant.*
+**No settings.** Same as Threads. The channel is fixed when the user connects
+it in Posty (one shared bot posts into the channel or group they chose).
 
-All fields optional.
+---
+
+## Discord — `discord`
 
 | Field | Values |
 |---|---|
-| `topicType` | `STANDARD`, `EVENT`, `OFFER` |
-| `callToActionType` | `NONE`, `BOOK`, `ORDER`, `SHOP`, `LEARN_MORE`, `SIGN_UP`, `GET_OFFER`, `CALL` |
-| `callToActionUrl` | URL — required once `callToActionType` is set |
-| `eventTitle`, `eventStartDate`, `eventEndDate`, `eventStartTime`, `eventEndTime` | strings — for `topicType: EVENT` |
-| `offerCouponCode`, `offerRedeemUrl`, `offerTerms` | strings — for `topicType: OFFER` |
+| `channel` | **required** — a channel id from the `channels` tool |
+
+Get the id first; a channel name is a `400`:
 
 ```bash
-posty posts:create \
-  -c "Summer sale at the store" \
-  -s "2026-12-31T12:00:00Z" \
-  --settings '{"topicType":"OFFER","callToActionType":"GET_OFFER","callToActionUrl":"https://example.com/sale","offerCouponCode":"SUMMER20"}' \
-  -i "$GMB_ID"
+posty integrations:trigger "$DISCORD_ID" channels -d '{}' | jq '.output'
+posty posts:create -c "Release notes are out" -s "2026-12-31T12:00:00Z" \
+  --settings '{"channel":"123456789012345678"}' -i "$DISCORD_ID"
+```
+
+---
+
+## Slack — `slack`
+
+| Field | Values |
+|---|---|
+| `channel` | **required** — a channel id from the `channels` tool |
+
+Same shape as Discord:
+
+```bash
+posty integrations:trigger "$SLACK_ID" channels -d '{}' | jq '.output'
+posty posts:create -c "Release notes are out" -s "2026-12-31T12:00:00Z" \
+  --settings '{"channel":"C0123456789"}' -i "$SLACK_ID"
 ```
 
 ---

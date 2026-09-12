@@ -1,6 +1,6 @@
 ---
 name: posty
-description: Posty schedules and publishes social posts from the command line to X (Twitter), Facebook, Instagram, Threads and Bluesky.
+description: Posty schedules and publishes social posts from the command line to Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord and Slack.
 homepage: https://posty.hu
 metadata: {"openclaw":{"emoji":"🌎","requires":{"bins":[],"env":[]}}}
 ---
@@ -53,16 +53,21 @@ enabled and not supported.
 | X (Twitter) | `x` |
 | Facebook (Pages) | `facebook` |
 | Instagram | `instagram` |
-| Instagram (standalone login) | `instagram-standalone` |
+| LinkedIn (member feed) | `linkedin` |
+| TikTok | `tiktok` |
+| YouTube | `youtube` |
 | Threads | `threads` |
 | Bluesky | `bluesky` |
+| Telegram | `telegram` |
+| Discord | `discord` |
+| Slack | `slack` |
 
 **`integrations:list` is the truth.** The table says what Posty supports; that
 command says what THIS user has actually connected. Check it before you
 schedule anything, and never post to an id that is not in its output.
 
 **Never assume another provider exists.** If a user asks for Mastodon, Reddit,
-Pinterest, Discord, Telegram, Slack, Medium, Dev.to, WordPress, Tumblr,
+Pinterest, Google Business Profile, Medium, Dev.to, WordPress, Tumblr,
 Farcaster or anything else, the answer is that Posty does not offer it. Do not
 build a `--settings` payload for it.
 
@@ -142,7 +147,7 @@ The fundamental pattern for using Posty CLI:
 
 1. **Authenticate** - Verify or set up authentication (see above)
 2. **Discover** - List integrations and get their settings
-3. **Fetch** - Use integration tools to retrieve dynamic data (only Instagram has one: `audioSearch`)
+3. **Fetch** - Use integration tools to retrieve dynamic data (Instagram `audioSearch`; Discord and Slack `channels`)
 4. **Prepare** - Upload media files if needed
 5. **Post** - Create posts with content, media, and platform-specific settings
 6. **Analyze** - Track performance with platform and post-level analytics
@@ -433,10 +438,11 @@ posty posts:create -c "Content" -s "2026-12-31T12:00:00Z" -m "$VIDEO_PATH" -i "t
 ### Pattern 1: Discover & Use Integration Tools
 
 **Most supported channels have no tools at all.** Of the channels in the table
-at the top of this file, exactly one exposes a tool: Instagram. X, Facebook,
-Threads, Bluesky, YouTube, LinkedIn, TikTok and Google Business Profile expose
-none — `integrations:settings` returns an empty `tools` array for them, and
-`integrations:trigger` on them returns `404 Tool not found`.
+at the top of this file, three expose a tool: Instagram (`audioSearch`),
+Discord (`channels`) and Slack (`channels`). X, Facebook, Threads, Bluesky,
+YouTube, LinkedIn, TikTok and Telegram expose none — `integrations:settings`
+returns an empty `tools` array for them, and `integrations:trigger` on them
+returns `404 Tool not found`.
 
 **Never guess a method name.** Read the `tools` array from
 `integrations:settings` first; the `methodName` there is the only string
@@ -632,7 +638,7 @@ done
 
 ### Integration Tools Workflow
 
-Some integrations expose a tool for data that cannot be hard-coded. Among supported channels only Instagram does. The workflow:
+Some integrations expose a tool for data that cannot be hard-coded. Among supported channels Instagram, Discord and Slack do. The workflow:
 
 1. **Check available tools** - `integrations:settings` returns a `tools` array
 2. **Review tool schema** - Each tool has `methodName`, `description`, and `dataSchema`
@@ -644,7 +650,9 @@ Some integrations expose a tool for data that cannot be hard-coded. Among suppor
 | Channel | Tools |
 |---|---|
 | Instagram (`instagram`) | `audioSearch` |
-| Instagram standalone, X, Facebook, Threads, Bluesky, YouTube, LinkedIn, TikTok, Google Business Profile | *(none)* |
+| Discord (`discord`) | `channels` (the server's channels; the `id` goes into `settings.channel`) |
+| Slack (`slack`) | `channels` (the workspace's channels; the `id` goes into `settings.channel`) |
+| X, Facebook, Threads, Bluesky, YouTube, LinkedIn, TikTok, Telegram | *(none)* |
 
 That is the whole list. There is no `getPlaylists`, no `getCompanies`, no
 `getBoards`, no `getFlairs` — earlier versions of this file invented all four,
@@ -853,7 +861,7 @@ posty posts:create \
 All optional: `post_type` (`post` | `story`), `url`, `text_format_preset_id`
 (a background for a **text-only** post; Pages only, ~130 characters max).
 
-### Instagram — `instagram` / `instagram-standalone`
+### Instagram — `instagram`
 ```bash
 IMG=$(posty upload image.jpg | jq -r '.path')
 
@@ -923,7 +931,7 @@ documented above; there is no second syntax guide to consult.
 6. **Date format** - ISO 8601 with an explicit offset (`"2026-12-31T12:00:00Z"`), or a naive datetime plus `--timezone <IANA name>`. A naive datetime with no timezone configured is a hard error. Required except with `-t now` or `--json`.
 7. **Tool not found** - Check available tools in `integrations:settings` output
 8. **Character limits** - Each platform has different limits, check `maxLength` in settings
-9. **Required settings** - YouTube requires `title` and `type`; X requires `who_can_reply_post`; Instagram requires `post_type`; TikTok requires `privacy_level` and `content_posting_method`. Threads and Bluesky require nothing.
+9. **Required settings** - YouTube requires `title` and `type`; X requires `who_can_reply_post`; Instagram requires `post_type`; TikTok requires `privacy_level` and `content_posting_method`; Discord and Slack require `channel` (an id from their `channels` tool). Threads, Bluesky, LinkedIn and Telegram require nothing.
 10. **Media MIME types** - CLI auto-detects from file extension, ensure correct extension
 11. **Analytics returns `{"missing": true}`** - The post was published but the platform didn't return a post ID. Run `posts:missing <post-id>` to get available content, then `posts:connect <post-id> --release-id "<id>"` to link it. Analytics will work after connecting.
 
