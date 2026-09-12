@@ -18,8 +18,8 @@ None of them are enabled or supported. Do not build a settings payload for one.
 | Telegram | `telegram` | **no** | Publishing verified |
 | Discord | `discord` | yes, `channel` required | Publishing verified |
 | Slack | `slack` | yes, `channel` required | Publishing verified |
-| YouTube | `youtube` | yes | Approved by Google, quota-limited |
-| TikTok | `tiktok` | yes | Pending TikTok's app review |
+| YouTube | `youtube` | yes | Publishing verified |
+| TikTok | `tiktok` | yes | Publishing verified |
 
 Source of truth for everything on this page:
 `libraries/nestjs-libraries/src/dtos/posts/providers-settings/*.ts` in the Posty
@@ -215,10 +215,6 @@ Only MP4 uploads. See [SUPPORTED_FILE_TYPES.md](./SUPPORTED_FILE_TYPES.md).
 
 ## LinkedIn — `linkedin`
 
-*Connecting a LinkedIn channel is pending LinkedIn's app review. The code is
-complete; a user may not be able to connect one yet. Check
-`integrations:list`.*
-
 Both fields optional.
 
 | Field | Values |
@@ -239,8 +235,6 @@ posty posts:create -c "Content" -s "2026-12-31T12:00:00Z" \
 ---
 
 ## TikTok — `tiktok`
-
-*Pending TikTok's app review.*
 
 | Field | Required | Values |
 |---|---|---|
