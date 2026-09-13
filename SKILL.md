@@ -698,7 +698,7 @@ it is being replaced, not accepted.
 
 **1. A key without `posts:publish` silently produces a draft.** `posts:create`
 requires only `posts:draft`. If the key (or its owner's current role — a
-Közreműködő/DRAFTER) lacks `posts:publish`, the server coerces `type` to
+Contributor/DRAFTER) lacks `posts:publish`, the server coerces `type` to
 `draft` and creates a draft instead of refusing. It is not silent in the
 response: **read back the `type` you got, do not assume the one you sent.**
 If the user wanted it published, tell them the key cannot, rather than

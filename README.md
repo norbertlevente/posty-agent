@@ -1,309 +1,305 @@
-## Használat AI-ügynökkel
+## Using it with an AI agent
 
-A csomagban megtalálod a teljes, kifejezetten ügynököknek szánt
-parancsreferenciát, a [`SKILL.md`](./SKILL.md) fájlt. Telepítés után mutasd meg
-az ügynöknek, és további magyarázat nélkül tudja használni az egész CLI-t.
+The package includes the full command reference written for agents,
+[`SKILL.md`](./SKILL.md). After install, show it to the agent and it can use
+the whole CLI with no further explanation.
 
-A repó két Claude Code-plugint ad, szándékosan külön:
+The repo ships two Claude Code plugins, kept separate on purpose:
 
-- **`posty`**, az MCP-konnektor beszélgetéshez (Claude app, Cowork, Claude Code).
-  Bekötés böngészős belépéssel, kulcs nélkül; a Posty MCP-eszközeit használja,
-  a gépedre semmit nem telepít.
-- **`posty-cli`**, a parancssori eszköz és a teljes referenciája programozó
-  ügynököknek (Claude Code, Codex, OpenClaw, Hermes), ahol a terminál a
-  munkaeszköz.
+- **`posty`**, the MCP connector for conversation (Claude app, Cowork, Claude
+  Code). Sign-in through the browser, no key; it uses Posty's MCP tools and
+  installs nothing on your machine.
+- **`posty-cli`**, the command-line tool and its full reference for coding
+  agents (Claude Code, Codex, OpenClaw, Hermes), where the terminal is the
+  working surface.
 
 ```bash
 claude plugin marketplace add norbertlevente/posty-agent
-claude plugin install posty@posty-agent        # MCP, beszélgetéshez
-claude plugin install posty-cli@posty-agent    # CLI, terminálhoz és szkriptekhez
+claude plugin install posty@posty-agent        # MCP, for conversation
+claude plugin install posty-cli@posty-agent    # CLI, for the terminal and scripts
 ```
 
-A ChatGPT-ben ugyanez az MCP-szerver a hivatalos bővítmény: https://posty.hu/ai/chatgpt
+In ChatGPT the same MCP server is the official plugin: https://posty.hu/ai/chatgpt
 
 ---
 
 # Posty CLI
 
-**Közösségimédia-ütemezés a parancssorból — vagy az AI-ügynöködből.**
+**Social media scheduling from the command line, or from your AI agent.**
 
-A Posty magyar közösségimédia-ütemező, ez pedig a parancssori felülete.
-Ugyanazt a nyilvános API-t használja, mint a webes alkalmazás: amit itt
-ütemezel, megjelenik a Posty naptáradban, és amit ott ütemezel, azt itt is
-látod.
+Posty is a social media scheduler, and this is its command-line surface. It
+uses the same public API as the web app: what you schedule here shows up in
+your Posty calendar, and what you schedule there you can see here too.
 
-A Postyban **szándékosan nincs beépített AI-szövegíró**. Úgyis fizetsz egy jó
-modellért; a CLI-vel ez a modell közvetlenül a naptáradba dolgozhat, így nem kell
-két ablak között másolgatnod. A [`SKILL.md`](./SKILL.md) kifejezetten
-AI-ügynököknek készült. Ha megmutatod a Claude-nak, a ChatGPT-nek, a Codexnek,
-a Muse-nak, az OpenClaw-nak vagy a Hermesnek, további magyarázat nélkül tudják
-használni az egész CLI-t.
+Posty **deliberately has no built-in AI writer**. You already pay for a good
+model; with the CLI that model can work straight into your calendar, so you
+do not have to copy between two windows. [`SKILL.md`](./SKILL.md) is written
+for AI agents. Show it to Claude, ChatGPT, Codex, Muse, OpenClaw or Hermes
+and they can use the whole CLI with no further explanation.
 
-> A parancsok, a kapcsolók és a kimenet szándékosan angol nyelvű: a
-> parancssort fejlesztők és ügynökök használják, maga a termék viszont magyar.
+> Commands, flags and output are English on purpose: the command line is for
+> developers and agents. The product itself is still Hungarian in the app.
 
-## Telepítés
+## Install
 
 ```bash
 npm install -g posty-cli
-# vagy
+# or
 pnpm install -g posty-cli
 ```
 
-> **A csomag neve `posty-cli`, a parancsé `posty`.**
-> A két név szándékosan tér el. Az npm-en a sima `posty` egy tőlünk független
-> projekt neve, ezért az `npm install -g posty` sikeresen, figyelmeztetés nélkül
-> valaki más csomagját telepíti.
+> **The package is `posty-cli`, the command is `posty`.**
+> The two names differ on purpose. On npm the bare name `posty` belongs to an
+> unrelated project, so `npm install -g posty` silently installs somebody
+> else's package.
 
-## Hitelesítés
+## Authentication
 
-**1. lehetőség: OAuth2 (ajánlott)**
+**Option 1: OAuth2 (recommended)**
 
 ```bash
-posty auth:login     # device flow, böngészőt nyit
-posty auth:status    # ellenőrzi, hogy még érvényes-e
-posty auth:logout    # törli a tárolt hitelesítő adatokat
+posty auth:login     # device flow, opens a browser
+posty auth:status    # checks that credentials are still valid
+posty auth:logout    # deletes stored credentials
 ```
 
-A CLI a hitelesítő adatokat a `~/.posty/credentials.json` fájlban tárolja,
-`0600` jogosultsággal, egy `0700` jogosultságú könyvtárban. A fájl elkülönül a
-beállításoktól, így a `logout` törli a titkokat, de a konfigurációdat békén
-hagyja.
+The CLI stores credentials in `~/.posty/credentials.json`, mode `0600`, in a
+`0700` directory. The file is separate from settings, so `logout` clears
+secrets and leaves your config alone.
 
-**2. lehetőség: API-kulcs** — szerverhez, CI-hez, ügynökhöz:
+**Option 2: API key** — for a server, CI, or an agent:
 
 ```bash
-export POSTY_API_KEY=az_api_kulcsod   # Beállítások → Fejlesztők, a webes felületen
+export POSTY_API_KEY=your_api_key   # Settings → Developers, in the web app
 ```
 
-## Parancsok
+## Commands
 
-### Csatornák felderítése
+### Discover channels
 
 ```bash
-posty integrations:list                      # összekötött csatornák és azonosítóik
-posty integrations:list --group <group-id>   # egy ügyfél csatornái
-posty integrations:groups                    # csoportok (ügyfelek)
-posty integrations:settings <id>             # beállításséma, szabályok, karakterkorlát
-posty integrations:trigger <id> <method>     # csatornaspecifikus lekérdezés
+posty integrations:list                      # connected channels and their ids
+posty integrations:list --group <group-id>   # one customer's channels
+posty integrations:groups                    # groups (customers)
+posty integrations:settings <id>             # settings schema, rules, character limit
+posty integrations:trigger <id> <method>     # channel-specific lookup
 ```
 
-### Poszt létrehozása
+### Create a post
 
 ```bash
-# Egyszerű ütemezett poszt
-posty posts:create -c "Tartalom" --date "2026-12-31T12:00:00Z" -i "<id>"
+# Simple scheduled post
+posty posts:create -c "Content" --date "2026-12-31T12:00:00Z" -i "<id>"
 
-# Piszkozat
-posty posts:create -c "Tartalom" --date "2026-12-31T12:00:00Z" -t draft -i "<id>"
+# Draft
+posty posts:create -c "Content" --date "2026-12-31T12:00:00Z" -t draft -i "<id>"
 
-# Azonnali közzététel (nem kell dátum)
-posty posts:create -c "Tartalom" -t now -i "<id>"
+# Publish now (no date needed)
+posty posts:create -c "Content" -t now -i "<id>"
 
-# Médiával — a fájlt előbb fel kell tölteni
-IMG=$(posty upload kep.jpg | jq -r '.path')
-posty posts:create -c "Tartalom" -m "$IMG" --date "2026-12-31T12:00:00Z" -i "<id>"
+# With media — upload the file first
+IMG=$(posty upload photo.jpg | jq -r '.path')
+posty posts:create -c "Content" -m "$IMG" --date "2026-12-31T12:00:00Z" -i "<id>"
 
-# Több csatornára egyszerre
-posty posts:create -c "Tartalom" --date "2026-12-31T12:00:00Z" -i "<id1>,<id2>"
+# Several channels at once
+posty posts:create -c "Content" --date "2026-12-31T12:00:00Z" -i "<id1>,<id2>"
 
-# Csatornaspecifikus beállításokkal
-posty posts:create -c "Tartalom" --date "2026-12-31T12:00:00Z" \
+# With channel-specific settings
+posty posts:create -c "Content" --date "2026-12-31T12:00:00Z" \
   --settings '{"who_can_reply_post":"everyone"}' -i "<x-id>"
 
-# Összetett poszt JSON-ból
-posty posts:create --json poszt.json
+# Complex post from JSON
+posty posts:create --json post.json
 ```
 
-### Posztok kezelése
+### Manage posts
 
 ```bash
-posty posts:list                                   # alapból -30 … +30 nap
-posty posts:list --startDate "..." --endDate "..." # adott időszak
-posty posts:delete <id>                            # törlés
-posty posts:status <id> --status draft             # vissza piszkozatba
-posty posts:status <id> --status schedule          # piszkozat sorba állítása
-posty posts:find-slot <id>                         # következő szabad idősáv
+posty posts:list                                   # default -30 … +30 days
+posty posts:list --startDate "..." --endDate "..." # a given range
+posty posts:delete <id>                            # delete
+posty posts:status <id> --status draft             # back to draft
+posty posts:status <id> --status schedule          # queue a draft
+posty posts:find-slot <id>                         # next free slot
 ```
 
-### Analitika
+### Analytics
 
 ```bash
-posty analytics:platform <integration-id>        # csatorna, 7 nap
-posty analytics:platform <integration-id> -d 30  # csatorna, 30 nap
-posty analytics:post <post-id>                   # poszt, 7 nap
+posty analytics:platform <integration-id>        # channel, 7 days
+posty analytics:platform <integration-id> -d 30  # channel, 30 days
+posty analytics:post <post-id>                   # post, 7 days
 ```
 
-Ha az `analytics:post` `{"missing": true}` értéket ad vissza, a poszt már
-megjelent, de a platformtól nem érkezett használható azonosító. Ilyenkor:
+If `analytics:post` returns `{"missing": true}`, the post is already live but
+the platform did not return a usable id. Then:
 
 ```bash
-posty posts:missing <post-id>                     # elérhető tartalmak a szolgáltatótól
-posty posts:connect <post-id> --release-id "<id>" # összekötés
-posty analytics:post <post-id>                    # most már működik
+posty posts:missing <post-id>                     # available content from the provider
+posty posts:connect <post-id> --release-id "<id>" # connect it
+posty analytics:post <post-id>                    # works now
 ```
 
-### Média
+### Media
 
 ```bash
-posty upload fajl.jpg
+posty upload file.jpg
 ```
 
-**A `-m` értékeként csak a `posty upload` által visszaadott elérési utat adhatod
-meg.** A sima fájlnevek (`kep.jpg`) és a külső URL-ek (`https://...`) nem
-működnek, mert a platformok csak a Posty által kiszolgált címeket fogadják el.
+**For `-m` you may only pass a path returned by `posty upload`.** Bare
+filenames (`photo.jpg`) and external URLs (`https://...`) do not work,
+because the platforms only accept addresses Posty serves.
 
-### Beállítások
+### Settings
 
 ```bash
 posty config:set timezone Europe/Budapest
 posty config:get
 ```
 
-## Csatornaspecifikus beállítások
+## Channel-specific settings
 
-A pontos sémát mindig a `posty integrations:settings <id>` mutatja. Röviden:
+The exact schema is always what `posty integrations:settings <id>` shows.
+In short:
 
 ### X (Twitter) — `x`
 
 ```bash
-posty posts:create -c "Tartalom" --date "2026-12-31T12:00:00Z" \
+posty posts:create -c "Content" --date "2026-12-31T12:00:00Z" \
   --settings '{"who_can_reply_post":"everyone"}' -i "<x-id>"
 ```
 
-A `who_can_reply_post` **kötelező**. Értékei: `everyone`, `following`,
+`who_can_reply_post` is **required**. Values: `everyone`, `following`,
 `mentionedUsers`, `subscribers`, `verified`.
 
 ### Facebook — `facebook`
 
 ```bash
-IMG=$(posty upload kep.jpg | jq -r '.path')
-posty posts:create -c "Tartalom" -m "$IMG" --date "2026-12-31T12:00:00Z" \
+IMG=$(posty upload photo.jpg | jq -r '.path')
+posty posts:create -c "Content" -m "$IMG" --date "2026-12-31T12:00:00Z" \
   --settings '{"post_type":"post"}' -i "<facebook-id>"
 ```
 
-`post_type`: `post` vagy `story`. Csak oldalakra publikálhatsz, személyes profilra
-nem.
+`post_type`: `post` or `story`. You can publish to Pages, not to a personal
+profile.
 
 ### Instagram — `instagram`
 
 ```bash
-IMG=$(posty upload kep.jpg | jq -r '.path')
-posty posts:create -c "Felirat #hashtag" -m "$IMG" --date "2026-12-31T12:00:00Z" \
+IMG=$(posty upload photo.jpg | jq -r '.path')
+posty posts:create -c "Caption #hashtag" -m "$IMG" --date "2026-12-31T12:00:00Z" \
   --settings '{"post_type":"post"}' -i "<instagram-id>"
 ```
 
-A `post_type` **kötelező**: `post` vagy `story`.
+`post_type` is **required**: `post` or `story`.
 
 ### Threads — `threads`, Bluesky — `bluesky`
 
-**Nincs beállításuk.** Hagyd el a `--settings` kapcsolót.
+**No settings.** Omit the `--settings` flag.
 
-Teljes séma: [PROVIDER_SETTINGS.md](./PROVIDER_SETTINGS.md).
+Full schema: [PROVIDER_SETTINGS.md](./PROVIDER_SETTINGS.md).
 
-## AI-ügynököknek
+## For AI agents
 
-**Felderítés.** Ne hagyd, hogy az ügynök találgasson. Az `integrations:list`
-megmutatja a valóban összekötött csatornákat, az `integrations:settings <id>`
-pedig az elfogadott beállításokat. Amelyik csatorna nem szerepel az
-`integrations:list` kimenetében, arra nem lehet posztolni.
+**Discovery.** Do not let the agent guess. `integrations:list` shows the
+channels that are actually connected, and `integrations:settings <id>` shows
+the accepted settings. A channel that is not in `integrations:list` cannot
+be posted to.
 
-**Kimeneti szerződés.** A parancs az eredményt **JSON-ként a stdout-ra**, az
-állapotüzeneteket és a hibákat pedig a **stderr-re** írja. Hiba esetén nem nulla
-kilépési kóddal áll le:
+**Output contract.** The command writes the result **as JSON to stdout**, and
+status lines and errors to **stderr**. On failure it exits with a non-zero
+code:
 
 ```bash
 posty integrations:list | jq -r '.[].id'
 ```
 
-**JSON mód.** Összetett kampánynál írd a posztot fájlba, majd add át
-`--json`-nal. Működő példákat az [`examples/`](./examples) könyvtárban találsz.
+**JSON mode.** For a complex campaign, write the post to a file and pass it
+with `--json`. Working examples are in [`examples/`](./examples).
 
-**Szálak.** A `-c` kapcsoló ismétlésével építhetsz szálat: az első elem a
-poszt, a többi a hozzászólás. Minden `-m` az előtte álló `-c` kapcsolóhoz
-tartozik:
+**Threads.** Repeat `-c` to build a thread: the first item is the post, the
+rest are comments. Each `-m` belongs to the `-c` in front of it:
 
 ```bash
 posty posts:create \
-  -c "Első bejegyzés"     -m "$(posty upload egy.jpg | jq -r '.path')" \
-  -c "Második bejegyzés" \
-  -c "Harmadik bejegyzés" -m "$(posty upload harom.jpg | jq -r '.path')" \
+  -c "First post"     -m "$(posty upload one.jpg | jq -r '.path')" \
+  -c "Second post" \
+  -c "Third post" -m "$(posty upload three.jpg | jq -r '.path')" \
   -d 2 \
   --date "2026-12-31T12:00:00Z" -i "<id>"
 ```
 
-A `-d` **percben** értendő, nem másodpercben.
+`-d` is in **minutes**, not seconds.
 
-## Gyakori munkamenetek
+## Common workflows
 
-**Kampány több csatornára, csatornánként más szöveggel** — írd JSON-fájlba,
-majd add át `--json`-nal; lásd
+**A campaign on several channels, with different text per channel** — write
+it to a JSON file and pass `--json`; see
 [`examples/multi-platform-with-settings.json`](./examples/multi-platform-with-settings.json).
 
-**Heti ütemezés szkriptből:**
+**Weekly scheduling from a script:**
 
 ```bash
 DATES=("2026-09-01T09:00:00Z" "2026-09-02T09:00:00Z" "2026-09-03T09:00:00Z")
-TEXTS=("Hétfői indítás" "Keddi tipp" "Szerdai tanulság")
+TEXTS=("Monday kickoff" "Tuesday tip" "Wednesday takeaway")
 
 for i in "${!DATES[@]}"; do
   posty posts:create -c "${TEXTS[$i]}" --date "${DATES[$i]}" -i "<id>"
 done
 ```
 
-**Karakterkorlát ellenőrzése publikálás előtt:**
+**Check the character limit before publishing:**
 
 ```bash
 MAX=$(posty integrations:settings "<id>" | jq '.output.maxLength')
 ```
 
-## Környezeti változók
+## Environment variables
 
-| Változó | Kötelező | Alapérték | Mire való |
+| Variable | Required | Default | What it is for |
 |---|---|---|---|
-| `POSTY_API_KEY` | nem | — | API-kulcs az `auth:login` helyett |
-| `POSTY_API_URL` | nem | `https://posty.hu/api` | Ezzel felülírhatod az API-végpontot |
-| `POSTY_TIMEZONE` | nem | — | IANA időzóna az eltolás nélküli dátumokhoz |
-| `POSTY_AUTH_SERVER` | nem | `https://posty.hu` | OAuth2 szerver (saját üzemeltetéshez) |
-| `POSTY_CLIENT_NAME` | nem | `posty-cli` | Az eszközengedélyezéskor megjelenő kliensnév |
+| `POSTY_API_KEY` | no | — | API key instead of `auth:login` |
+| `POSTY_API_URL` | no | `https://posty.hu/api` | Override the API endpoint |
+| `POSTY_TIMEZONE` | no | — | IANA timezone for datetimes with no offset |
+| `POSTY_AUTH_SERVER` | no | `https://posty.hu` | OAuth2 server (self-hosting) |
+| `POSTY_CLIENT_NAME` | no | `posty-cli` | Client name shown at device approval |
 
-## Dátumok és időzónák
+## Dates and timezones
 
-Az önmagában megadott `"2026-12-31 12:00"` kétértelmű. A CLI **inkább hibával
-leáll**, mint hogy csendben egy órával eltérő időpontban publikáljon. Ebben a
-sorrendben keresi az időzónát:
+A bare `"2026-12-31 12:00"` is ambiguous. The CLI **fails rather than
+silently publishing an hour off**. It looks for a timezone in this order:
 
-1. a dátumban egyértelműen megadott eltolás — `2026-12-31T12:00:00Z` vagy `+01:00`
+1. an explicit offset in the date — `2026-12-31T12:00:00Z` or `+01:00`
 2. `--timezone Europe/Budapest`
 3. `POSTY_TIMEZONE`
 4. `posty config:set timezone Europe/Budapest`
 
-Ha egyik sincs megadva, a parancs hibával leáll, a hibaüzenet pedig mind a négy
-megoldást felsorolja. Időzónaként nem adhatsz meg számokkal jelölt eltolást.
+If none of those is set, the command fails, and the error lists all four
+fixes. You cannot pass a numeric offset as a timezone value.
 
-## Hibakezelés
+## Error handling
 
-A CLI minden hibát a stderr-re ír, és nem nulla kilépési kóddal áll le. A
-stdout így tisztán, géppel feldolgozható marad.
+The CLI writes every error to stderr and exits non-zero. stdout stays clean
+and machine-readable.
 
-| Hiba | Jelentése |
+| Error | Meaning |
 |---|---|
-| `--date is required...` | Ütemezéshez dátum kell, vagy használj `-t now`-t |
-| `--integrations is required...` | Nem adtál meg csatornát; `integrations:list` |
-| naiv dátum hibája | Nincs időzóna sehol; lásd fentebb |
-| `Integration not found` | Rossz azonosító, vagy a csatorna már nincs összekötve |
-| 401 / 403 | Lejárt vagy visszavont hitelesítés; `posty auth:login` |
+| `--date is required...` | A schedule needs a date, or use `-t now` |
+| `--integrations is required...` | No channel given; `integrations:list` |
+| naive date error | No timezone anywhere; see above |
+| `Integration not found` | Bad id, or the channel is no longer connected |
+| 401 / 403 | Expired or revoked auth; `posty auth:login` |
 
-## Fejlesztés
+## Development
 
 ```
 src/
-├── index.ts        # parancsok és kapcsolók (yargs)
-├── api.ts          # HTTP-kliens
+├── index.ts        # commands and flags (yargs)
+├── api.ts          # HTTP client
 ├── commands/       # posts, integrations, analytics, upload, auth, config
-├── dates.ts        # időzóna-feloldás
-├── settings.ts     # csatornabeállítások
-└── output.ts       # a JSON/stderr kimeneti szerződés
+├── dates.ts        # timezone resolution
+├── settings.ts     # channel settings
+└── output.ts       # the JSON/stderr output contract
 ```
 
 ```bash
@@ -314,105 +310,104 @@ pnpm run build          # tsup → dist/index.js
 node dist/index.js --help
 ```
 
-| Szkript | Mit csinál |
+| Script | What it does |
 |---|---|
-| `pnpm run build` | Lefordítja a kódot a `dist/` könyvtárba |
-| `pnpm run dev` | Figyeli és újrafordítja a kódot |
-| `pnpm run release:check` | Ellenőrzi a csomagot és a publikálást (nem publikál) |
+| `pnpm run build` | Compiles into `dist/` |
+| `pnpm run dev` | Watches and recompiles |
+| `pnpm run release:check` | Checks the package and publishing (does not publish) |
 
-## Gyorsreferencia
+## Quick reference
 
 ```bash
-# Hitelesítés
+# Authentication
 posty auth:status
 posty auth:login
 posty auth:logout
 
-# Felderítés
+# Discovery
 posty integrations:list
 posty integrations:settings <id>
 posty integrations:trigger <id> <method>
 
-# Posztolás
-posty posts:create -c "szöveg" --date "2026-12-31T12:00:00Z" -i "<id>"
-posty posts:create -c "szöveg" -t draft --date "..." -i "<id>"
-posty posts:create -c "szöveg" -t now -i "<id>"
-posty posts:create --json fajl.json
+# Posting
+posty posts:create -c "text" --date "2026-12-31T12:00:00Z" -i "<id>"
+posty posts:create -c "text" -t draft --date "..." -i "<id>"
+posty posts:create -c "text" -t now -i "<id>"
+posty posts:create --json file.json
 
-# Kezelés
+# Management
 posty posts:list
 posty posts:delete <id>
 posty posts:status <id> --status draft
 posty posts:find-slot <id>
-posty upload <fajl>
+posty upload <file>
 posty upload:link
 posty upload:files <id>
 
-# Analitika
+# Analytics
 posty analytics:platform <id> -d 30
 posty analytics:post <id>
 posty posts:missing <id>
 posty posts:connect <id> --release-id "<rid>"
 ```
 
-## Ha a fájl nem ezen a gépen van
+## When the file is not on this machine
 
-A `posty upload` a lemezen lévő fájlt tölti fel. Ha a kép vagy videó a
-telefonodon van, vagy az ügynök, amelyik a CLI-t futtatja, nem látja a
-fájlrendszeredet, kérj feltöltési linket:
+`posty upload` uploads a file from disk. If the image or video is on your
+phone, or the agent running the CLI cannot see your filesystem, mint an
+upload link:
 
 ```bash
 posty upload:link            # {id, url, expiresAt}
-# nyisd meg az url-t bárhol (bejelentkezés nélkül is megy), húzd rá a fájlokat
+# open the url anywhere (it works signed out), drop the files on it
 posty upload:files <id>      # {status, count, files:[{id, name, path, type}]}
 ```
 
-A visszakapott elemek `path` értéke megy a `posts:create -m` kapcsolóba. A
-link két óráig él, több fájlt fogad, és csak feltölteni tud abba az egy
-munkaterületbe, amelyikhez készült.
+Each item's `path` goes into `posts:create -m`. The link lives two hours,
+accepts several files, and can only upload into the one workspace it was
+made for.
 
-## Dokumentáció
+## Documentation
 
-- [SKILL.md](./SKILL.md) — a teljes parancsreferencia, AI-ügynököknek írva
-- [HOW_TO_RUN.md](./HOW_TO_RUN.md) — telepítés és futtatás forrásból
-- [PROVIDER_SETTINGS.md](./PROVIDER_SETTINGS.md) — csatornánkénti beállítássémák
-- [SUPPORTED_FILE_TYPES.md](./SUPPORTED_FILE_TYPES.md) — elfogadott médiatípusok
+- [SKILL.md](./SKILL.md) — the full command reference, written for AI agents
+- [HOW_TO_RUN.md](./HOW_TO_RUN.md) — install and run from source
+- [PROVIDER_SETTINGS.md](./PROVIDER_SETTINGS.md) — per-channel settings schemas
+- [SUPPORTED_FILE_TYPES.md](./SUPPORTED_FILE_TYPES.md) — accepted media types
 
-## Támogatott csatornák
+## Supported channels
 
-| Csatorna | `identifier` | Beállítások |
+| Channel | `identifier` | Settings |
 |---|---|---|
-| X (Twitter) | `x` | `who_can_reply_post` kötelező |
-| Facebook (oldalak) | `facebook` | `post_type` |
-| Instagram | `instagram` | `post_type` kötelező |
-| LinkedIn | `linkedin` | nincs kötelező |
-| TikTok | `tiktok` | `privacy_level`, `content_posting_method` kötelező |
-| YouTube | `youtube` | `title`, `type` kötelező |
-| Threads | `threads` | nincs |
-| Bluesky | `bluesky` | nincs |
-| Telegram | `telegram` | nincs |
-| Discord | `discord` | `channel` kötelező (a `channels` eszközből) |
-| Slack | `slack` | `channel` kötelező (a `channels` eszközből) |
+| X (Twitter) | `x` | `who_can_reply_post` required |
+| Facebook (Pages) | `facebook` | `post_type` |
+| Instagram | `instagram` | `post_type` required |
+| LinkedIn | `linkedin` | none required |
+| TikTok | `tiktok` | `privacy_level`, `content_posting_method` required |
+| YouTube | `youtube` | `title`, `type` required |
+| Threads | `threads` | none |
+| Bluesky | `bluesky` | none |
+| Telegram | `telegram` | none |
+| Discord | `discord` | `channel` required (from the `channels` tool) |
+| Slack | `slack` | `channel` required (from the `channels` tool) |
 
-Az `integrations:list` mutatja meg, melyik csatornákat használhatod ténylegesen.
-A táblázatban a Posty által támogatott csatornákat látod, a parancs kimenetében
-pedig azokat, amelyeket te is összekötöttél.
+`integrations:list` shows which channels you can actually use. The table is
+what Posty supports; the command output is what you have connected.
 
-## Hozzájárulás
+## Contributing
 
-1. Forkold a projektet
-2. Hozz létre egy branchet (`git checkout -b feature/valami`)
-3. Fordítsd le, majd próbáld ki: `pnpm run build && node dist/index.js --help`
-4. Nyiss pull requestet
+1. Fork the project
+2. Create a branch (`git checkout -b feature/something`)
+3. Build, then try it: `pnpm run build && node dist/index.js --help`
+4. Open a pull request
 
-## Linkek
+## Links
 
-- Weboldal: [posty.hu](https://posty.hu)
+- Website: [posty.hu](https://posty.hu)
 - npm: [posty-cli](https://www.npmjs.com/package/posty-cli)
 - GitHub: [norbertlevente/posty-agent](https://github.com/norbertlevente/posty-agent)
 
-## Licenc
+## License
 
-AGPL-3.0, lásd a [LICENSE](./LICENSE) fájlt.
+AGPL-3.0, see the [LICENSE](./LICENSE) file.
 
 © 2026 Kiss Industries
