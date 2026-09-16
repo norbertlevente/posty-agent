@@ -6,11 +6,25 @@ import { getAnalytics, getPostAnalytics } from './commands/analytics';
 import { uploadFile, createUploadLink, listUploadLinkFiles } from './commands/upload';
 import { authLogin, authLogout, authStatus } from './commands/auth';
 import { configSet, configGet } from './commands/config';
+import { listWorkspaces, useWorkspace, currentWorkspace } from './commands/workspaces';
 import type { Argv } from 'yargs';
 
 yargs(hideBin(process.argv))
   .scriptName('posty')
   .usage('$0 <command> [options]')
+  .option('workspace', {
+    alias: 'w',
+    describe:
+      'Workspace id this command acts on (overrides "posty workspaces:use" and POSTY_WORKSPACE)',
+    type: 'string',
+    global: true,
+  })
+  // One place reads the choice (config.ts), so the flag becomes the env var.
+  .middleware((argv: any) => {
+    if (argv.workspace) {
+      process.env.POSTY_WORKSPACE = String(argv.workspace);
+    }
+  })
   .command(
     'posts:create',
     'Create a new post (schedule, draft, or publish now)',
@@ -412,12 +426,37 @@ yargs(hideBin(process.argv))
     listUploadLinkFiles as any
   )
   .command(
+    'workspaces:list',
+    'List the workspaces this credential can act on ("current" marks the active one)',
+    {},
+    listWorkspaces as any
+  )
+  .command(
+    'workspaces:use <id>',
+    'Make every following command act on this workspace',
+    (yargs: Argv) => {
+      return yargs
+        .positional('id', {
+          describe: 'Workspace id, from "posty workspaces:list"',
+          type: 'string',
+        })
+        .example('$0 workspaces:use 3f2a…', 'Switch the CLI to that workspace');
+    },
+    useWorkspace as any
+  )
+  .command(
+    'workspaces:current',
+    'Show the workspace commands act on now',
+    {},
+    currentWorkspace as any
+  )
+  .command(
     'config:set <key> <value>',
     'Save a CLI setting to ~/.posty/config.json',
     (yargs: Argv) => {
       return yargs
         .positional('key', {
-          describe: 'Setting name. Known: "timezone" (an IANA name)',
+          describe: 'Setting name. Known: "timezone" (an IANA name), "workspace" (an id; prefer "posty workspaces:use")',
           type: 'string',
         })
         .positional('value', {
@@ -481,6 +520,6 @@ yargs(hideBin(process.argv))
   .alias('v', 'version')
   .wrap(Math.min(110, process.stdout.columns || 110))
   .epilogue(
-    'Output contract: results are JSON on stdout; status and errors go to stderr. Every failure exits 1.\n\nAuthentication:\n  Device login: posty auth:login\n  API Key: export POSTY_API_KEY=your_api_key\n\nDates: ALWAYS pass an explicit offset ("2026-12-31T12:00:00Z" / "+01:00"), or pass --timezone with an IANA name (e.g. Europe/Budapest). A date without either is resolved via POSTY_TIMEZONE, then the timezone saved by "posty config:set timezone" — and is an ERROR when none of those is set. Numeric offsets are never accepted as timezone values.\n\nFor more information, visit: https://posty.hu'
+    'Output contract: results are JSON on stdout; status and errors go to stderr. Every failure exits 1.\n\nAuthentication:\n  Device login: posty auth:login\n  API Key: export POSTY_API_KEY=your_api_key\n\nWorkspaces: a credential may reach several. "posty workspaces:list" shows them, "posty workspaces:use <id>" picks the one commands act on (or pass --workspace <id> / POSTY_WORKSPACE).\n\nDates: ALWAYS pass an explicit offset ("2026-12-31T12:00:00Z" / "+01:00"), or pass --timezone with an IANA name (e.g. Europe/Budapest). A date without either is resolved via POSTY_TIMEZONE, then the timezone saved by "posty config:set timezone" — and is an ERROR when none of those is set. Numeric offsets are never accepted as timezone values.\n\nFor more information, visit: https://posty.hu'
   )
   .parse();

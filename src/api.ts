@@ -1,6 +1,21 @@
 export interface PostyConfig {
   apiKey: string;
   apiUrl?: string;
+  /**
+   * The workspace every request is about, sent as the `showorg` header.
+   * Required by the API when the key spans several workspaces; harmless when
+   * it spans one. See `posty workspaces:list` / `posty workspaces:use`.
+   */
+  workspaceId?: string;
+}
+
+/** `GET /public/v1/workspaces`: what the credential can act on. */
+export interface Workspace {
+  id: string;
+  name: string;
+  role: string;
+  /** True for the workspace this request acted on. */
+  current: boolean;
 }
 
 /**
@@ -20,6 +35,17 @@ export class ApiError extends Error {
 
   get isRateLimit() {
     return this.status === 429;
+  }
+
+  /**
+   * The 403 a multi-workspace key gets when no workspace was named. Not an
+   * auth failure: the key is fine, the request is missing a choice, and the
+   * fix is `workspaces:use`, not `auth:login`.
+   */
+  get isWorkspaceChoice() {
+    return (
+      this.status === 403 && this.body.includes('spans several workspaces')
+    );
   }
 }
 
@@ -41,9 +67,11 @@ export interface UploadLinkFiles {
 export class PostyAPI {
   private apiKey: string;
   private apiUrl: string;
+  private workspaceId?: string;
 
   constructor(config: PostyConfig) {
     this.apiKey = config.apiKey;
+    this.workspaceId = config.workspaceId;
     // `api.posty.hu` is live and equivalent; the same API is also served under
     // `/api` on the main host, which is the safer fallback for a key set by
     // hand. `posty auth:login` stores the real base in credentials.json.
@@ -55,6 +83,7 @@ export class PostyAPI {
     const headers = {
       'Content-Type': 'application/json',
       Authorization: this.apiKey,
+      ...this.workspaceHeader(),
       ...options.headers,
     };
 
@@ -149,6 +178,7 @@ export class PostyAPI {
         body: formData,
         headers: {
           Authorization: this.apiKey,
+          ...this.workspaceHeader(),
         },
       });
     } catch (error: any) {
@@ -161,6 +191,16 @@ export class PostyAPI {
     }
 
     return await response.json();
+  }
+
+  private workspaceHeader(): Record<string, string> {
+    return this.workspaceId ? { showorg: this.workspaceId } : {};
+  }
+
+  async listWorkspaces(): Promise<Workspace[]> {
+    return (await this.request('/public/v1/workspaces', {
+      method: 'GET',
+    })) as Workspace[];
   }
 
   async getMissingContent(postId: string) {

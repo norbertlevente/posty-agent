@@ -73,6 +73,26 @@ secrets and leaves your config alone.
 export POSTY_API_KEY=your_api_key   # Settings → Developers, in the web app
 ```
 
+## Workspaces
+
+A credential can reach one workspace or several (tick "All my workspaces" on
+the approval page, or make a multi-workspace key in Settings). Channel ids
+belong to a workspace, so the CLI has to know which one you mean:
+
+```bash
+posty workspaces:list          # what this credential can act on; "current" marks the active one
+posty workspaces:use <id>      # every following command acts on that workspace
+posty workspaces:current       # the one commands act on now
+posty posts:list --workspace <id>   # one command in another workspace
+```
+
+`auth:login` asks which workspace to use when the key spans several. The
+choice is stored with your login (or in `~/.posty/config.json` for an env
+key); `POSTY_WORKSPACE` and `--workspace` override it for one shell or one
+command. A multi-workspace key with no choice made is refused by the API
+with 403 on every route except `workspaces:list`, so nothing is ever posted
+to a guessed workspace.
+
 ## Commands
 
 ### Discover channels
@@ -155,6 +175,7 @@ because the platforms only accept addresses Posty serves.
 ```bash
 posty config:set timezone Europe/Budapest
 posty config:get
+posty workspaces:use <id>          # see "Workspaces" above
 ```
 
 ## Channel-specific settings
@@ -261,6 +282,7 @@ MAX=$(posty integrations:settings "<id>" | jq '.output.maxLength')
 | `POSTY_API_KEY` | no | — | API key instead of `auth:login` |
 | `POSTY_API_URL` | no | `https://posty.hu/api` | Override the API endpoint |
 | `POSTY_TIMEZONE` | no | — | IANA timezone for datetimes with no offset |
+| `POSTY_WORKSPACE` | no | — | Workspace id for a key that spans several (see `workspaces:use`) |
 | `POSTY_AUTH_SERVER` | no | `https://posty.hu` | OAuth2 server (self-hosting) |
 | `POSTY_CLIENT_NAME` | no | `posty-cli` | Client name shown at device approval |
 
@@ -323,6 +345,10 @@ node dist/index.js --help
 posty auth:status
 posty auth:login
 posty auth:logout
+
+# Workspaces
+posty workspaces:list
+posty workspaces:use <id>
 
 # Discovery
 posty integrations:list

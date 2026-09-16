@@ -15,7 +15,12 @@ import { homedir } from 'os';
 const SETTINGS_DIR = join(homedir(), '.posty');
 const SETTINGS_FILE = join(SETTINGS_DIR, 'config.json');
 
-export const KNOWN_SETTINGS = ['timezone'] as const;
+/*
+  `workspace` is the fallback home of the chosen workspace for a key that came
+  from POSTY_API_KEY rather than from `posty auth:login`; a device login stores
+  it next to its token in credentials.json instead (see `workspaces:use`).
+*/
+export const KNOWN_SETTINGS = ['timezone', 'workspace'] as const;
 export type SettingKey = (typeof KNOWN_SETTINGS)[number];
 
 export function settingsFilePath(): string {

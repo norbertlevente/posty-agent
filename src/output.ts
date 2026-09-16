@@ -24,7 +24,11 @@ export function status(message: string): void {
 export function fail(context: string, error: any): never {
   console.error(`❌ ${context}: ${error?.message || error}`);
 
-  if (error instanceof ApiError && error.isAuthError) {
+  if (error instanceof ApiError && error.isWorkspaceChoice) {
+    console.error(
+      'This key spans several workspaces and none is selected. Run "posty workspaces:list", then "posty workspaces:use <id>" (or pass --workspace <id>).'
+    );
+  } else if (error instanceof ApiError && error.isAuthError) {
     console.error(
       'Your credentials were rejected. Run "posty auth:login" to re-authenticate, or check POSTY_API_KEY.'
     );

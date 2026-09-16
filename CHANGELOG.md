@@ -5,6 +5,21 @@ All notable changes to the Posty CLI are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-09-16
+
+### Added
+- **Workspaces.** `posty workspaces:list` shows every workspace the
+  credential can act on (`GET /public/v1/workspaces`, new), with `current`
+  marking the active one; `posty workspaces:use <id>` stores the choice and
+  the CLI sends it as the `showorg` header on every request;
+  `posty workspaces:current` prints it. `--workspace <id>` (global) and
+  `POSTY_WORKSPACE` override it for one command or one shell.
+- `posty auth:login` asks which workspace to use when the new key spans
+  several (the approval page can now grant "All my workspaces"), and stores
+  the id when it spans one. `auth:status` reports the workspace.
+- `config:set workspace <id>` is the home of the choice for a key that comes
+  from `POSTY_API_KEY` rather than from a device login.
+
 ## [1.1.0] - 2026-09-08
 
 ### Added

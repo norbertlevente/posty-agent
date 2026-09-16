@@ -27,7 +27,9 @@ prompt in the desktop app), then retry. There is no key to paste.
 
 | Tool | What it does | Writes? |
 |---|---|---|
-| `get_workspace_context` | current UTC time, the user's timezone, workspace name. **Call first** whenever a date or time is involved. | no |
+| `get_workspace_context` | current UTC time, the user's timezone, the workspace id and name this connection acts on. **Call first** whenever a date or time is involved. | no |
+| `list_workspaces` | every workspace the user owns, with the current one marked. Everything else acts on the current one only. | no |
+| `switch_workspace` | moves the connection to another workspace, for this and every other session using it, until switched again. Confirm with the user first unless they named it. | yes |
 | `list_integrations` | the connected channels with id, name, `@handle`, platform, and whether each can publish now | no |
 | `list_groups` | the customer groups channels are filed under | no |
 | `get_integration_schema` | one channel's posting rules and its real character limit. Call before writing for that channel. | no |
@@ -43,6 +45,7 @@ prompt in the desktop app), then retry. There is no key to paste.
 ## Rules that hold on every call
 
 - Dates: get the clock and timezone from `get_workspace_context`; never infer either from the conversation. Say times back to the user in their own local time. Dates you send are ISO 8601 UTC.
+- Workspaces: a connection acts on one workspace. When the user names a brand, client or channel that is not in `list_integrations`, call `list_workspaces` before saying it does not exist; after `switch_workspace`, call `list_integrations` again, because channel ids belong to a workspace. Say the workspace name back when the user has more than one.
 - Channels: pick by id from `list_integrations`. Use the `@handle` to tell same-named accounts apart, and say the handle back when confirming. Skip channels marked disabled or needing reconnect; they cannot publish until fixed in Posty.
 - Limits: `get_integration_schema` returns the character limit for that account. It is binding, even if the user asks to ignore it. Never guess whether an X account has Premium.
 - Confirmation: `preview_post` first, with the same payload you intend to send; show the user the account, handle, local time, character count and any problem; call `create_post` only after the user agrees. `create_post` also gets a client-side confirmation from the host, which is expected.

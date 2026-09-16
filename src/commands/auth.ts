@@ -5,6 +5,8 @@ import { createInterface } from 'readline';
 import { getSetting, saveSetting } from '../settings';
 import { result, status } from '../output';
 import { assertIanaTimezone } from '../dates';
+import { PostyAPI, Workspace } from '../api';
+import { getWorkspaceId } from '../config';
 
 const CREDENTIALS_DIR = join(homedir(), '.posty');
 const CREDENTIALS_FILE = join(CREDENTIALS_DIR, 'credentials.json');
@@ -50,7 +52,7 @@ export function loadCredentials(): StoredCredentials | null {
   }
 }
 
-function saveCredentials(credentials: StoredCredentials): void {
+export function saveCredentials(credentials: StoredCredentials): void {
   if (!existsSync(CREDENTIALS_DIR)) {
     mkdirSync(CREDENTIALS_DIR, { recursive: true, mode: 0o700 });
   }
@@ -163,6 +165,54 @@ async function maybeConfigureTimezone(): Promise<void> {
   );
 }
 
+/**
+ * Which workspace the new key acts on, decided right after login.
+ *
+ * The approval page can grant one workspace or all of them. With one there
+ * is nothing to ask and the id is stored so `auth:status` can name it. With
+ * several the API refuses every request that does not name one, so the
+ * choice is made here, on a TTY, and stored; off-TTY the hint says how.
+ * Never fatal: a login that worked stays worked.
+ */
+async function chooseWorkspace(creds: StoredCredentials): Promise<void> {
+  let workspaces: Workspace[];
+  try {
+    workspaces = await new PostyAPI({
+      apiKey: creds.accessToken,
+      apiUrl: creds.apiUrl,
+    }).listWorkspaces();
+  } catch {
+    return;
+  }
+
+  if (workspaces.length === 1) {
+    saveCredentials({ ...creds, organizationId: workspaces[0].id });
+    console.error(`🏢 Workspace: ${workspaces[0].name}`);
+    return;
+  }
+  if (workspaces.length < 2) return;
+
+  console.error('\nThis key reaches several workspaces:');
+  workspaces.forEach((w, i) => console.error(`  ${i + 1}. ${w.name}  (${w.id})`));
+
+  if (!process.stdin.isTTY || !process.stderr.isTTY) {
+    console.error(
+      'Pick one with: posty workspaces:use <id>   (or pass --workspace <id> on each command)'
+    );
+    return;
+  }
+
+  const answer = (await ask(`Work in which one? [1-${workspaces.length}] `)).trim();
+  const index = Number(answer) - 1;
+  const chosen = workspaces[index];
+  if (!chosen) {
+    console.error('Skipped. Pick one later with: posty workspaces:use <id>');
+    return;
+  }
+  saveCredentials({ ...creds, organizationId: chosen.id });
+  console.error(`✅ Workspace: ${chosen.name} (change it with "posty workspaces:use <id>")`);
+}
+
 export async function authLogin(argv: any) {
   const authServer = argv.authServer || process.env.POSTY_AUTH_SERVER || DEFAULT_AUTH_SERVER;
 
@@ -231,17 +281,16 @@ export async function authLogin(argv: any) {
       const data = (await response.json()) as any;
 
       if (response.ok && data.access_token) {
-        saveCredentials({
+        const creds: StoredCredentials = {
           accessToken: data.access_token,
           apiUrl: data.api_url || DEFAULT_API_URL,
           organizationId: data.organization_id,
-        });
+        };
+        saveCredentials(creds);
 
         console.log('✅ Successfully authenticated!');
         console.log(`📁 Credentials saved to ${CREDENTIALS_FILE}`);
-        if (data.organization_id) {
-          console.log(`🏢 Organization ID: ${data.organization_id}`);
-        }
+        await chooseWorkspace(creds);
         await maybeConfigureTimezone();
         return;
       }
@@ -315,7 +364,7 @@ export async function authStatus() {
     status(`📡 API URL: ${creds.apiUrl}`);
     status(`🔑 Token: ${hint(creds.accessToken)}`);
     if (creds.organizationId) {
-      status(`🏢 Organization: ${creds.organizationId}`);
+      status(`🏢 Workspace: ${creds.organizationId}`);
     }
     status(`📁 Credentials file: ${CREDENTIALS_FILE}`);
   } else if (envKey) {
@@ -338,11 +387,13 @@ export async function authStatus() {
   status('🔄 Verifying credentials...');
 
   try {
+    const workspaceId = getWorkspaceId();
     const response = await fetch(`${apiUrl}/public/v1/integrations`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
         Authorization: apiKey,
+        ...(workspaceId ? { showorg: workspaceId } : {}),
       },
     });
 
@@ -355,6 +406,7 @@ export async function authStatus() {
         authenticated: true,
         method,
         apiUrl,
+        workspace: workspaceId ?? null,
         integrations: integrations.length,
       });
       return;

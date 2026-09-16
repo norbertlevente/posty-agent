@@ -146,12 +146,13 @@ a key with the scope, or to have someone with the right role do it.
 The fundamental pattern for using Posty CLI:
 
 1. **Authenticate** - Verify or set up authentication (see above)
-2. **Discover** - List integrations and get their settings
-3. **Fetch** - Use integration tools to retrieve dynamic data (Instagram `audioSearch`; Discord and Slack `channels`)
-4. **Prepare** - Upload media files if needed
-5. **Post** - Create posts with content, media, and platform-specific settings
-6. **Analyze** - Track performance with platform and post-level analytics
-7. **Resolve** - If analytics returns `{"missing": true}`, run `posts:missing` to list provider content, then `posts:connect` to link it
+2. **Workspace** - `posty workspaces:list`; if more than one and none is `current`, ask the user which, then `posty workspaces:use <id>`. Channel ids belong to a workspace.
+3. **Discover** - List integrations and get their settings
+4. **Fetch** - Use integration tools to retrieve dynamic data (Instagram `audioSearch`; Discord and Slack `channels`)
+5. **Prepare** - Upload media files if needed
+6. **Post** - Create posts with content, media, and platform-specific settings
+7. **Analyze** - Track performance with platform and post-level analytics
+8. **Resolve** - If analytics returns `{"missing": true}`, run `posts:missing` to list provider content, then `posts:connect` to link it
 
 ```bash
 # 1. Authenticate
@@ -186,6 +187,24 @@ posty posts:connect <post-id> --release-id "<content-id>"
 ---
 
 ## Essential Commands
+
+### Workspaces
+
+A credential may reach several workspaces (the user ticked "All my
+workspaces" at login, or made a multi-workspace key). The API refuses every
+request from such a key that does not name one, with 403 and the message
+"This API key spans several workspaces", so check first:
+
+```bash
+posty workspaces:list            # [{id, name, role, current}]
+posty workspaces:use <id>        # persists; every later command acts there
+posty workspaces:current
+posty integrations:list --workspace <id>   # one command elsewhere, without switching
+```
+
+Say the workspace name back to the user when they have more than one, and
+never pick one for them. After a switch, run `integrations:list` again:
+channel ids from the other workspace are invalid here.
 
 ### Authentication
 

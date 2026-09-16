@@ -1,13 +1,32 @@
 import { PostyConfig } from './api';
 import { loadCredentials } from './commands/auth';
+import { getSetting } from './settings';
+
+/**
+ * Which workspace requests are about, in order of precedence: `--workspace`
+ * on the command (the yargs middleware copies it into POSTY_WORKSPACE), the
+ * environment, the choice saved by `posty workspaces:use` (in credentials.json
+ * for a device login, in config.json for an env key). Undefined is fine for a
+ * one-workspace key; the API refuses to guess for a key that spans several.
+ */
+export function getWorkspaceId(): string | undefined {
+  const fromEnv = process.env.POSTY_WORKSPACE;
+  if (fromEnv) return fromEnv;
+  const creds = loadCredentials();
+  if (creds?.organizationId) return creds.organizationId;
+  return getSetting('workspace');
+}
 
 export function getConfig(): PostyConfig {
+  const workspaceId = getWorkspaceId();
+
   // Check for stored OAuth credentials first
   const creds = loadCredentials();
   if (creds) {
     return {
       apiKey: creds.accessToken,
       apiUrl: creds.apiUrl,
+      workspaceId,
     };
   }
 
@@ -26,5 +45,6 @@ export function getConfig(): PostyConfig {
   return {
     apiKey,
     apiUrl,
+    workspaceId,
   };
 }
