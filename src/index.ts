@@ -7,6 +7,7 @@ import { uploadFile, createUploadLink, listUploadLinkFiles } from './commands/up
 import { authLogin, authLogout, authStatus } from './commands/auth';
 import { configSet, configGet } from './commands/config';
 import { listWorkspaces, useWorkspace, currentWorkspace } from './commands/workspaces';
+import { billingPlans, billingSubscribe, billingStatus, billingManage } from './commands/billing';
 import type { Argv } from 'yargs';
 
 yargs(hideBin(process.argv))
@@ -449,6 +450,62 @@ yargs(hideBin(process.argv))
     'Show the workspace commands act on now',
     {},
     currentWorkspace as any
+  )
+  .command(
+    'billing:plans',
+    'Show the Posty plans: prices in forint, limits, the trial rule and the current tier',
+    {},
+    billingPlans as any
+  )
+  .command(
+    'billing:subscribe',
+    'Get a Stripe Checkout link for a plan. Nothing is charged; the subscriber opens the link and pays with their own wallet or card',
+    (yargs: Argv) => {
+      return yargs
+        .option('tier', {
+          describe: 'The plan: alap, pro, kreator or csapat (see "posty billing:plans")',
+          type: 'string',
+          demandOption: true,
+        })
+        .option('period', {
+          describe: 'How often the plan renews',
+          type: 'string',
+          choices: ['monthly', 'yearly'],
+          demandOption: true,
+        })
+        .option('open', {
+          describe: 'Also open the link in this machine\'s browser',
+          type: 'boolean',
+          default: false,
+        })
+        .example(
+          '$0 billing:subscribe --tier pro --period yearly',
+          'Print the checkout link as JSON'
+        )
+        .example(
+          '$0 billing:subscribe --tier pro --period yearly --open',
+          'Print it and open it in the browser'
+        );
+    },
+    billingSubscribe as any
+  )
+  .command(
+    'billing:status',
+    'Show the subscription state (none, trialing, active, past_due, read_only, cancelled) and any unpaid checkout',
+    {},
+    billingStatus as any
+  )
+  .command(
+    'billing:manage',
+    'Get a link to the Stripe billing portal (plan change, cancel, invoices, card)',
+    (yargs: Argv) => {
+      return yargs.option('open', {
+        describe: 'Also open the link in this machine\'s browser',
+        type: 'boolean',
+        default: false,
+      });
+    },
+    billingManage as any
   )
   .command(
     'config:set <key> <value>',

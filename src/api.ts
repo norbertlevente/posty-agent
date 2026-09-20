@@ -64,6 +64,58 @@ export interface UploadLinkFiles {
   files: Array<{ id: string; name: string; path: string; type: string }>;
 }
 
+/** `GET /public/v1/plans`: the four plans and the workspace's current tier. */
+export interface Plans {
+  currency: string;
+  trial: string;
+  trialDays: number;
+  trialAvailableHere: boolean;
+  current: { tier: string; plan: string; slug: string | null };
+  plans: Array<{
+    tier: string;
+    plan: string;
+    slug: string;
+    monthly: { amount: number; formatted: string };
+    yearly: { amount: number; formatted: string; savesPerYear: number };
+    limits: Record<string, number | boolean | null>;
+  }>;
+}
+
+/** `POST /public/v1/subscriptions/checkout`: the link the PERSON opens. */
+export interface SubscriptionCheckout {
+  status: 'requires_payment';
+  checkoutUrl: string;
+  checkoutId: string;
+  tier: string;
+  plan: string;
+  period: 'MONTHLY' | 'YEARLY';
+  amount: number;
+  currency: string;
+  trial: boolean;
+  trialDays: number;
+  expiresAt: string;
+}
+
+/** `GET /public/v1/subscription`: where the workspace stands. */
+export interface SubscriptionState {
+  state: 'none' | 'trialing' | 'active' | 'past_due' | 'read_only' | 'cancelled';
+  tier: string | null;
+  plan: string | null;
+  period: 'MONTHLY' | 'YEARLY' | null;
+  currentPeriodEnd: string | null;
+  cancelAt: string | null;
+  payerIsCaller: boolean;
+  noPayerYet: boolean;
+  pendingCheckout: {
+    checkoutId: string;
+    checkoutUrl: string;
+    plan: string;
+    period: string | null;
+    expiresAt: string;
+  } | null;
+  apiAndMcpAccess: boolean;
+}
+
 export class PostyAPI {
   private apiKey: string;
   private apiUrl: string;
@@ -281,5 +333,40 @@ export class PostyAPI {
       `/public/v1/upload-link/${encodeURIComponent(id)}`,
       { method: 'GET' }
     )) as UploadLinkFiles;
+  }
+
+  /*
+    BILLING. These four answer without the plan gate on the server, so they
+    work for a workspace that has no subscription yet: they are how it gets
+    one. The checkout and the portal need an OAuth token or a full-workspace
+    key (the "whole workspace" box on the `posty auth:login` approval page);
+    a scoped key is refused with a sentence that says so.
+  */
+
+  async getPlans(): Promise<Plans> {
+    return (await this.request('/public/v1/plans', { method: 'GET' })) as Plans;
+  }
+
+  async getSubscription(): Promise<SubscriptionState> {
+    return (await this.request('/public/v1/subscription', {
+      method: 'GET',
+    })) as SubscriptionState;
+  }
+
+  /** Nothing is charged by this call; the person pays on the returned link. */
+  async createSubscriptionCheckout(
+    tier: string,
+    period: string
+  ): Promise<SubscriptionCheckout> {
+    return (await this.request('/public/v1/subscriptions/checkout', {
+      method: 'POST',
+      body: JSON.stringify({ tier, period }),
+    })) as SubscriptionCheckout;
+  }
+
+  async getSubscriptionPortal(): Promise<{ portalUrl: string; note: string }> {
+    return (await this.request('/public/v1/subscription/portal', {
+      method: 'GET',
+    })) as { portalUrl: string; note: string };
   }
 }

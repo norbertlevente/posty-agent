@@ -81,7 +81,7 @@ function deleteCredentials(): void {
   rather than a program, so it needs cmd -- and there the url is passed AS AN
   ARGUMENT to cmd rather than pasted into the command string.
 */
-function openBrowser(url: string): void {
+export function openBrowser(url: string): void {
   const { spawn } = require('child_process');
   const opts = { stdio: 'ignore' as const, detached: true };
 

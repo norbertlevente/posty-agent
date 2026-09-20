@@ -278,6 +278,44 @@ have not finished, or spoke before the last file landed. Ask them to check the
 page says "uploaded" and run it again. The link lives two hours; mint a new one
 if it expires.
 
+### Subscription (only when the user asks)
+
+Four commands, the only place a plan is named. Call them only when the user
+asks about plans, asks to subscribe, or asks to manage their subscription;
+never suggest a plan or an upgrade otherwise.
+
+```bash
+posty billing:plans                                  # → {current:{tier,plan}, plans:[{plan,slug,monthly,yearly,limits}], trial, trialDays}
+posty billing:subscribe --tier pro --period yearly   # → {status:"requires_payment", checkoutUrl, checkoutId, plan, amount, currency, trial, expiresAt}
+posty billing:status                                 # → {state, plan, period, currentPeriodEnd, payerIsCaller, pendingCheckout, apiAndMcpAccess}
+posty billing:manage                                 # → {portalUrl, note}
+```
+
+The flow:
+
+1. Confirm the plan (`--tier` is the `slug` from `billing:plans`: alap, pro,
+   kreator, csapat) and the period (monthly or yearly) with the user.
+2. Run `billing:subscribe` once and give the user `checkoutUrl`. **The user
+   opens it and pays with their OWN Link wallet or card.** Do NOT pay with a
+   one-time or agent-issued card, a virtual card number or any credential of
+   your own: a Posty subscription renews monthly or yearly, and a one-time
+   credential fails at the first renewal, which ends the plan. `--open` opens
+   the link in the browser of this machine; use it only when this machine is
+   the user's own.
+3. After the user says they have paid, run `billing:status` and check that
+   `state` is `trialing` or `active` before continuing setup. It changes
+   within seconds of the payment. If `billing:status` shows a
+   `pendingCheckout`, hand that link back instead of running
+   `billing:subscribe` again.
+4. A live subscription is changed, cancelled or invoiced in the Stripe
+   portal: `billing:manage` prints the link. Do not describe plans there.
+
+These commands work before the workspace has a plan with API access (they
+are how it gets one). `billing:subscribe` and `billing:manage` need a
+full-workspace key or an OAuth token held by the person who pays (or a
+workspace owner when nobody pays yet); a scoped key is refused with a
+message that says so.
+
 ### Rate limits
 
 Tiered, **per key, per route, per hour**. Each route keeps its own bucket, so a

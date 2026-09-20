@@ -178,6 +178,32 @@ posty config:get
 posty workspaces:use <id>          # see "Workspaces" above
 ```
 
+### Subscription
+
+An agent can take the person from "subscribe me to Pro yearly" to a live
+subscription. The one step that stays human is the payment, in Stripe
+Checkout, with the person's own Link wallet or card.
+
+```bash
+posty billing:plans                                       # the four plans, prices in HUF, limits, trial rule, current tier
+posty billing:subscribe --tier pro --period yearly        # a Stripe Checkout link as JSON; nothing is charged
+posty billing:subscribe --tier pro --period yearly --open # same, and open it in this machine's browser
+posty billing:status                                      # none | trialing | active | past_due | read_only | cancelled, plus any unpaid checkout
+posty billing:manage                                      # a link to the Stripe billing portal (plan change, cancel, invoices, card)
+```
+
+**Never pay with a one-time or agent-issued card.** A Posty subscription
+renews monthly or yearly; a one-time card fails at the first renewal and the
+plan ends. Give the link to the subscriber, let them pay, then run
+`posty billing:status` to confirm before continuing setup.
+
+`billing:subscribe` and `billing:manage` need a full-workspace key (tick
+"the whole workspace" on the `posty auth:login` approval page) or an OAuth
+token, held by the person who pays for the workspace (or a workspace owner
+when nobody pays yet). A scoped key is refused with a message that says so.
+All four commands work before the workspace has a plan with API access: they
+are how it gets one.
+
 ## Channel-specific settings
 
 The exact schema is always what `posty integrations:settings <id>` shows.
@@ -375,6 +401,12 @@ posty analytics:platform <id> -d 30
 posty analytics:post <id>
 posty posts:missing <id>
 posty posts:connect <id> --release-id "<rid>"
+
+# Subscription (the person pays in Stripe Checkout; never with an agent card)
+posty billing:plans
+posty billing:subscribe --tier pro --period yearly
+posty billing:status
+posty billing:manage
 ```
 
 ## When the file is not on this machine

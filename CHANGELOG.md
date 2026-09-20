@@ -5,6 +5,21 @@ All notable changes to the Posty CLI are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-09-20
+
+### Added
+- **Subscription.** `posty billing:plans` (the four plans, prices in forint,
+  limits, the trial rule, the current tier), `posty billing:subscribe --tier
+  <alap|pro|kreator|csapat> --period <monthly|yearly> [--open]` (a Stripe
+  Checkout link; nothing is charged, the person pays with their own Link
+  wallet or card), `posty billing:status` (none, trialing, active, past_due,
+  read_only, cancelled, plus any unpaid checkout) and `posty billing:manage
+  [--open]` (the Stripe billing portal). Backed by `GET /public/v1/plans`,
+  `POST /public/v1/subscriptions/checkout`, `GET /public/v1/subscription`
+  and `GET /public/v1/subscription/portal`, all of which answer before the
+  workspace has a plan with API access. The checkout and the portal need a
+  full-workspace key or an OAuth token of the payer.
+
 ## [1.2.0] - 2026-09-16
 
 ### Added

@@ -41,6 +41,10 @@ prompt in the desktop app), then retry. There is no key to paste.
 | `upload_media_from_url` | puts an image or video into the media library from a public URL or data URL | yes |
 | `create_upload_link` | a browser link the user drops files on, for media that is on their own device | yes |
 | `list_upload_link_files` | what the user dropped on that link, with the path to attach | no |
+| `get_plans` | the four plans (Alap, Pro, Kreátor, Csapat), prices in forint, limits, the trial rule, the current tier. **Only when the user asks about plans or wants to subscribe.** | no |
+| `subscribe` | a Stripe Checkout link for the chosen plan and period. Nothing is charged; **the user opens it and pays with their own Link wallet or card**. Signed-in (OAuth) connections, workspace owner only. | yes |
+| `get_subscription` | the subscription state (none, trialing, active, past_due, read_only, cancelled), plan, period end, and any unpaid checkout from the last hour. Call it after the user says they paid. | no |
+| `manage_subscription` | a link to the Stripe billing portal: plan change, cancel, invoices, card. Signed-in connections, the payer only. | yes |
 
 ## Rules that hold on every call
 
@@ -55,6 +59,7 @@ prompt in the desktop app), then retry. There is no key to paste.
 - Media: a public URL goes through `upload_media_from_url`; a file on the user's device goes through `create_upload_link`, then `list_upload_link_files`, then attach the returned path. Reels and Shorts want 9:16 video.
 - Undo: `delete_post` with the id from `list_posts` or `create_post`, only before it publishes, and ask first. Posty cannot remove a post from a platform once it is live.
 - Rate limits: if a call is refused for frequency, wait the number of seconds in the message.
+- Billing: `get_plans`, `subscribe`, `get_subscription` and `manage_subscription` are the only tools that name a plan or a price, and you call them only after the user asks about plans, asks to subscribe, or asks to manage billing. Never suggest a plan or an upgrade otherwise. To subscribe: confirm the plan and period, call `subscribe` once, give the user the `checkoutUrl`, and let THEM pay in Stripe Checkout with their own wallet or card. Never pay with a one-time or agent-issued card: the subscription renews and a one-time card fails at the first renewal. After the user says they paid, call `get_subscription` and check for `trialing` or `active` before continuing. A connection made before paying sees only these four tools; refresh the tool list (or reconnect) once `apiAndMcpAccess` is true.
 
 ## Worked example
 
