@@ -42,7 +42,7 @@ prompt in the desktop app), then retry. There is no key to paste.
 | `create_upload_link` | a browser link the user drops files on, for media that is on their own device | yes |
 | `list_upload_link_files` | what the user dropped on that link, with the path to attach | no |
 | `get_plans` | the four plans (Alap, Pro, Kreátor, Csapat), prices in forint, limits, the trial rule, the current tier. **Only when the user asks about plans or wants to subscribe.** | no |
-| `subscribe` | a Stripe Checkout link for the chosen plan and period. Nothing is charged; **the user opens it and pays with their own Link wallet or card**. Signed-in (OAuth) connections, workspace owner only. | yes |
+| `subscribe` | a Stripe Checkout link for the chosen plan and period. Nothing is charged; **the user opens it and pays with their own Link wallet or card**. Signed-in (OAuth) connections, workspace owner only. Only a plan with `apiAndMcpAccess: true` keeps you working after the payment (not Alap): say so before the user pays. | yes |
 | `get_subscription` | the subscription state (none, trialing, active, past_due, read_only, cancelled), plan, period end, and any unpaid checkout from the last hour. Call it after the user says they paid. | no |
 | `manage_subscription` | a link to the Stripe billing portal: plan change, cancel, invoices, card. Signed-in connections, the payer only. | yes |
 

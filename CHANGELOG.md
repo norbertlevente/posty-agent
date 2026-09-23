@@ -5,6 +5,37 @@ All notable changes to the Posty CLI are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **`auth:status` for a key that has no plan yet.** The probe is now
+  `GET /public/v1/subscription`, which answers for any valid credential. A
+  fresh `auth:signup` key was reported as "expired or invalid" because the
+  old probe (`GET /public/v1/integrations`) is plan-gated. A valid key of an
+  unpaid workspace now answers `authenticated: true, apiAccess: false,
+  reason: "no-plan"` (exit 0). The method label follows the credential
+  (`psty_` key or `pos_` OAuth token), not the file it is stored in; it said
+  "OAuth2" for every stored key. The output also carries `source`,
+  `plan` and `subscriptionState`.
+- **`auth:signup` off a terminal** prints a second command that keeps every
+  option of the first run (`--api-url`, `--language`, `--workspace-name`,
+  `--timezone`). The timezone defaults to the one saved by `config:set`,
+  then to this machine's own zone (`Intl`).
+- **A 403 scope refusal** no longer says "credentials rejected, run
+  auth:login": it names the missing permission and the key owner's role. A
+  401 for a workspace without a plan with API access points at
+  `billing:plans` instead of `auth:login`.
+- **`billing:status`** names the pending checkout by plan, start time and
+  expiry, not by its session id.
+
+### Added
+- **`posts:create` sends an `Idempotency-Key`** (a new UUID per run) and,
+  after a network failure or a 5xx, retries once with the same key, so a
+  lost answer cannot create the post twice.
+- `billing:subscribe` says so on stderr when the chosen plan has no API or
+  MCP access (`apiAndMcpAccess: false`, Alap): after the payment the key
+  still reaches only the billing commands.
+
 ## [1.3.0] - 2026-09-20
 
 ### Added

@@ -59,7 +59,7 @@ pnpm install -g posty-cli
 
 ```bash
 posty auth:login     # device flow, opens a browser
-posty auth:status    # checks that credentials are still valid
+posty auth:status    # checks the credential; a valid key whose workspace has no plan yet is reported as such, not as invalid
 posty auth:logout    # deletes stored credentials
 ```
 
@@ -89,7 +89,12 @@ never printed. **Accounts created this way have no free trial**: until the
 person pays, only the `billing:*` commands work, so the next step is
 `posty billing:plans` and `posty billing:subscribe`. An address that already
 has an account is refused (sign in with `posty auth:login`). Off a terminal,
-the first run only sends the code and prints the command to run next.
+the first run only sends the code and prints the command to run next, with
+every option of the first run in it (`--api-url`, `--language`,
+`--workspace-name`, `--timezone`). The timezone defaults to the one saved by
+`config:set`, then to this machine's own. After the payment the key works
+for every command only on a plan with API access (`apiAndMcpAccess: true` in
+`billing:plans`); Alap has none, so say so before the person picks it.
 `--workspace` stays the global workspace id flag; the new workspace's name is
 `--workspace-name`.
 
@@ -152,6 +157,11 @@ posty posts:create -c "Content" --date "2026-12-31T12:00:00Z" \
 posty posts:create --json post.json
 ```
 
+Every `posts:create` sends an `Idempotency-Key` (a new UUID per run). After a
+network failure or a 5xx it retries once with the same key, so the server
+returns the post it already made instead of making a second one. Running the
+command again is a new post: check `posts:list` first after an error.
+
 ### Manage posts
 
 ```bash
@@ -208,7 +218,7 @@ Checkout, with the person's own Link wallet or card.
 posty billing:plans                                       # the four plans, prices in HUF, limits, trial rule, current tier
 posty billing:subscribe --tier pro --period yearly        # a Stripe Checkout link as JSON; nothing is charged
 posty billing:subscribe --tier pro --period yearly --open # same, and open it in this machine's browser
-posty billing:status                                      # none | trialing | active | past_due | read_only | cancelled, plus any unpaid checkout
+posty billing:status                                      # none | trialing | active | past_due | read_only | cancelled, plus any unpaid checkout (plan, start time, expiry)
 posty billing:manage                                      # a link to the Stripe billing portal (plan change, cancel, invoices, card)
 ```
 
@@ -356,7 +366,9 @@ and machine-readable.
 | `--integrations is required...` | No channel given; `integrations:list` |
 | naive date error | No timezone anywhere; see above |
 | `Integration not found` | Bad id, or the channel is no longer connected |
-| 401 / 403 | Expired or revoked auth; `posty auth:login` |
+| 401 "no plan with API access" | The key is fine; the workspace needs a plan: `billing:plans`, `billing:subscribe` |
+| 403 "missing the required permission" | The key is valid but lacks that scope; make a key that has it. Logging in again does not help |
+| 401 / 403 otherwise | Expired or revoked auth; `posty auth:login` |
 
 ## Development
 

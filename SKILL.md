@@ -120,7 +120,7 @@ When the user asks you to make them a Posty account and they have none:
 
 ```bash
 posty auth:signup --email anna@example.com
-# → {codeSent:true, terms, privacy, next}   (no terminal: the code is on its way)
+# → {codeSent:true, terms, privacy, timezone, language, next}   (no terminal: the code is on its way; `next` is the exact second command, every option kept)
 posty auth:signup --email anna@example.com --code 123456 --accept-terms [--workspace-name "Anna Kávézó"] [--timezone Europe/Budapest]
 # → {created:true, workspaceId, workspaceName, trial:false, credentials, next}
 ```
@@ -137,6 +137,15 @@ posty auth:signup --email anna@example.com --code 123456 --accept-terms [--works
    user pays, only the `billing:*` commands work. Next: `billing:plans`,
    confirm a plan with the user, `billing:subscribe`, give them the link.
    Channels are connected by the user in the web app after paying.
+5. **You keep working for the user only on a plan with API access**
+   (`limits.apiAndMcpAccess: true` in `billing:plans`). Alap has none: if
+   the user picks it, tell them BEFORE they pay that you will not be able to
+   schedule for them afterwards. `billing:subscribe` answers with
+   `apiAndMcpAccess` and a `note` for such a plan.
+
+`posty auth:status` reports a valid key of a workspace that has not paid yet
+as `authenticated: true, apiAccess: false, reason: "no-plan"` (exit 0). It is
+not an invalid key; do not run `auth:login` for it.
 
 Exit 1 with "already has a Posty account" (HTTP 409) means the address is
 taken: the user signs in with `posty auth:login` instead. A wrong or expired
@@ -165,7 +174,7 @@ A key can also be **granted only some workspaces and only some channels**. A
 request naming a channel outside the grant is refused even when the scope is
 right.
 
-**When you hit a 403, read the message.** It names the missing scope. Do not
+**When you hit a 403, read the message.** The CLI names the missing scope; the key is valid, so `auth:login` does not fix it. Do not
 retry, and do not try a different route to get around it — ask the user to mint
 a key with the scope, or to have someone with the right role do it.
 
@@ -316,7 +325,7 @@ never suggest a plan or an upgrade otherwise.
 
 ```bash
 posty billing:plans                                  # → {current:{tier,plan}, plans:[{plan,slug,monthly,yearly,limits}], trial, trialDays}
-posty billing:subscribe --tier pro --period yearly   # → {status:"requires_payment", checkoutUrl, checkoutId, plan, amount, currency, trial, expiresAt}
+posty billing:subscribe --tier pro --period yearly   # → {status:"requires_payment", checkoutUrl, checkoutId, plan, amount, currency, trial, expiresAt, apiAndMcpAccess, note}
 posty billing:status                                 # → {state, plan, period, currentPeriodEnd, payerIsCaller, pendingCheckout, apiAndMcpAccess}
 posty billing:manage                                 # → {portalUrl, note}
 ```
@@ -693,31 +702,30 @@ done
 
 ### Pattern 7: Error Handling & Retry
 
+`posts:create` already retries for you: every run sends an `Idempotency-Key`
+(a new UUID per run) and, after a network failure or a 5xx, retries ONCE with
+the same key, so the server hands back the post it already made instead of
+making a second one. Running the command again is a NEW key and a NEW post.
+So never wrap `posts:create` in a retry loop; after a failure, look first:
+
 ```bash
 #!/bin/bash
 
 CONTENT="Your post content"
 INTEGRATION_ID="$X_ID"
 DATE="2026-12-31T12:00:00Z"
-MAX_RETRIES=3
 
-for attempt in $(seq 1 $MAX_RETRIES); do
-  if posty posts:create -c "$CONTENT" -s "$DATE" -i "$INTEGRATION_ID"; then
-    echo "Post created successfully"
-    break
-  else
-    echo "Attempt $attempt failed"
-    if [ "$attempt" -lt "$MAX_RETRIES" ]; then
-      DELAY=$((2 ** attempt))
-      echo "Retrying in ${DELAY}s..."
-      sleep "$DELAY"
-    else
-      echo "Failed after $MAX_RETRIES attempts"
-      exit 1
-    fi
-  fi
-done
+if posty posts:create -c "$CONTENT" -s "$DATE" -i "$INTEGRATION_ID"; then
+  echo "Post created successfully"
+else
+  # Did it get through anyway? Check before running it again.
+  posty posts:list --startDate "$DATE" --endDate "$DATE"
+fi
 ```
+
+A 403 that names a missing permission is not retryable: the key is valid
+and lacks the scope. A 401 saying the workspace has no plan with API access
+is not retryable either: see `billing:plans`.
 
 ---
 
