@@ -58,6 +58,12 @@ export async function billingSubscribe(args: any) {
     status(
       'The subscriber opens this link and pays in Stripe Checkout with their own Link wallet or card. Do not pay with a one-time or agent-issued card: the subscription renews and a one-time card fails at the first renewal. After paying, run "posty billing:status" to confirm.'
     );
+    if (checkout.apiAndMcpAccess === false) {
+      status(
+        checkout.note ||
+          `The ${checkout.plan} plan has no API or MCP access: after the payment this key still reaches only the billing commands. Tell the person before they pay.`
+      );
+    }
     if (args.open) {
       openBrowser(checkout.checkoutUrl);
       status('Opened the checkout in the browser.');
@@ -74,8 +80,13 @@ export async function billingStatus() {
   try {
     const subscription = await api.getSubscription();
     if (subscription.pendingCheckout) {
+      const pending = subscription.pendingCheckout;
+      const when = (iso: string) =>
+        iso ? new Date(iso).toLocaleString() : 'an unknown time';
       status(
-        `A checkout started at ${subscription.pendingCheckout.checkoutId} has not been paid yet; the same link is in pendingCheckout.`
+        `A checkout for ${pending.plan}${
+          pending.period ? ` (${pending.period.toLowerCase()})` : ''
+        } started at ${when(pending.startedAt)} has not been paid yet. The link is in pendingCheckout.checkoutUrl and expires at ${when(pending.expiresAt)}.`
       );
     }
     result(subscription);
