@@ -5,7 +5,7 @@ import { createInterface } from 'readline';
 import { getSetting, saveSetting } from '../settings';
 import { result, status } from '../output';
 import { assertIanaTimezone } from '../dates';
-import { PostyAPI, Workspace } from '../api';
+import { ApiError, PostyAPI, SubscriptionState, Workspace } from '../api';
 import { getWorkspaceId } from '../config';
 
 const CREDENTIALS_DIR = join(homedir(), '.posty');
@@ -341,6 +341,28 @@ async function signupRequest(
   return { status: response.status, data };
 }
 
+/** One shell word: quoted only when it has to be, so the command stays readable. */
+function shellWord(value: string): string {
+  return /^[A-Za-z0-9_@%+=:,./-]+$/.test(value)
+    ? value
+    : `'${value.replace(/'/g, `'\\''`)}'`;
+}
+
+/**
+ * The person's timezone for the new account: `--timezone`, then the one
+ * saved by `config:set`, then this machine's own zone. An agent usually runs
+ * on the person's machine, and a workspace without a zone schedules in UTC.
+ */
+function signupTimezone(argv: any): string | undefined {
+  const chosen = argv.timezone || getSetting('timezone');
+  if (chosen) return String(chosen);
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** The server's refusal as one sentence, whatever shape it came in. */
 function refusal(data: any): string {
   if (typeof data === 'string') return data;
@@ -374,6 +396,7 @@ export async function authSignup(argv: any) {
     argv.apiUrl || process.env.POSTY_API_URL || DEFAULT_API_URL
   ).replace(/\/+$/, '');
   const language = argv.language ? String(argv.language) : undefined;
+  const timezone = signupTimezone(argv);
   const interactive = !!process.stdin.isTTY && !!process.stderr.isTTY;
 
   if (!email.includes('@')) {
@@ -400,14 +423,34 @@ export async function authSignup(argv: any) {
       status('   Accounts created this way have no free trial; a plan is chosen and paid for next.');
 
       if (!interactive) {
-        // An agent: the person reads the code back, then the second run.
+        /*
+          An agent: the person reads the code back, then the second run.
+          EVERY option of this run rides along in the printed command. The
+          first version printed only --email, so the second run lost the
+          API URL (and hit the wrong server), the language, the workspace
+          name and the timezone.
+        */
+        const nextCommand = [
+          'posty auth:signup',
+          `--email ${shellWord(email)}`,
+          '--code <code>',
+          '--accept-terms',
+          ...(argv.apiUrl ? [`--api-url ${shellWord(apiUrl)}`] : []),
+          ...(language ? [`--language ${language}`] : []),
+          ...(argv.workspaceName
+            ? [`--workspace-name ${shellWord(String(argv.workspaceName))}`]
+            : []),
+          ...(timezone ? [`--timezone ${shellWord(timezone)}`] : []),
+        ].join(' ');
         result({
           codeSent: true,
           email,
           trial: false,
           terms: TERMS_URL,
           privacy: PRIVACY_URL,
-          next: `Ask the person for the code, show them ${TERMS_URL} and ${PRIVACY_URL}, and when they agree run: posty auth:signup --email ${email} --code <code> --accept-terms`,
+          timezone: timezone ?? null,
+          language: language ?? null,
+          next: `Ask the person for the code, show them ${TERMS_URL} and ${PRIVACY_URL}, and when they agree run: ${nextCommand}`,
         });
         return;
       }
@@ -441,7 +484,6 @@ export async function authSignup(argv: any) {
       process.exit(1);
     }
 
-    const timezone = argv.timezone || getSetting('timezone');
     const completed = await signupRequest(apiUrl, '/signup/complete', {
       email,
       code,
@@ -484,7 +526,7 @@ export async function authSignup(argv: any) {
     status('No free trial on this account. Next:');
     status('  posty billing:plans');
     status('  posty billing:subscribe --tier <slug> --period <monthly|yearly>');
-    status('The person opens the checkout link and pays; then every command works.');
+    status('The person opens the checkout link and pays. This key then works for every command only on a plan with API access (apiAndMcpAccess: true in billing:plans); Alap has none, so say so before the person picks it.');
 
     result({
       created: true,
@@ -497,6 +539,7 @@ export async function authSignup(argv: any) {
         'posty billing:subscribe --tier <slug> --period <monthly|yearly>',
         'posty billing:status',
       ],
+      note: 'This key keeps working after the payment only on a plan with apiAndMcpAccess: true in billing:plans. Alap has no API access: tell the person before they pay for it.',
     });
   } catch (error: any) {
     console.error(`❌ Could not reach the Posty API at ${apiUrl}: ${error.message}`);
@@ -539,33 +582,48 @@ export async function authStatus() {
   /** Enough to identify a key, never enough to use one. */
   const hint = (token: string) => `${token.split('_')[0]}_…`;
 
+  /*
+    THE METHOD IS THE CREDENTIAL, NOT THE FILE IT CAME FROM. Both
+    `auth:login` and `auth:signup` store a Posty API key (`psty_…`) in
+    credentials.json; only a `pos_` token is OAuth. This used to say
+    "OAuth2" for anything in the file.
+  */
+  const methodOf = (token: string): 'oauth2' | 'api-key' =>
+    token.startsWith('pos_') ? 'oauth2' : 'api-key';
+  const label = (m: 'oauth2' | 'api-key') =>
+    m === 'oauth2' ? 'OAuth token' : 'API key';
+
   let apiKey: string | undefined;
   let apiUrl: string;
   let method: 'oauth2' | 'api-key';
+  let source: 'credentials-file' | 'environment';
 
   if (creds) {
-    method = 'oauth2';
+    method = methodOf(creds.accessToken);
+    source = 'credentials-file';
     apiKey = creds.accessToken;
     apiUrl = creds.apiUrl;
-    status('🔐 Authentication method: OAuth2');
+    status(`🔐 Authentication method: ${label(method)} (stored by auth:login or auth:signup)`);
     status(`📡 API URL: ${creds.apiUrl}`);
-    status(`🔑 Token: ${hint(creds.accessToken)}`);
+    status(`🔑 Credential: ${hint(creds.accessToken)}`);
     if (creds.organizationId) {
       status(`🏢 Workspace: ${creds.organizationId}`);
     }
     status(`📁 Credentials file: ${CREDENTIALS_FILE}`);
   } else if (envKey) {
-    method = 'api-key';
+    method = methodOf(envKey);
+    source = 'environment';
     apiKey = envKey;
     apiUrl = process.env.POSTY_API_URL || DEFAULT_API_URL;
-    status('🔑 Authentication method: API Key (environment variable)');
-    status(`🔑 Key: ${hint(envKey)}`);
+    status(`🔑 Authentication method: ${label(method)} (POSTY_API_KEY)`);
+    status(`🔑 Credential: ${hint(envKey)}`);
   } else {
     status('❌ Not authenticated.');
     status('');
     status('Options:');
-    status('  1. OAuth2: posty auth:login');
-    status('  2. API Key: export POSTY_API_KEY=your_api_key');
+    status('  1. Device login: posty auth:login');
+    status('  2. New account: posty auth:signup --email <address>');
+    status('  3. API Key: export POSTY_API_KEY=your_api_key');
     result({ authenticated: false, reason: 'no-credentials' });
     process.exit(1);
   }
@@ -573,61 +631,110 @@ export async function authStatus() {
   status('');
   status('🔄 Verifying credentials...');
 
+  const workspaceId = getWorkspaceId();
+  const base = { method, source, apiUrl, workspace: workspaceId ?? null };
+
+  /*
+    THE PROBE IS `GET /subscription`, which answers for ANY valid credential,
+    including one whose workspace has no plan with API access yet. The old
+    probe (`GET /integrations`) is plan-gated, so a fresh `auth:signup` key
+    was reported as "expired or invalid" while it was fine and only waiting
+    for the payment.
+  */
+  let subscription: SubscriptionState;
   try {
-    const workspaceId = getWorkspaceId();
-    const response = await fetch(`${apiUrl}/public/v1/integrations`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: apiKey,
-        ...(workspaceId ? { showorg: workspaceId } : {}),
-      },
-    });
-
-    if (response.ok) {
-      const integrations = (await response.json()) as any[];
-      status(
-        `✅ Credentials are valid. ${integrations.length} integration(s) connected.`
-      );
-      result({
-        authenticated: true,
-        method,
-        apiUrl,
-        workspace: workspaceId ?? null,
-        integrations: integrations.length,
-      });
-      return;
+    subscription = await new PostyAPI({
+      apiKey,
+      apiUrl,
+      workspaceId,
+    }).getSubscription();
+  } catch (error: any) {
+    if (error instanceof ApiError && error.isWorkspaceChoice) {
+      status('✅ Credentials are valid, but this key spans several workspaces and none is selected.');
+      status('   Run: posty workspaces:list, then posty workspaces:use <id>');
+      result({ authenticated: true, ...base, reason: 'choose-workspace' });
+      process.exit(1);
     }
-
-    if (response.status === 401 || response.status === 403) {
+    if (error instanceof ApiError && error.status === 401) {
       status('❌ Credentials are expired or invalid. Please re-authenticate.');
       status(
         creds
           ? '   Run: posty auth:login'
           : '   Update your POSTY_API_KEY environment variable.'
       );
-      result({ authenticated: false, method, apiUrl, reason: 'rejected' });
+      result({ authenticated: false, ...base, reason: 'rejected' });
       process.exit(1);
     }
-
-    const error = await response.text();
-    status(`⚠️  Could not verify credentials (HTTP ${response.status}): ${error}`);
-    /*
-      UNKNOWN, NOT INVALID. A 500 or a proxy error says nothing about the
-      credentials, so this reports that it could not check rather than
-      claiming they are bad -- but it still exits 1, because a caller that
-      asked "are these good?" did not get a yes.
-    */
-    result({
-      authenticated: null,
-      method,
-      apiUrl,
-      reason: `http-${response.status}`,
-    });
-    process.exit(1);
-  } catch (error: any) {
+    if (error instanceof ApiError) {
+      /*
+        UNKNOWN, NOT INVALID. A 500 or a proxy error says nothing about the
+        credentials, so this reports that it could not check rather than
+        claiming they are bad, but it still exits 1, because a caller that
+        asked "are these good?" did not get a yes.
+      */
+      status(`⚠️  Could not verify credentials (HTTP ${error.status}): ${error.body}`);
+      result({ authenticated: null, ...base, reason: `http-${error.status}` });
+      process.exit(1);
+    }
     status(`⚠️  Could not reach API to verify credentials: ${error.message}`);
-    result({ authenticated: null, method, apiUrl, reason: 'unreachable' });
+    result({ authenticated: null, ...base, reason: 'unreachable' });
     process.exit(1);
   }
+
+  /*
+    VALID, BUT NO PLAN YET: said as its own answer. The credential works (exit
+    0), and every command except billing:* will be refused until the workspace
+    is on a plan with API access.
+  */
+  if (!subscription.apiAndMcpAccess) {
+    const noPlan =
+      subscription.state === 'none' ||
+      subscription.state === 'cancelled' ||
+      subscription.state === 'read_only';
+    status(
+      noPlan
+        ? '✅ Credentials are valid. This workspace has no plan yet, so only the billing commands work.'
+        : `✅ Credentials are valid. The current plan (${subscription.plan}) has no API access, so only the billing commands work.`
+    );
+    status('   Next: posty billing:plans, then posty billing:subscribe --tier <slug> --period <monthly|yearly>');
+    if (subscription.pendingCheckout) {
+      status(`   An unpaid checkout is waiting: ${subscription.pendingCheckout.checkoutUrl}`);
+    }
+    result({
+      authenticated: true,
+      ...base,
+      apiAccess: false,
+      plan: subscription.plan,
+      subscriptionState: subscription.state,
+      reason: noPlan ? 'no-plan' : 'plan-without-api-access',
+    });
+    return;
+  }
+
+  // A full answer: how many channels, when the key may read them.
+  let integrations: number | null = null;
+  try {
+    const list = (await new PostyAPI({
+      apiKey,
+      apiUrl,
+      workspaceId,
+    }).listIntegrations()) as any[];
+    integrations = Array.isArray(list) ? list.length : null;
+  } catch {
+    // A scoped key without channels:read; the credential is still valid.
+  }
+
+  status(
+    `✅ Credentials are valid. Plan: ${subscription.plan ?? 'none'}${
+      integrations === null ? '' : `, ${integrations} channel(s) connected`
+    }.`
+  );
+  result({
+    authenticated: true,
+    ...base,
+    apiAccess: true,
+    plan: subscription.plan,
+    subscriptionState: subscription.state,
+    integrations,
+  });
 }

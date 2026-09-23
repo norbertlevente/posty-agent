@@ -1,3 +1,5 @@
+import { randomUUID } from 'crypto';
+
 export interface PostyConfig {
   apiKey: string;
   apiUrl?: string;
@@ -31,6 +33,50 @@ export class ApiError extends Error {
 
   get isAuthError() {
     return this.status === 401 || this.status === 403;
+  }
+
+  /** The body as JSON when it is JSON, else null. */
+  private get json(): any {
+    try {
+      return JSON.parse(this.body);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * The 403 of the scope guard: the credential is VALID and lacks a
+   * permission. Logging in again changes nothing; a key with the scope
+   * (or a higher role for its owner) does. Null for any other answer.
+   */
+  get missingScope(): { missing: string[]; granted: string[]; role?: string } | null {
+    if (this.status !== 403) return null;
+    const body = this.json;
+    const msg = String(body?.msg ?? body?.message ?? this.body);
+    if (!/missing the required permission/i.test(msg)) return null;
+    const required: string[] = Array.isArray(body?.required) ? body.required : [];
+    const granted: string[] = Array.isArray(body?.granted) ? body.granted : [];
+    const fromText = (msg.split(':')[1] || '')
+      .split(',')
+      .map((scope) => scope.trim())
+      .filter(Boolean);
+    const missing = required.length
+      ? required.filter((scope) => !granted.includes(scope))
+      : fromText;
+    return { missing, granted, role: body?.role };
+  }
+
+  /**
+   * The 401 of the plan gate: the credential is valid, the workspace has no
+   * plan with API access. The billing commands still work.
+   */
+  get isPlanMissing() {
+    return (
+      this.status === 401 &&
+      /no subscription found|does not include api access|no plan with api access/i.test(
+        this.body
+      )
+    );
   }
 
   get isRateLimit() {
@@ -94,6 +140,10 @@ export interface SubscriptionCheckout {
   trial: boolean;
   trialDays: number;
   expiresAt: string;
+  /** False for a plan without API or MCP access (Alap): tell the person before they pay. */
+  apiAndMcpAccess?: boolean;
+  /** Set when the plan has no API access; the sentence to pass on. */
+  note?: string | null;
 }
 
 /** `GET /public/v1/subscription`: where the workspace stands. */
@@ -111,6 +161,7 @@ export interface SubscriptionState {
     checkoutUrl: string;
     plan: string;
     period: string | null;
+    startedAt: string;
     expiresAt: string;
   } | null;
   apiAndMcpAccess: boolean;
@@ -157,11 +208,33 @@ export class PostyAPI {
     return await response.json();
   }
 
-  async createPost(data: any) {
-    return this.request('/public/v1/posts', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+  /**
+   * ONE IDEMPOTENCY KEY PER INVOCATION, REUSED ON ITS OWN RETRY.
+   *
+   * A timeout cannot tell a lost request from a lost answer, and resending a
+   * post blindly can publish it twice on a real account. So the post carries
+   * an `Idempotency-Key` (a fresh UUID for this command), and the one retry
+   * below, after a network failure or a 5xx, sends the SAME key: the server
+   * then hands back the post it already created instead of making another.
+   */
+  async createPost(data: any, idempotencyKey: string = randomUUID()) {
+    const send = () =>
+      this.request('/public/v1/posts', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: { 'Idempotency-Key': idempotencyKey },
+      });
+
+    try {
+      return await send();
+    } catch (error: any) {
+      const retryable =
+        !(error instanceof ApiError) ||
+        [500, 502, 503, 504].includes(error.status);
+      if (!retryable) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      return send();
+    }
   }
 
   async listPosts(filters: any = {}) {

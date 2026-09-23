@@ -28,6 +28,21 @@ export function fail(context: string, error: any): never {
     console.error(
       'This key spans several workspaces and none is selected. Run "posty workspaces:list", then "posty workspaces:use <id>" (or pass --workspace <id>).'
     );
+  } else if (error instanceof ApiError && error.missingScope) {
+    /*
+      A VALID credential without the permission. "Run auth:login" was the
+      wrong advice here: the key is fine, logging in again changes nothing.
+    */
+    const { missing, role } = error.missingScope;
+    console.error(
+      `This key is valid but lacks the permission ${missing.join(', ') || 'this command needs'}${
+        role ? ` (the key owner's role: ${role})` : ''
+      }. Create a key that includes it in Posty (Settings, Developers), or ask a workspace owner.`
+    );
+  } else if (error instanceof ApiError && error.isPlanMissing) {
+    console.error(
+      'The credential is valid, but this workspace has no plan with API access yet. Run "posty billing:plans", then "posty billing:subscribe --tier <slug> --period <monthly|yearly>".'
+    );
   } else if (error instanceof ApiError && error.isAuthError) {
     console.error(
       'Your credentials were rejected. Run "posty auth:login" to re-authenticate, or check POSTY_API_KEY.'
