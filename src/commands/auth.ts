@@ -317,6 +317,193 @@ export async function authLogin(argv: any) {
   process.exit(1);
 }
 
+const TERMS_URL = 'https://posty.hu/aszf';
+const PRIVACY_URL = 'https://posty.hu/adatvedelem';
+
+/** POST a JSON body to the unauthenticated sign-up routes. */
+async function signupRequest(
+  apiUrl: string,
+  path: string,
+  body: Record<string, unknown>
+): Promise<{ status: number; data: any }> {
+  const response = await fetch(`${apiUrl}/public/v1${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const text = await response.text();
+  let data: any = text;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    // not JSON; keep the text for the error message
+  }
+  return { status: response.status, data };
+}
+
+/** The server's refusal as one sentence, whatever shape it came in. */
+function refusal(data: any): string {
+  if (typeof data === 'string') return data;
+  const message = data?.msg ?? data?.message;
+  return Array.isArray(message) ? message.join('; ') : String(message ?? JSON.stringify(data));
+}
+
+/**
+ * `posty auth:signup --email <address> [--workspace-name <name>] [--code <code>] [--accept-terms]`
+ *
+ * CREATES A NEW POSTY ACCOUNT for the person at that address, with a code
+ * from their mailbox, and stores its key exactly like `auth:login` does
+ * (~/.posty/credentials.json, 0600). The key is never printed.
+ *
+ * NO FREE TRIAL. An account made this way has no trial and no plan: the key
+ * opens only the billing commands until the person pays, so the next step is
+ * `posty billing:plans` and `posty billing:subscribe`.
+ *
+ * Two shapes, so both a person at a terminal and an agent without one can
+ * drive it:
+ *   - interactive: one run sends the code, asks for it, asks whether the
+ *     person agrees to the terms, and finishes;
+ *   - an agent: the first run (no --code, no TTY) sends the code and prints
+ *     what to run next; the second run passes --code and --accept-terms,
+ *     which the agent sends only after the person has read the terms and the
+ *     privacy notice and agreed.
+ */
+export async function authSignup(argv: any) {
+  const email = String(argv.email || '').trim();
+  const apiUrl = String(
+    argv.apiUrl || process.env.POSTY_API_URL || DEFAULT_API_URL
+  ).replace(/\/+$/, '');
+  const language = argv.language ? String(argv.language) : undefined;
+  const interactive = !!process.stdin.isTTY && !!process.stderr.isTTY;
+
+  if (!email.includes('@')) {
+    console.error('❌ Give the e-mail address of the new account with --email.');
+    process.exit(1);
+  }
+
+  let code = argv.code ? String(argv.code).trim() : '';
+
+  try {
+    if (!code) {
+      const started = await signupRequest(apiUrl, '/signup/start', {
+        email,
+        ...(language ? { language } : {}),
+      });
+      if (started.status !== 202 && started.status !== 200) {
+        console.error(
+          `❌ Could not send the code (HTTP ${started.status}): ${refusal(started.data)}`
+        );
+        process.exit(1);
+      }
+
+      status(`📧 A six-digit code was sent to ${email}. It is valid for 10 minutes.`);
+      status('   Accounts created this way have no free trial; a plan is chosen and paid for next.');
+
+      if (!interactive) {
+        // An agent: the person reads the code back, then the second run.
+        result({
+          codeSent: true,
+          email,
+          trial: false,
+          terms: TERMS_URL,
+          privacy: PRIVACY_URL,
+          next: `Ask the person for the code, show them ${TERMS_URL} and ${PRIVACY_URL}, and when they agree run: posty auth:signup --email ${email} --code <code> --accept-terms`,
+        });
+        return;
+      }
+
+      code = (await ask('Code from the e-mail: ')).trim();
+      if (!code) {
+        console.error('❌ No code given. Run the command again with --code <code>.');
+        process.exit(1);
+      }
+    }
+
+    if (!/^[0-9]{6}$/.test(code)) {
+      console.error('❌ The code is the six digits from the e-mail.');
+      process.exit(1);
+    }
+
+    status('');
+    status('To create the account the person must agree to:');
+    status(`  Terms of service:  ${TERMS_URL}`);
+    status(`  Privacy notice:    ${PRIVACY_URL}`);
+
+    let accepted = !!argv.acceptTerms;
+    if (!accepted && interactive) {
+      const answer = (await ask('Do you agree to both? [y/N] ')).trim().toLowerCase();
+      accepted = answer === 'y' || answer === 'yes' || answer === 'i' || answer === 'igen';
+    }
+    if (!accepted) {
+      console.error(
+        '❌ No account was created: the terms were not accepted. Show the person the two links above; if they agree, run the command again with --accept-terms.'
+      );
+      process.exit(1);
+    }
+
+    const timezone = argv.timezone || getSetting('timezone');
+    const completed = await signupRequest(apiUrl, '/signup/complete', {
+      email,
+      code,
+      acceptTerms: true,
+      ...(argv.workspaceName ? { workspaceName: String(argv.workspaceName) } : {}),
+      ...(timezone ? { timezone: String(timezone) } : {}),
+      ...(language ? { language } : {}),
+    });
+
+    if (completed.status === 409) {
+      console.error(`❌ ${refusal(completed.data)}`);
+      console.error('   Sign in instead: posty auth:login');
+      process.exit(1);
+    }
+    if (completed.status !== 201 && completed.status !== 200) {
+      console.error(
+        `❌ The account was not created (HTTP ${completed.status}): ${refusal(completed.data)}`
+      );
+      process.exit(1);
+    }
+
+    const data = completed.data || {};
+    if (!data.apiKey) {
+      console.error('❌ The server answered without a key. Sign in with: posty auth:login');
+      process.exit(1);
+    }
+
+    if (loadCredentials()) {
+      status('ℹ️  The credentials stored before are replaced by the new account\'s key.');
+    }
+    saveCredentials({
+      accessToken: data.apiKey,
+      apiUrl,
+      organizationId: data.workspaceId,
+    });
+
+    status(`✅ Account created. Workspace: ${data.workspaceName}`);
+    status(`📁 Key saved to ${CREDENTIALS_FILE}`);
+    status('');
+    status('No free trial on this account. Next:');
+    status('  posty billing:plans');
+    status('  posty billing:subscribe --tier <slug> --period <monthly|yearly>');
+    status('The person opens the checkout link and pays; then every command works.');
+
+    result({
+      created: true,
+      workspaceId: data.workspaceId,
+      workspaceName: data.workspaceName,
+      trial: false,
+      credentials: CREDENTIALS_FILE,
+      next: [
+        'posty billing:plans',
+        'posty billing:subscribe --tier <slug> --period <monthly|yearly>',
+        'posty billing:status',
+      ],
+    });
+  } catch (error: any) {
+    console.error(`❌ Could not reach the Posty API at ${apiUrl}: ${error.message}`);
+    process.exit(1);
+  }
+}
+
 export async function authLogout() {
   const creds = loadCredentials();
   if (!creds) {

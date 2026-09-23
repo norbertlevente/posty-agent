@@ -73,6 +73,26 @@ secrets and leaves your config alone.
 export POSTY_API_KEY=your_api_key   # Settings → Developers, in the web app
 ```
 
+**No account yet: create one from the terminal**
+
+```bash
+posty auth:signup --email anna@example.com            # e-mails a code, asks for it and for the terms
+posty auth:signup --email anna@example.com --code 123456 --accept-terms --workspace-name "Anna Kávézó"
+```
+
+Posty e-mails a six-digit code to the address; the person reads it to you
+(or types it at the prompt). The person must agree to the terms
+(https://posty.hu/aszf) and the privacy notice (https://posty.hu/adatvedelem):
+`--accept-terms` says they did, or the command asks on a terminal. The new
+account's full-workspace key is stored like `auth:login` stores it and is
+never printed. **Accounts created this way have no free trial**: until the
+person pays, only the `billing:*` commands work, so the next step is
+`posty billing:plans` and `posty billing:subscribe`. An address that already
+has an account is refused (sign in with `posty auth:login`). Off a terminal,
+the first run only sends the code and prints the command to run next.
+`--workspace` stays the global workspace id flag; the new workspace's name is
+`--workspace-name`.
+
 ## Workspaces
 
 A credential can reach one workspace or several (tick "All my workspaces" on
@@ -370,6 +390,7 @@ node dist/index.js --help
 # Authentication
 posty auth:status
 posty auth:login
+posty auth:signup --email <address>
 posty auth:logout
 
 # Workspaces

@@ -111,6 +111,36 @@ posty auth:status
 If not authenticated, either:
 1. **Device login:** `posty auth:login` — opens a browser, the human approves it
 2. **API Key:** `export POSTY_API_KEY=your_api_key`
+3. **No account yet:** `posty auth:signup` creates one, see below. Only when
+   the user asks you to create a Posty account for them.
+
+### Creating an account for the user (no free trial)
+
+When the user asks you to make them a Posty account and they have none:
+
+```bash
+posty auth:signup --email anna@example.com
+# → {codeSent:true, terms, privacy, next}   (no terminal: the code is on its way)
+posty auth:signup --email anna@example.com --code 123456 --accept-terms [--workspace-name "Anna Kávézó"] [--timezone Europe/Budapest]
+# → {created:true, workspaceId, workspaceName, trial:false, credentials, next}
+```
+
+1. Run it with `--email` only. Posty e-mails the user a six-digit code
+   (valid 10 minutes). Ask the user to read the code to you.
+2. Show the user the terms (https://posty.hu/aszf) and the privacy notice
+   (https://posty.hu/adatvedelem) and ask whether they agree. Pass
+   `--accept-terms` ONLY after they said yes; never decide it for them.
+3. Run it again with `--code` and `--accept-terms`. The key is stored like
+   `auth:login` stores it (`~/.posty/credentials.json`, 0600) and is never
+   printed.
+4. **There is no free trial on an account made this way**, and until the
+   user pays, only the `billing:*` commands work. Next: `billing:plans`,
+   confirm a plan with the user, `billing:subscribe`, give them the link.
+   Channels are connected by the user in the web app after paying.
+
+Exit 1 with "already has a Posty account" (HTTP 409) means the address is
+taken: the user signs in with `posty auth:login` instead. A wrong or expired
+code: run step 1 again for a new one.
 
 **Do NOT proceed with any other commands until authentication is confirmed.**
 
@@ -1000,6 +1030,7 @@ documented above; there is no second syntax guide to consult.
 # ⚠️ AUTHENTICATE FIRST - required before any other command
 posty auth:status                                             # Check if authenticated
 posty auth:login                                              # OAuth2 device flow login
+posty auth:signup --email <address>                           # New account by e-mailed code; no free trial
 posty auth:logout                                             # Remove credentials
 export POSTY_API_KEY=key                                      # Or use API key
 

@@ -4,7 +4,7 @@ import { createPost, listPosts, deletePost, getMissingContent, connectPost, chan
 import { listIntegrations, listGroups, getIntegrationSettings, triggerIntegrationTool } from './commands/integrations';
 import { getAnalytics, getPostAnalytics } from './commands/analytics';
 import { uploadFile, createUploadLink, listUploadLinkFiles } from './commands/upload';
-import { authLogin, authLogout, authStatus } from './commands/auth';
+import { authLogin, authLogout, authStatus, authSignup } from './commands/auth';
 import { configSet, configGet } from './commands/config';
 import { listWorkspaces, useWorkspace, currentWorkspace } from './commands/workspaces';
 import { billingPlans, billingSubscribe, billingStatus, billingManage } from './commands/billing';
@@ -556,6 +556,58 @@ yargs(hideBin(process.argv))
         );
     },
     authLogin as any
+  )
+  .command(
+    'auth:signup',
+    'Create a NEW Posty account with a code sent to the e-mail address, and store its key. No free trial: the next step is billing:subscribe',
+    (yargs: Argv) => {
+      return yargs
+        .option('email', {
+          describe: 'E-mail address of the new account; the code is sent there',
+          type: 'string',
+          demandOption: true,
+        })
+        .option('code', {
+          describe: 'The six-digit code from the e-mail (asked for when omitted on a terminal)',
+          type: 'string',
+        })
+        .option('accept-terms', {
+          describe: 'The person has read https://posty.hu/aszf and https://posty.hu/adatvedelem and agrees',
+          type: 'boolean',
+          default: false,
+        })
+        /*
+          NOT --workspace: that is the global flag and takes a workspace ID
+          (the middleware above turns it into POSTY_WORKSPACE). A name here
+          under the same flag would be read as an id by every other command.
+        */
+        .option('workspace-name', {
+          describe: 'Name of the new workspace (default: the part of the address before the @)',
+          type: 'string',
+        })
+        .option('timezone', {
+          describe: 'The person\'s IANA timezone for the account, e.g. Europe/Budapest (default: the one saved by config:set)',
+          type: 'string',
+        })
+        .option('language', {
+          describe: 'Language of the e-mail and the account',
+          type: 'string',
+          choices: ['hu', 'en', 'de', 'cs'],
+        })
+        .option('api-url', {
+          describe: 'API base URL (default: POSTY_API_URL, then https://posty.hu/api)',
+          type: 'string',
+        })
+        .example(
+          '$0 auth:signup --email anna@example.com',
+          'Send the code, then ask for it and for the terms on the terminal'
+        )
+        .example(
+          '$0 auth:signup --email anna@example.com --code 123456 --accept-terms --workspace-name "Anna Kávézó"',
+          'Finish in one run (an agent, after the person read the code and agreed)'
+        );
+    },
+    authSignup as any
   )
   .command(
     'auth:logout',

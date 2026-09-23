@@ -19,6 +19,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and `GET /public/v1/subscription/portal`, all of which answer before the
   workspace has a plan with API access. The checkout and the portal need a
   full-workspace key or an OAuth token of the payer.
+- **Account sign-up.** `posty auth:signup --email <address> [--code <code>]
+  [--accept-terms] [--workspace-name <name>] [--timezone <IANA>]
+  [--language hu|en|de|cs]` creates a new Posty account with a one-time code
+  e-mailed to the address (`POST /public/v1/signup/start`, then
+  `POST /public/v1/signup/complete`) and stores its full-workspace key like
+  `auth:login` does (0600, never printed). The person must accept the terms
+  and the privacy notice: `--accept-terms`, or a yes on the terminal. Accounts
+  created this way have **no free trial**; the next step is
+  `billing:plans` and `billing:subscribe`. Off a terminal the first run only
+  sends the code and prints the command to run next. The workspace name flag
+  is `--workspace-name` because `--workspace` is the global workspace id.
 
 ## [1.2.0] - 2026-09-16
 
