@@ -141,7 +141,7 @@ posty auth:signup --email anna@example.com --code 123456 --accept-terms [--works
    (`limits.apiAndMcpAccess: true` in `billing:plans`). Alap has none: if
    the user picks it, tell them BEFORE they pay that you will not be able to
    schedule for them afterwards. `billing:subscribe` answers with
-   `apiAndMcpAccess` and a `note` for such a plan.
+   `apiAndMcpAccess: false` and prints the warning on stderr for such a plan.
 
 `posty auth:status` reports a valid key of a workspace that has not paid yet
 as `authenticated: true, apiAccess: false, reason: "no-plan"` (exit 0). It is
@@ -325,9 +325,9 @@ never suggest a plan or an upgrade otherwise.
 
 ```bash
 posty billing:plans                                  # → {current:{tier,plan}, plans:[{plan,slug,monthly,yearly,limits}], trial, trialDays}
-posty billing:subscribe --tier pro --period yearly   # → {status:"requires_payment", checkoutUrl, checkoutId, plan, amount, currency, trial, expiresAt, apiAndMcpAccess, note}
+posty billing:subscribe --tier pro --period yearly   # → {status:"requires_payment", checkoutUrl, checkoutId, plan, amount, currency, trial, expiresAt, apiAndMcpAccess}
 posty billing:status                                 # → {state, plan, period, currentPeriodEnd, payerIsCaller, pendingCheckout, apiAndMcpAccess}
-posty billing:manage                                 # → {portalUrl, note}
+posty billing:manage                                 # → {portalUrl}
 ```
 
 The flow:

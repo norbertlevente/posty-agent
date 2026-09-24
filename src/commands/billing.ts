@@ -58,17 +58,23 @@ export async function billingSubscribe(args: any) {
     status(
       'The subscriber opens this link and pays in Stripe Checkout with their own Link wallet or card. Do not pay with a one-time or agent-issued card: the subscription renews and a one-time card fails at the first renewal. After paying, run "posty billing:status" to confirm.'
     );
+    /*
+      The note goes to stderr ONCE, in the CLI's own words: the server's text
+      is shared with the MCP tools, and the JSON on stdout carries
+      `apiAndMcpAccess: false` for a script to act on. Printing `note` in both
+      streams showed the person the same warning twice.
+    */
+    const { note: _note, ...json } = checkout;
     if (checkout.apiAndMcpAccess === false) {
       status(
-        checkout.note ||
-          `The ${checkout.plan} plan has no API or MCP access: after the payment this key still reaches only the billing commands. Tell the person before they pay.`
+        `The ${checkout.plan} plan has no API or MCP access: after the payment this key still reaches only the billing commands, and the person uses Posty in the web app. Tell the person before they pay; a plan with apiAndMcpAccess: true in "posty billing:plans" keeps the CLI working.`
       );
     }
     if (args.open) {
       openBrowser(checkout.checkoutUrl);
       status('Opened the checkout in the browser.');
     }
-    result(checkout);
+    result(json);
   } catch (error: any) {
     fail('Failed to start the subscription', error);
   }
@@ -100,12 +106,14 @@ export async function billingManage(args: any) {
   const api = new PostyAPI(getConfig());
   try {
     const portal = await api.getSubscriptionPortal();
-    status(portal.note);
+    // Once, on stderr; the JSON keeps only what a script acts on.
+    const { note, ...json } = portal;
+    status(note);
     if (args.open) {
       openBrowser(portal.portalUrl);
       status('Opened the billing portal in the browser.');
     }
-    result(portal);
+    result(json);
   } catch (error: any) {
     fail('Failed to open the billing portal', error);
   }

@@ -586,7 +586,7 @@ yargs(hideBin(process.argv))
           type: 'string',
         })
         .option('timezone', {
-          describe: 'The person\'s IANA timezone for the account, e.g. Europe/Budapest (default: the one saved by config:set)',
+          describe: 'The person\'s IANA timezone for the account, e.g. Europe/Budapest (default: the one saved by config:set, else the system time zone)',
           type: 'string',
         })
         .option('language', {

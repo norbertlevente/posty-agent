@@ -27,6 +27,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `billing:plans` instead of `auth:login`.
 - **`billing:status`** names the pending checkout by plan, start time and
   expiry, not by its session id.
+- **Any other 403** (for example a scoped key on `billing:manage` or
+  `billing:subscribe`) no longer adds "Your credentials were rejected. Run
+  posty auth:login". Only a 401 means rejected credentials; a 403 now says
+  the credential is valid but not allowed to do this, and the server's
+  message says why.
+- **`auth:signup --help`** says `--timezone` defaults to the zone saved by
+  `config:set`, else the system time zone, as the code does.
+- **`billing:subscribe` and `billing:manage` print their note once**, on
+  stderr. The JSON on stdout no longer repeats it as `note`;
+  `billing:subscribe` keeps `apiAndMcpAccess` for a script to act on. The
+  Alap warning names `posty billing:plans`, not the MCP tool `get_plans`.
 
 ### Added
 - **`posts:create` sends an `Idempotency-Key`** (a new UUID per run) and,

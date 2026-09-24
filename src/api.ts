@@ -22,8 +22,9 @@ export interface Workspace {
 
 /**
  * Thrown for any non-2xx answer from the API. `status` survives so command
- * handlers can say something more useful than the raw body — in particular
- * a 401/403 should point the user at `posty auth:login`, not at the JSON.
+ * handlers can say something more useful than the raw body. Only a 401 means
+ * the credential was rejected and points at `posty auth:login`; a 403 is a
+ * valid credential that may not do this, and logging in again changes nothing.
  */
 export class ApiError extends Error {
   constructor(public status: number, public body: string) {
@@ -31,8 +32,18 @@ export class ApiError extends Error {
     this.name = 'ApiError';
   }
 
+  /** The credential itself was rejected (missing, unknown, expired). 401 only. */
   get isAuthError() {
-    return this.status === 401 || this.status === 403;
+    return this.status === 401;
+  }
+
+  /**
+   * A valid credential that is not allowed to do this: a scoped key on a
+   * route that needs a full-workspace one, a role below the payer, a closed
+   * registration. The body says which; the fix is never `auth:login`.
+   */
+  get isForbidden() {
+    return this.status === 403;
   }
 
   /** The body as JSON when it is JSON, else null. */

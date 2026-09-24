@@ -43,6 +43,16 @@ export function fail(context: string, error: any): never {
     console.error(
       'The credential is valid, but this workspace has no plan with API access yet. Run "posty billing:plans", then "posty billing:subscribe --tier <slug> --period <monthly|yearly>".'
     );
+  } else if (error instanceof ApiError && error.isForbidden) {
+    /*
+      A 403 the scope guard did not phrase: the credential is valid, this
+      action is not open to it (a scoped key on billing:manage, a colleague
+      who is not the payer). The server's message above says why; "your
+      credentials were rejected" would send the person to log in for nothing.
+    */
+    console.error(
+      'The credential is valid but not allowed to do this. The message above says why.'
+    );
   } else if (error instanceof ApiError && error.isAuthError) {
     console.error(
       'Your credentials were rejected. Run "posty auth:login" to re-authenticate, or check POSTY_API_KEY.'
