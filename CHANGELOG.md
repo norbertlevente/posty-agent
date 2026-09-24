@@ -38,6 +38,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   stderr. The JSON on stdout no longer repeats it as `note`;
   `billing:subscribe` keeps `apiAndMcpAccess` for a script to act on. The
   Alap warning names `posty billing:plans`, not the MCP tool `get_plans`.
+- **A 403 on `posts:create`** for a channel outside a scoped key's channels
+  goes through the same rule: it says the credential is valid but not
+  allowed, never "run auth:login". Checked for every command: they all
+  report failures through the one `fail()` helper.
+- **`posts:connect`** gets a clean answer from the server for an unknown or
+  another workspace's post (404) and for a post that is already connected
+  (409), where it used to be a 500.
+- **`posts:delete`** prints `{ "deleted": true, "group": "...", "count": n }`.
+  The server used to answer a successful delete with `{ "error": true }`.
 
 ### Added
 - **`posts:create` sends an `Idempotency-Key`** (a new UUID per run) and,
