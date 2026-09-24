@@ -326,9 +326,9 @@ YT_ID=$(posty integrations:list | jq -r '.[] | select(.identifier=="youtube")  |
 `identifier` is the provider; `__type` in JSON mode is the same string.
 
 If a channel is not in `integrations:list`, the user cannot post to it. For
-LinkedIn, TikTok and Google Business Profile that is the expected state until
-those platforms approve the app — say so rather than scheduling a post that
-will fail.
+Pinterest, Google Business Profile and LinkedIn company pages that is the
+expected state until those platforms approve the app (personal LinkedIn
+profiles work). Say so rather than scheduling a post that will fail.
 
 ---
 

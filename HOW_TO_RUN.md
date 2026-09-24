@@ -118,9 +118,9 @@ posty auth:status
 posty integrations:list
 ```
 
-`integrations:list` is the ground truth for what you can post to. LinkedIn,
-TikTok and Google Business Profile are pending those platforms' own approval,
-so they may not appear even though the code is complete.
+`integrations:list` is the ground truth for what you can post to. Pinterest,
+Google Business Profile and LinkedIn company pages are pending those platforms'
+own approval, so they do not appear yet. Personal LinkedIn profiles work.
 
 ```bash
 # Upload first — always. -m takes URLs from upload, never a local filename.
