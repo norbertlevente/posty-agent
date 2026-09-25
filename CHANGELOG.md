@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-09-25
+
 ### Fixed
 - **`auth:status` for a key that has no plan yet.** The probe is now
   `GET /public/v1/subscription`, which answers for any valid credential. A
@@ -64,7 +66,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   MCP access (`apiAndMcpAccess: false`, Alap): after the payment the key
   still reaches only the billing commands.
 
-## [1.3.0] - 2026-09-20
 
 ### Added
 - **Subscription.** `posty billing:plans` (the four plans, prices in forint,
