@@ -167,7 +167,8 @@ command again is a new post: check `posts:list` first after an error.
 ```bash
 posty posts:list                                   # default -30 … +30 days
 posty posts:list --startDate "..." --endDate "..." # a given range
-posty posts:delete <id>                            # delete
+posty posts:delete <id>                            # delete one post (one channel)
+posty posts:delete-group <group>                   # delete every channel of a group
 posty posts:status <id> --status draft             # back to draft
 posty posts:status <id> --status schedule          # queue a draft
 posty posts:find-slot <id>                         # next free slot
@@ -423,6 +424,7 @@ posty posts:create --json file.json
 # Management
 posty posts:list
 posty posts:delete <id>
+posty posts:delete-group <group>
 posty posts:status <id> --status draft
 posty posts:find-slot <id>
 posty upload <file>

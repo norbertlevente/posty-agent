@@ -341,3 +341,17 @@ export async function deletePost(args: any) {
     fail('Failed to delete post', error);
   }
 }
+
+export async function deletePostGroup(args: any) {
+  const config = getConfig();
+  const api = new PostyAPI(config);
+
+  try {
+    const res = await api.deletePostGroup(args.group);
+    status(`✅ Post group ${args.group} deleted from every channel`);
+    result(res);
+    return res;
+  } catch (error: any) {
+    fail('Failed to delete post group', error);
+  }
+}

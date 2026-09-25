@@ -363,7 +363,7 @@ polling loop on `posts:list` cannot starve `posts:create`.
 | Routes | Limit |
 |---|---|
 | Reads — `posts:list`, `integrations:list`, `integrations:groups`, `integrations:settings`, `posts:missing`, `posts:find-slot`, notifications | 600/h (the `API_LIMIT` default; production sets 600) |
-| Publish and delete — `posts:create`, `posts:delete`, `posts:status`, `integrations:trigger` | 60/h |
+| Publish and delete — `posts:create`, `posts:delete`, `posts:delete-group`, `posts:status`, `integrations:trigger` | 60/h |
 | Analytics and channel refresh — `analytics:platform`, `analytics:post`, `/social/:integration` | 30/h |
 | Uploads — `upload`, `upload-from-url` | 30/h |
 | Upload links — `upload:link` 60/h, `upload:files` 600/h | |
@@ -442,8 +442,11 @@ posty posts:list
 # List posts in date range
 posty posts:list --startDate "2026-01-01T00:00:00Z" --endDate "2026-12-31T23:59:59Z"
 
-# Delete post
+# Delete one post (one channel, with its thread or comments); other channels of its group stay
 posty posts:delete <post-id>
+
+# Delete a whole group: the post on every channel it went to (group from posts:list)
+posty posts:delete-group <group>
 
 # Change post status (draft ↔ schedule)
 posty posts:status <post-id> --status draft     # Move back to draft, terminates any running publish workflow
@@ -1066,7 +1069,8 @@ posty posts:create --json file.json                                             
 # Management
 posty posts:list                                  # List posts
 posty posts:find-slot <integration-id>            # Next free slot: {"date": "..."}
-posty posts:delete <id>                          # Delete post
+posty posts:delete <id>                          # Delete one post (one channel)
+posty posts:delete-group <group>                 # Delete every channel of a group
 posty posts:status <id> --status draft           # Move to draft (stops workflow)
 posty posts:status <id> --status schedule        # Queue draft for publishing
 posty upload <file>                              # Upload media

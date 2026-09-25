@@ -267,8 +267,16 @@ export class PostyAPI {
     });
   }
 
+  /** One post (one channel) with its thread or comments. Other channels of its group stay. */
   async deletePost(id: string) {
-    return this.request(`/public/v1/posts/${id}`, {
+    return this.request(`/public/v1/posts/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+  }
+
+  /** The whole group: every channel of one multi-channel post. */
+  async deletePostGroup(group: string) {
+    return this.request(`/public/v1/posts/group/${encodeURIComponent(group)}`, {
       method: 'DELETE',
     });
   }

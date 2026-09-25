@@ -1,6 +1,6 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { createPost, listPosts, deletePost, getMissingContent, connectPost, changePostStatus, findSlot } from './commands/posts';
+import { createPost, listPosts, deletePost, deletePostGroup, getMissingContent, connectPost, changePostStatus, findSlot } from './commands/posts';
 import { listIntegrations, listGroups, getIntegrationSettings, triggerIntegrationTool } from './commands/integrations';
 import { getAnalytics, getPostAnalytics } from './commands/analytics';
 import { uploadFile, createUploadLink, listUploadLinkFiles } from './commands/upload';
@@ -175,16 +175,30 @@ yargs(hideBin(process.argv))
   )
   .command(
     'posts:delete <id>',
-    'Delete a post',
+    'Delete one post (one channel). Other channels of the same group stay scheduled',
     (yargs: Argv) => {
       return yargs
         .positional('id', {
-          describe: 'Post ID to delete',
+          describe: 'Post ID to delete (the id field of posts:list)',
           type: 'string',
         })
-        .example('$0 posts:delete abc123', 'Delete post with ID abc123');
+        .example('$0 posts:delete abc123', 'Delete only post abc123, with its thread or comments')
+        .epilogue('To delete a post from every channel it went to, use posts:delete-group <group>.');
     },
     deletePost as any
+  )
+  .command(
+    'posts:delete-group <group>',
+    'Delete a whole group: the post on every channel it went to',
+    (yargs: Argv) => {
+      return yargs
+        .positional('group', {
+          describe: 'Group ID (the group field of posts:list)',
+          type: 'string',
+        })
+        .example('$0 posts:delete-group grp_9f8e7d6c', 'Delete every channel of group grp_9f8e7d6c');
+    },
+    deletePostGroup as any
   )
   .command(
     'posts:find-slot <id>',

@@ -45,10 +45,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`posts:connect`** gets a clean answer from the server for an unknown or
   another workspace's post (404) and for a post that is already connected
   (409), where it used to be a 500.
-- **`posts:delete`** prints `{ "deleted": true, "group": "...", "count": n }`.
-  The server used to answer a successful delete with `{ "error": true }`.
+- **`posts:delete <id>` deletes one post.** Only that channel's post, with
+  its thread or comments, is deleted and only its publishing workflow is
+  stopped; the other channels of the same group stay scheduled. It used to
+  delete the whole group. It prints `{ "deleted": true, "id": "...",
+  "count": 1 }` and fails with a 404 for an unknown or already deleted id.
+  (The server used to answer a successful delete with `{ "error": true }`.)
 
 ### Added
+- **`posts:delete-group <group>`** deletes a whole group: the post on every
+  channel it went to (`DELETE /public/v1/posts/group/{group}`). The group ID
+  is the `group` field of `posts:list`. Prints `{ "deleted": true, "group":
+  "...", "count": n }`.
 - **`posts:create` sends an `Idempotency-Key`** (a new UUID per run) and,
   after a network failure or a 5xx, retries once with the same key, so a
   lost answer cannot create the post twice.

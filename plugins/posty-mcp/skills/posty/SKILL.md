@@ -37,7 +37,7 @@ prompt in the desktop app), then retry. There is no key to paste.
 | `preview_post` | validates a proposed post and shows exactly what would go out, per account. **Always call this and show the result before `create_post`.** | no |
 | `create_post` | creates a draft, schedules, or publishes now, across one or more channels | yes |
 | `list_posts` | the calendar: id, state, channel, UTC and local time | no |
-| `delete_post` | removes an unpublished post; refuses anything already live | yes |
+| `delete_post` | removes one unpublished post (one channel); `allChannels: true` removes the whole group; refuses anything already live | yes |
 | `upload_media_from_url` | puts an image or video into the media library from a public URL or data URL | yes |
 | `create_upload_link` | a browser link the user drops files on, for media that is on their own device | yes |
 | `list_upload_link_files` | what the user dropped on that link, with the path to attach | no |
@@ -57,7 +57,7 @@ prompt in the desktop app), then retry. There is no key to paste.
 - Content is HTML with each line in `<p>`. Allowed tags: h1, h2, h3, u, strong, li, ul, p. Never u and strong together.
 - Idempotency: pass an `idempotencyKey` (a UUID you invent per post) to `create_post`. If a call times out, resend the same request with the same key; nothing posts twice.
 - Media: a public URL goes through `upload_media_from_url`; a file on the user's device goes through `create_upload_link`, then `list_upload_link_files`, then attach the returned path. Reels and Shorts want 9:16 video.
-- Undo: `delete_post` with the id from `list_posts` or `create_post`, only before it publishes, and ask first. Posty cannot remove a post from a platform once it is live.
+- Undo: `delete_post` with the id from `list_posts` or `create_post`, only before it publishes, and ask first. It deletes that one channel; ask whether the user means all channels, and pass `allChannels: true` for that. Posty cannot remove a post from a platform once it is live.
 - Rate limits: if a call is refused for frequency, wait the number of seconds in the message.
 - Billing: `get_plans`, `subscribe`, `get_subscription` and `manage_subscription` are the only tools that name a plan or a price, and you call them only after the user asks about plans, asks to subscribe, or asks to manage billing. Never suggest a plan or an upgrade otherwise. To subscribe: confirm the plan and period, call `subscribe` once, give the user the `checkoutUrl`, and let THEM pay in Stripe Checkout with their own wallet or card. Never pay with a one-time or agent-issued card: the subscription renews and a one-time card fails at the first renewal. After the user says they paid, call `get_subscription` and check for `trialing` or `active` before continuing. A connection made before paying sees only these four tools; refresh the tool list (or reconnect) once `apiAndMcpAccess` is true.
 
