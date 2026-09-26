@@ -3,8 +3,8 @@
 Every channel Posty supports, and every field its `--settings` payload accepts.
 
 **The channels below are the whole list.** Posty's server carries inherited
-code for many other providers — Reddit, Mastodon, Pinterest, Medium, Dev.to,
-Hashnode, WordPress, Lemmy, Nostr, VK, Tumblr, Dribbble, Farcaster and others.
+code for many other providers — Reddit, Mastodon, Medium, Dev.to, Hashnode,
+WordPress, Lemmy, Nostr, VK, Tumblr, Dribbble, Farcaster and others.
 None of them are enabled or supported. Do not build a settings payload for one.
 
 | Channel | `__type` | Has settings? | Status |
@@ -20,6 +20,7 @@ None of them are enabled or supported. Do not build a settings payload for one.
 | Slack | `slack` | yes, `channel` required | Publishing verified |
 | YouTube | `youtube` | yes | Publishing verified |
 | TikTok | `tiktok` | yes | Publishing verified |
+| Pinterest | `pinterest` | yes, `board` required | BETA: pins visible only to their creator until Pinterest grants Standard access |
 
 Source of truth for everything on this page:
 `libraries/nestjs-libraries/src/dtos/posts/providers-settings/*.ts` in the Posty
@@ -145,8 +146,7 @@ posty posts:create -c "Post text" -s "2026-12-31T12:00:00Z" \
 | `is_trial_reel` | no | boolean |
 | `graduation_strategy` | no | `MANUAL`, `SS_PERFORMANCE` |
 
-`audio.id` comes from the `audioSearch` tool — the only tool any supported
-channel has:
+`audio.id` comes from the `audioSearch` tool:
 
 ```bash
 posty integrations:trigger "$IG_ID" audioSearch -d '{"q":"lofi","type":"music"}'
@@ -312,6 +312,31 @@ posty posts:create -c "Release notes are out" -s "2026-12-31T12:00:00Z" \
 
 ---
 
+## Pinterest — `pinterest`
+
+**BETA.** Until Pinterest grants Posty Standard access, a pin is visible only
+to the account that created it. Tell the user before you schedule one.
+
+| Field | Values |
+|---|---|
+| `board` | **required** — a board id from the `boards` tool |
+| `title` | optional, up to 100 characters |
+| `link` | optional, a URL the pin opens |
+
+A pin needs media: one image (up to 5 images in one pin), or a video with a
+cover picture as the second attachment. Get the board id first; a board name is
+refused:
+
+```bash
+posty integrations:trigger "$PINTEREST_ID" boards | jq '.output'
+IMG=$(posty upload ./pin.jpg | jq -r '.path')
+posty posts:create -c "Autumn recipes" -m "$IMG" -s "2026-12-31T12:00:00Z" \
+  --settings '{"board":"1234567890123456789","title":"Autumn recipes","link":"https://example.com/recipes"}' \
+  -i "$PINTEREST_ID"
+```
+
+---
+
 ## Finding your integration ids
 
 ```bash
@@ -326,9 +351,9 @@ YT_ID=$(posty integrations:list | jq -r '.[] | select(.identifier=="youtube")  |
 `identifier` is the provider; `__type` in JSON mode is the same string.
 
 If a channel is not in `integrations:list`, the user cannot post to it. For
-Pinterest, Google Business Profile and LinkedIn company pages that is the
-expected state until those platforms approve the app (personal LinkedIn
-profiles work). Say so rather than scheduling a post that will fail.
+Google Business Profile and LinkedIn company pages that is the expected state
+until those platforms approve the app (personal LinkedIn profiles work).
+Pinterest is live as a BETA channel. Say so rather than scheduling a post that will fail.
 
 ---
 

@@ -118,9 +118,11 @@ posty auth:status
 posty integrations:list
 ```
 
-`integrations:list` is the ground truth for what you can post to. Pinterest,
-Google Business Profile and LinkedIn company pages are pending those platforms'
-own approval, so they do not appear yet. Personal LinkedIn profiles work.
+`integrations:list` is the ground truth for what you can post to. Pinterest is
+live as a BETA channel: until Pinterest grants Posty Standard access, a pin is
+visible only to the account that created it. Google Business Profile and
+LinkedIn company pages are pending those platforms' own approval, so they do not
+appear yet. Personal LinkedIn profiles work.
 
 ```bash
 # Upload first — always. -m takes URLs from upload, never a local filename.

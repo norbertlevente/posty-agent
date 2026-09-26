@@ -15,7 +15,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   job unless `--yes` is given, and never spends more than the price it
   quoted; `--wait` returns the media paths in the same call. A key whose
   owner has not connected FotoAI gets the link to connect it. Needs the
-  Posty API with `/public/v1/fotoai/*` (media:write).
+  Posty API with `/public/v1/fotoai/*` (media:write). On a Posty server
+  where FotoAI is not switched on yet, the commands say "FotoAI is not
+  available on this Posty server yet" instead of printing a raw 404.
+
+### Changed
+- **Pinterest is a live BETA channel** in `SKILL.md`, `HOW_TO_RUN.md` and
+  `PROVIDER_SETTINGS.md`: a pin is visible only to the account that created
+  it until Pinterest grants Standard access. `PROVIDER_SETTINGS.md` has its
+  settings (`board` required, from `integrations:trigger <id> boards`;
+  optional `title` up to 100 characters and `link`). Only Google Business
+  Profile and LinkedIn company pages are still pending.
 
 ## [1.3.0] - 2026-09-25
 

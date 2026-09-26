@@ -28,6 +28,15 @@ const failFotoAi = (context: string, error: any): never => {
     } catch {
       /* not JSON */
     }
+    /*
+      A 404 without a FotoAI code is the route itself missing: this Posty
+      server runs without FotoAI (it is switched off there, or older than it).
+      A generation that does not exist answers 404 WITH a code, below.
+    */
+    if (error.status === 404 && !body?.code) {
+      status('❌ FotoAI is not available on this Posty server yet.');
+      process.exit(1);
+    }
     if (body?.code) {
       const details = body.details || {};
       status(`❌ ${context}: ${body.msg || body.code} (${body.code})`);

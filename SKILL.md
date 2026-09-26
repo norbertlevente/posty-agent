@@ -61,14 +61,20 @@ enabled and not supported.
 | Telegram | `telegram` |
 | Discord | `discord` |
 | Slack | `slack` |
+| Pinterest (BETA) | `pinterest` |
+
+**Pinterest is a BETA channel.** Until Pinterest grants Posty Standard access, a
+pin is visible only to the account that created it. Tell the user this before
+you schedule a pin. A pin needs a `board` id in `--settings`; get the ids with
+`posty integrations:trigger <integration-id> boards` (see PROVIDER_SETTINGS.md).
 
 **`integrations:list` is the truth.** The table says what Posty supports; that
 command says what THIS user has actually connected. Check it before you
 schedule anything, and never post to an id that is not in its output.
 
 **Never assume another provider exists.** If a user asks for Mastodon, Reddit,
-Pinterest, Google Business Profile, Medium, Dev.to, WordPress, Tumblr,
-Farcaster or anything else, the answer is that Posty does not offer it. Do not
+Google Business Profile, Medium, Dev.to, WordPress, Tumblr, Farcaster or
+anything else, the answer is that Posty does not offer it. Do not
 build a `--settings` payload for it.
 
 ---
@@ -562,8 +568,8 @@ posty posts:create -c "Content" -s "2026-12-31T12:00:00Z" -m "$VIDEO_PATH" -i "t
 ### Pattern 1: Discover & Use Integration Tools
 
 **Most supported channels have no tools at all.** Of the channels in the table
-at the top of this file, three expose a tool: Instagram (`audioSearch`),
-Discord (`channels`) and Slack (`channels`). X, Facebook, Threads, Bluesky,
+at the top of this file, four expose a tool: Instagram (`audioSearch`),
+Discord (`channels`), Slack (`channels`) and Pinterest (`boards`). X, Facebook, Threads, Bluesky,
 YouTube, LinkedIn, TikTok and Telegram expose none — `integrations:settings`
 returns an empty `tools` array for them, and `integrations:trigger` on them
 returns `404 Tool not found`.
