@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **FotoAI (fotoai.hu) commands.** `fotoai:status`, `fotoai:models`,
+  `fotoai:generate` and `fotoai:get` generate images and videos with the key
+  owner's own FotoAI account and credits and save them into the workspace's
+  media library, ready for `posts:create`. `fotoai:generate` only prices the
+  job unless `--yes` is given, and never spends more than the price it
+  quoted; `--wait` returns the media paths in the same call. A key whose
+  owner has not connected FotoAI gets the link to connect it. Needs the
+  Posty API with `/public/v1/fotoai/*` (media:write).
+
 ## [1.3.0] - 2026-09-25
 
 ### Fixed

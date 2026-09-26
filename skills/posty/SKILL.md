@@ -317,6 +317,31 @@ have not finished, or spoke before the last file landed. Ask them to check the
 page says "uploaded" and run it again. The link lives two hours; mint a new one
 if it expires.
 
+### FotoAI images and videos (the user's own FotoAI credits)
+
+When the user wants a picture or a video made for a post, and has a FotoAI
+account (fotoai.hu), generate it with THEIR FotoAI credits; the result lands
+in the media library.
+
+```bash
+posty fotoai:status                                   # → {connected, needsReconnect, email, balanceCredits, connectUrl}
+posty fotoai:models --category image                  # → {models:[{id, name, can_use, params:[{key, default, options}], base_price_credits}]}
+posty fotoai:generate -m <model> -p "<prompt>" --aspect 4:5          # → {generated:false, quote:{credits, quote_id, insufficient, topup_url}}
+posty fotoai:generate -m <model> -p "<prompt>" --aspect 4:5 --yes --wait 60   # → {id, status, media:[{id, path}]}
+posty fotoai:get <id> --wait 60                       # → {status, media:[{id, path}], error}
+```
+
+1. `fotoai:status`. If `connected` is false, give the user `connectUrl` (they
+   open it once, sign in to FotoAI or create an account there, allow Posty)
+   and stop until they say it is done.
+2. Pick a model with `can_use: true` and a supported `aspect` (and `--duration`
+   for video).
+3. Run `fotoai:generate` WITHOUT `--yes`, tell the user the price in credits,
+   and ask. If `insufficient` is true, give them `topup_url` instead.
+4. After the user agrees, run the same command with `--yes --wait 60`.
+5. Attach each `media[].path` (not the id) with `posts:create -m`. If it was
+   still running, `fotoai:get <id> --wait 60`.
+
 ### Subscription (only when the user asks)
 
 Four commands, the only place a plan is named. Call them only when the user

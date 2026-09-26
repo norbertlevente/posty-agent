@@ -209,6 +209,27 @@ posty config:get
 posty workspaces:use <id>          # see "Workspaces" above
 ```
 
+### FotoAI images and videos
+
+With the key owner's **own FotoAI account and credits** (fotoai.hu), images
+and videos are generated and saved into the workspace's media library, ready
+for `posts:create`. The person connects FotoAI once in Posty
+(`/integraciok/fotoai`); the commands print that link while it is missing.
+The key needs `media:write`.
+
+```bash
+posty fotoai:status                                              # connected?, as whom, credit balance, connectUrl
+posty fotoai:models --category image                             # models, parameters (aspect, resolution, duration), base price
+posty fotoai:generate -m image.seedream-5-lite -p "kávé a teraszon" --aspect 4:5              # the price only; nothing is spent
+posty fotoai:generate -m image.seedream-5-lite -p "kávé a teraszon" --aspect 4:5 --yes --wait 60  # generate; prints media[].path
+posty fotoai:get <id> --wait 60                                  # status, and the outputs saved in the media library
+```
+
+`fotoai:generate` spends credits only with `--yes`, and never more than the
+price it just quoted (FotoAI answers PRICE_CHANGED instead). A failed
+generation costs nothing. `fotoai:get` also imports a generation made on
+fotoai.hu itself; importing twice returns the same media.
+
 ### Subscription
 
 An agent can take the person from "subscribe me to Pro yearly" to a live

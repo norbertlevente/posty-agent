@@ -8,6 +8,7 @@ import { authLogin, authLogout, authStatus, authSignup } from './commands/auth';
 import { configSet, configGet } from './commands/config';
 import { listWorkspaces, useWorkspace, currentWorkspace } from './commands/workspaces';
 import { billingPlans, billingSubscribe, billingStatus, billingManage } from './commands/billing';
+import { fotoAiStatus, fotoAiModels, fotoAiGenerate, fotoAiGet } from './commands/fotoai';
 import type { Argv } from 'yargs';
 
 yargs(hideBin(process.argv))
@@ -520,6 +521,52 @@ yargs(hideBin(process.argv))
       });
     },
     billingManage as any
+  )
+  .command(
+    'fotoai:status',
+    'Show whether FotoAI (fotoai.hu) is connected for the key owner, as whom, and the FotoAI credit balance',
+    {},
+    fotoAiStatus as any
+  )
+  .command(
+    'fotoai:models',
+    'List the FotoAI image and video models with their parameters and prices',
+    (yargs: Argv) => {
+      return yargs.option('category', {
+        describe: 'Only image or only video models',
+        type: 'string',
+        choices: ['image', 'video'],
+      });
+    },
+    fotoAiModels as any
+  )
+  .command(
+    'fotoai:generate',
+    "Price, and with --yes generate, an image or video with the key owner's own FotoAI credits; the result is saved into the media library",
+    (yargs: Argv) => {
+      return yargs
+        .option('model', { alias: 'm', describe: 'A model id from "posty fotoai:models"', type: 'string', demandOption: true })
+        .option('prompt', { alias: 'p', describe: 'What to generate', type: 'string', demandOption: true })
+        .option('aspect', { describe: 'Aspect ratio, e.g. 1:1, 4:5, 9:16, 16:9', type: 'string' })
+        .option('duration', { describe: 'Video length in seconds (video models)', type: 'number' })
+        .option('resolution', { describe: 'Resolution, when the model offers one (e.g. 2K)', type: 'string' })
+        .option('yes', { describe: 'Spend the credits. Without it only the price is shown', type: 'boolean', default: false })
+        .option('wait', { describe: 'Wait up to this many seconds for the result', type: 'number', default: 0 })
+        .option('idempotency-key', { describe: 'Reuse on a retry so nothing is charged twice', type: 'string' })
+        .example('$0 fotoai:generate -m image.seedream-5-lite -p "kávé a teraszon" --aspect 4:5', 'Show the price only')
+        .example('$0 fotoai:generate -m image.seedream-5-lite -p "kávé a teraszon" --aspect 4:5 --yes --wait 60', 'Generate and print the media paths');
+    },
+    fotoAiGenerate as any
+  )
+  .command(
+    'fotoai:get <id>',
+    'Show a FotoAI generation; once done, its outputs saved into the media library with paths for posts:create',
+    (yargs: Argv) => {
+      return yargs
+        .positional('id', { describe: 'The generation id', type: 'string' })
+        .option('wait', { describe: 'Wait up to this many seconds while it runs', type: 'number', default: 0 });
+    },
+    fotoAiGet as any
   )
   .command(
     'config:set <key> <value>',

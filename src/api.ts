@@ -461,4 +461,50 @@ export class PostyAPI {
       method: 'GET',
     })) as { portalUrl: string; note: string };
   }
+
+  /*
+    FOTOAI (fotoai.hu). Generation with the key owner's OWN FotoAI account and
+    credits; the outputs are saved into this workspace's media library. A key
+    whose owner has not connected FotoAI gets 409 FOTOAI_NOT_CONNECTED with
+    `details.connect_url`, the page the person opens once. Needs media:write.
+  */
+
+  async fotoAiStatus() {
+    return this.request('/public/v1/fotoai/status', { method: 'GET' });
+  }
+
+  async fotoAiModels(category?: string) {
+    const query = category ? `?category=${encodeURIComponent(category)}` : '';
+    return this.request(`/public/v1/fotoai/models${query}`, { method: 'GET' });
+  }
+
+  /** Spends nothing: the price, the balance and a quote_id valid 10 minutes. */
+  async fotoAiQuote(body: Record<string, unknown>) {
+    return this.request('/public/v1/fotoai/quote', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  /** SPENDS the key owner's FotoAI credits, at most the quoted price. */
+  async fotoAiGenerate(body: Record<string, unknown>) {
+    return this.request('/public/v1/fotoai/generations', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async fotoAiGeneration(id: string) {
+    return this.request(`/public/v1/fotoai/generations/${encodeURIComponent(id)}`, {
+      method: 'GET',
+    });
+  }
+
+  /** Imports any FotoAI generation of the key owner into the media library; repeatable. */
+  async fotoAiImport(id: string) {
+    return this.request(
+      `/public/v1/fotoai/generations/${encodeURIComponent(id)}/import`,
+      { method: 'POST' }
+    );
+  }
 }
