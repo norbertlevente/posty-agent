@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-09-28
+
 ### Added
 - **FotoAI (fotoai.hu) commands.** `fotoai:status`, `fotoai:models`,
   `fotoai:generate` and `fotoai:get` generate images and videos with the key
