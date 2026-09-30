@@ -1,0 +1,122 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "posty",
+  "version": "1.2.0",
+  "description": "Plan, write and schedule social media posts with Posty from ChatGPT: Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord and Slack. Posty opens as an app in the ChatGPT sidebar and beside a conversation, with a calendar, a composer and the channel list.",
+  "author": {
+    "name": "Norbert Kiss",
+    "email": "norbert@posty.hu",
+    "url": "https://posty.hu"
+  },
+  "homepage": "https://posty.hu",
+  "repository": "https://github.com/norbertlevente/posty-agent",
+  "license": "AGPL-3.0",
+  "keywords": [
+    "social media",
+    "scheduling",
+    "content calendar",
+    "facebook",
+    "instagram",
+    "linkedin",
+    "tiktok",
+    "hungarian"
+  ],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Posty",
+        "shortDescription": "Plan and publish posts",
+        "longDescription": "Posty is a Hungarian social media scheduler. Connect your Posty workspace and plan, write and schedule posts to eleven platforms directly from ChatGPT: Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord and Slack.\n\nChatGPT writes the post, Posty previews it as a card with the account, the handle, the local publish time and the character count, and creates it only after you confirm. Media comes from a public URL, from a file in the conversation, or from your own device through an upload link.\n\nPosty is also an app inside ChatGPT. Open it from the sidebar or beside a conversation to see your content calendar (scheduled, published and failed posts), write and schedule a post by hand, or check which channels are ready. Select a post and ask ChatGPT to rewrite it. In the ChatGPT desktop app, type @ to mention a channel or an upcoming post. Your timezone and the workspace ChatGPT works in are in the plugin settings.\n\nLimitations: new social accounts are connected in Posty itself, not in ChatGPT. Posty cannot remove a post from a platform after it is published. Analytics are not available in ChatGPT. A Posty plan with API access is required.",
+        "developerName": "Kiss Industries",
+        "category": "Productivity",
+        "capabilities": [
+          "Schedule posts",
+          "Preview posts",
+          "Content calendar",
+          "Delete scheduled posts",
+          "Upload media"
+        ],
+        "websiteURL": "https://posty.hu",
+        "supportURL": "https://posty.hu/help",
+        "privacyPolicyURL": "https://posty.hu/privacy",
+        "termsOfServiceURL": "https://posty.hu/terms",
+        "defaultPrompt": [
+          "Open my Posty calendar.",
+          "Write a Facebook post about our weekend opening hours and schedule it for Friday 9:00.",
+          "What is scheduled on my social channels this week?"
+        ],
+        "brandColor": "#EA580C",
+        "brandColorDark": "#FF7D1F",
+        "composerIcon": "./assets/logo.svg",
+        "logo": "./assets/logo.png",
+        "screenshots": [
+          "./assets/screenshot-calendar.png",
+          "./assets/screenshot-composer.png",
+          "./assets/screenshot-hungarian-dark.png"
+        ]
+      },
+      "onboardingSkill": "./skills/get-started/SKILL.md",
+      "review": {
+        "test_cases": {
+          "positive": [
+            {
+              "description": "Import a valid public image into the Posty media library for later attachment.",
+              "prompt": "Import this image into my Posty media library: https://www.w3.org/People/mimasa/test/imgformat/img/w3c_home.jpg",
+              "tools_triggered": "upload_media_from_url",
+              "expected_behavior": "Returns the stored Posty media identifier and its hosted media URL, or a concise validation error if the file cannot be imported."
+            },
+            {
+              "description": "List the connected channels, then preview an image post on Facebook and Instagram before any write occurs.",
+              "prompt": "Which social channels are connected to my Posty workspace? Preview a draft post with that imported image on the Facebook Page and on the Instagram channel, saying: Submission review test, please do not publish. Show me each account's exact name and handle.",
+              "tools_triggered": "list_integrations, get_integration_schema, preview_post",
+              "expected_behavior": "Lists the connected channels with their names and handles. The preview card shows the Facebook and Instagram accounts with the prepared text, its character count, each channel's own character limit, the attached image, and the publication time in the user's timezone. No post is created."
+            },
+            {
+              "description": "Create the confirmed drafts on Facebook and Instagram, publishing nothing.",
+              "prompt": "I confirm the preview. Create it as drafts on both channels, scheduled one week from now, and do not publish anything.",
+              "tools_triggered": "create_post",
+              "expected_behavior": "Creates one Posty draft per channel with the image attached and returns each post ID with the account name and handle. Nothing is published to either platform."
+            },
+            {
+              "description": "Refuse a photo on YouTube: video-only validation with a clear message.",
+              "prompt": "Now try to schedule that same photo post on the YouTube channel too.",
+              "tools_triggered": "preview_post or create_post",
+              "expected_behavior": "Posty refuses: the validation reports that the attached item must be a video, because YouTube accepts only video uploads. No YouTube post is created, and the reply explains what is missing."
+            },
+            {
+              "description": "Open the Posty app on the calendar, then delete the two drafts, leaving the workspace as it was.",
+              "prompt": "Open my Posty calendar so I can see those two drafts, then delete both of them.",
+              "tools_triggered": "open_posty, list_posts, delete_post",
+              "expected_behavior": "The Posty app opens with the calendar and shows both drafts with their channel names, handles and local times. Then both drafts are deleted, the reply names the channel for each, and a following list_posts call confirms they are gone."
+            }
+          ],
+          "negative": [
+            {
+              "description": "Do not trigger for unrelated calendar requests.",
+              "prompt": "What meetings do I have tomorrow?"
+            },
+            {
+              "description": "Do not trigger for connecting a new social account. Authorization happens in Posty's own connection screen.",
+              "prompt": "Connect my Instagram account to Posty for me."
+            },
+            {
+              "description": "Do not trigger for social analytics, which the Posty tools do not expose.",
+              "prompt": "Show me my Instagram engagement analytics for last month."
+            }
+          ]
+        },
+        "commerce": false,
+        "commerce_description": "Posty does not sell anything in ChatGPT. Plans are chosen and paid on posty.hu."
+      },
+      "publication": {
+        "release_notes": "Posty is now an app inside ChatGPT: open it from the sidebar or beside a conversation for a content calendar, a composer and the channel list. Plugin settings for timezone and workspace. Channels and upcoming posts in the @ menu of the desktop composer. A getting started guide after installation.",
+        "translations": {
+          "hu-HU": {
+            "subtitle": "Posztok tervezése, ütemezése",
+            "description": "A Posty magyar közösségimédia-ütemező. Kapcsold össze a Posty munkaterületedet, és tervezz, írj és ütemezz bejegyzéseket tizenegy platformra közvetlenül a ChatGPT-ből: Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord és Slack.\n\nA ChatGPT megírja a bejegyzést, a Posty kártyán mutatja az előnézetet a fiókkal, a felhasználónévvel, a helyi közzétételi időponttal és a karakterszámmal, és csak a jóváhagyásod után hozza létre. Médiát nyilvános linkről, a beszélgetésben csatolt fájlból vagy a saját eszközödről, feltöltési linken keresztül adhatsz hozzá.\n\nA Posty alkalmazásként is ott van a ChatGPT-ben. Nyisd meg az oldalsávból vagy egy beszélgetés mellett: látod a tartalomnaptárt (ütemezett, megjelent és hibás bejegyzések), kézzel is megírhatsz és ütemezhetsz egy bejegyzést, és látod, mely csatornák készek. Jelölj ki egy bejegyzést, és kérd meg a ChatGPT-t, hogy írja át. A ChatGPT asztali alkalmazásában a @ jellel csatornát vagy következő bejegyzést is megemlíthetsz. Az időzónád és a munkaterület a bővítmény beállításaiban van.\n\nKorlátok: új közösségimédia-fiókot magában a Postyban csatlakoztathatsz. Megjelent bejegyzést a Posty nem tud eltávolítani a platformról. Elemzések nem érhetők el a ChatGPT-ben. API-hozzáférést tartalmazó Posty csomag szükséges."
+          }
+        }
+      }
+    }
+  }
+}
