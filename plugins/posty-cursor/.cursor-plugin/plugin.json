@@ -1,0 +1,24 @@
+{
+  "name": "posty",
+  "version": "1.0.0",
+  "description": "Write, schedule and publish social media posts from Cursor and Grok Bot: Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord and Slack. Announce a release from your changelog, preview every post per account, and manage your content calendar through Posty's MCP server.",
+  "author": {
+    "name": "Norbert Levente Kiss",
+    "email": "norbert@posty.hu"
+  },
+  "homepage": "https://posty.hu",
+  "repository": "https://github.com/norbertlevente/posty-agent",
+  "license": "AGPL-3.0",
+  "keywords": [
+    "social media",
+    "scheduling",
+    "content calendar",
+    "release announcement",
+    "linkedin",
+    "x",
+    "instagram",
+    "facebook",
+    "mcp"
+  ],
+  "logo": "assets/logo.svg"
+}

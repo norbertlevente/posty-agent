@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "posty": {
+      "url": "https://api.posty.hu/mcp-oauth"
+    }
+  }
+}

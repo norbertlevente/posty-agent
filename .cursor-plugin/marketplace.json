@@ -1,0 +1,17 @@
+{
+  "name": "posty",
+  "owner": {
+    "name": "Norbert Levente Kiss",
+    "email": "norbert@posty.hu"
+  },
+  "metadata": {
+    "description": "Posty: write, schedule and publish social media posts from Cursor and Grok Bot."
+  },
+  "plugins": [
+    {
+      "name": "posty",
+      "source": "plugins/posty-cursor",
+      "description": "Write, schedule and publish social media posts to eleven platforms through Posty's MCP server, and announce releases from your changelog."
+    }
+  ]
+}
