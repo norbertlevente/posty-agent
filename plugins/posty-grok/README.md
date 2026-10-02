@@ -2,7 +2,7 @@
 
 Connect Grok Build to [Posty](https://posty.hu), a social media scheduler:
 write, preview, schedule and publish posts to Facebook, Instagram, X,
-LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord and Slack, and
+LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord, Slack and Pinterest, and
 manage the content calendar.
 
 ## Installation

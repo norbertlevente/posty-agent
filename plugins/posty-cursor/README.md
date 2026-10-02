@@ -2,7 +2,7 @@
 
 Write, schedule and publish social media posts without leaving the editor:
 Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky,
-Telegram, Discord and Slack. Posty previews every post per account (name,
+Telegram, Discord, Slack and Pinterest. Posty previews every post per account (name,
 @handle, local publish time, character count) and creates it only after you
 confirm.
 

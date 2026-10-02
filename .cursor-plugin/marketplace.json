@@ -11,7 +11,7 @@
     {
       "name": "posty",
       "source": "plugins/posty-cursor",
-      "description": "Write, schedule and publish social media posts to eleven platforms through Posty's MCP server, and announce releases from your changelog."
+      "description": "Write, schedule and publish social media posts to twelve platforms through Posty's MCP server, and announce releases from your changelog."
     }
   ]
 }

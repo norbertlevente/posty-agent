@@ -1,6 +1,6 @@
 ---
 name: posty
-description: Plan, write, preview, schedule, list and delete social media posts with Posty (Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord, Slack), and open the Posty app. Use for anything about the user's social media calendar, posting, scheduling or publishing.
+description: Plan, write, preview, schedule, list and delete social media posts with Posty (Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord, Slack, Pinterest), and open the Posty app. Use for anything about the user's social media calendar, posting, scheduling or publishing.
 ---
 
 # Posty
