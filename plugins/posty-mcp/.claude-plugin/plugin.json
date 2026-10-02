@@ -1,6 +1,7 @@
 {
   "name": "posty",
-  "version": "1.4.1",
+  "displayName": "Posty: Social Media Scheduler",
+  "version": "1.4.2",
   "description": "Social media scheduler for Claude: write, schedule and publish posts to Facebook, Instagram, X (Twitter), LinkedIn, TikTok, YouTube, Threads, Bluesky, Pinterest, Telegram, Discord and Slack, with a content calendar and photo and video uploads in full quality. Browser sign-in, no key.",
   "author": {
     "name": "Norbert Kiss",
@@ -8,6 +9,10 @@
     "url": "https://github.com/norbertlevente"
   },
   "homepage": "https://posty.hu/ai/claude",
+  "documentationUrl": "https://posty.hu/en/docs/mcp",
+  "supportUrl": "https://posty.hu/en/help",
+  "privacyPolicyUrl": "https://posty.hu/privacy",
+  "termsOfServiceUrl": "https://posty.hu/terms",
   "repository": "https://github.com/norbertlevente/posty-agent",
   "license": "AGPL-3.0",
   "keywords": [
@@ -35,5 +40,6 @@
     "hungarian",
     "magyar"
   ],
-  "mcpServers": "./.mcp.json"
+  "mcpServers": "./.mcp.json",
+  "icon": "./.claude-plugin/icon.png"
 }
