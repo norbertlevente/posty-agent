@@ -56,7 +56,7 @@
           "positive": [
             {
               "description": "Import a valid public image into the Posty media library for later attachment.",
-              "prompt": "Import this image into my Posty media library: https://www.w3.org/People/mimasa/test/imgformat/img/w3c_home.jpg",
+              "prompt": "Import this image into my Posty media library: https://posty.hu/review/posty-test-photo.jpg",
               "tools_triggered": "upload_media_from_url",
               "expected_behavior": "Returns the stored Posty media identifier and its hosted media URL, or a concise validation error if the file cannot be imported."
             },
