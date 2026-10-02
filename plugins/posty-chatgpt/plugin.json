@@ -79,10 +79,10 @@
               "expected_behavior": "Posty refuses: the validation reports that the attached item must be a video, because YouTube accepts only video uploads. No YouTube post is created, and the reply explains what is missing."
             },
             {
-              "description": "Open the Posty app on the calendar, then delete the two drafts, leaving the workspace as it was.",
-              "prompt": "Open my Posty calendar so I can see those two drafts, then delete both of them.",
-              "tools_triggered": "open_posty, list_posts, delete_post",
-              "expected_behavior": "The Posty app opens with the calendar and shows both drafts with their channel names, handles and local times. Then both drafts are deleted, the reply names the channel for each, and a following list_posts call confirms they are gone."
+              "description": "Read the drafts back with UTC and local times, then delete them, leaving the workspace as it was.",
+              "prompt": "Show me those two drafts in my Posty calendar with their publication times in UTC and in my timezone, then delete both of them.",
+              "tools_triggered": "list_posts, delete_post",
+              "expected_behavior": "Lists both drafts with their post IDs, their DRAFT state, the channel names and handles, and the publication times in both UTC and the user's timezone, as a calendar card. Then deletes each draft, reporting exactly what was removed and naming the channel for each. A following list_posts call confirms both drafts are gone."
             }
           ],
           "negative": [
@@ -104,7 +104,7 @@
         "commerce_description": "Posty does not sell anything in ChatGPT. Plans are chosen and paid on posty.hu."
       },
       "publication": {
-        "release_notes": "Posty is now an app inside ChatGPT: open it from the sidebar or beside a conversation for a content calendar, a composer and the channel list. Plugin settings for timezone and workspace. Channels and upcoming posts in the @ menu of the desktop composer. A getting started guide after installation.",
+        "release_notes": "Posty is now an app inside ChatGPT. Open it from the sidebar or beside a conversation: a content calendar (scheduled, published and failed posts), a composer, and your channel list. Richer cards in the conversation: the preview card lets you edit the text, change the date and time, choose schedule, draft or publish now, and leave an account out, then schedule from the card; the result card has Undo; asking what is scheduled shows a calendar card, deleting shows what was removed, and files from an upload link show as thumbnails. Plugin settings for your timezone and workspace, channels and upcoming posts in the @ menu of the desktop app, and a getting started guide. Pinterest joins as the twelfth platform (beta). Available in Hungary, Switzerland, Austria, Germany, Czechia, Slovakia, Poland, Romania and Slovenia.",
         "translations": {
           "hu": {
             "subtitle": "Közösségimédia-ütemező",
