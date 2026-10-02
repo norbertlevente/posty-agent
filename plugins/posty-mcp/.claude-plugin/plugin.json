@@ -1,7 +1,7 @@
 {
   "name": "posty",
-  "version": "1.4.0",
-  "description": "Posty for chat: connect Claude to Posty's MCP server and schedule or publish social posts to Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord and Slack from the conversation. Browser sign-in, no key.",
+  "version": "1.4.1",
+  "description": "Posty for chat: connect Claude to Posty's MCP server and schedule or publish social posts to Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord, Slack and Pinterest from the conversation, with photos and videos uploaded in full quality. Browser sign-in, no key.",
   "author": {
     "name": "Norbert Kiss",
     "email": "norbert@posty.hu",
@@ -26,7 +26,8 @@
     "bluesky",
     "telegram",
     "discord",
-    "slack"
+    "slack",
+    "pinterest"
   ],
   "mcpServers": "./.mcp.json"
 }

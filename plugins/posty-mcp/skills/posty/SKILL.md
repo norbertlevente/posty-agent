@@ -1,6 +1,6 @@
 ---
 name: posty
-description: Schedule and publish social posts through Posty's MCP tools (Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord, Slack). Use for anything about the user's social media calendar, posting, scheduling or publishing.
+description: Schedule and publish social posts through Posty's MCP tools (Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord, Slack, Pinterest). Use for anything about the user's social media calendar, posting, scheduling or publishing.
 homepage: https://posty.hu
 ---
 
@@ -39,7 +39,7 @@ prompt in the desktop app), then retry. There is no key to paste.
 | `list_posts` | the calendar: id, state, channel, UTC and local time | no |
 | `delete_post` | removes one unpublished post (one channel); `allChannels: true` removes the whole group; refuses anything already live | yes |
 | `upload_media_from_url` | puts an image or video into the media library from a public URL or data URL | yes |
-| `create_upload_link` | a browser link the user drops files on, for media that is on their own device | yes |
+| `create_upload_link` | an upload card in the chat (and a link that works on a phone) where the user drops photos or videos from their own device, in full quality | yes |
 | `list_upload_link_files` | what the user dropped on that link, with the path to attach | no |
 | `get_plans` | the four plans (Alap, Pro, Kreátor, Csapat), prices in forint, limits, the trial rule, the current tier. **Only when the user asks about plans or wants to subscribe.** | no |
 | `subscribe` | a Stripe Checkout link for the chosen plan and period. Nothing is charged; **the user opens it and pays with their own Link wallet or card**. Signed-in (OAuth) connections, workspace owner only. Only a plan with `apiAndMcpAccess: true` keeps you working after the payment (not Alap): say so before the user pays. | yes |
@@ -56,7 +56,7 @@ prompt in the desktop app), then retry. There is no key to paste.
 - Threads vs comments: entries after the first in `postsAndComments` are a thread on X, Threads and Bluesky, but comments on LinkedIn and Facebook. On thread-capable platforms ask which the user wants.
 - Content is HTML with each line in `<p>`. Allowed tags: h1, h2, h3, u, strong, li, ul, p. Never u and strong together.
 - Idempotency: pass an `idempotencyKey` (a UUID you invent per post) to `create_post`. If a call times out, resend the same request with the same key; nothing posts twice.
-- Media: a public URL goes through `upload_media_from_url`; a file on the user's device goes through `create_upload_link`, then `list_upload_link_files`, then attach the returned path. Reels and Shorts want 9:16 video.
+- Media: a public URL goes through `upload_media_from_url`. A photo or video on the user's device goes through `create_upload_link`: it shows an upload card where the user drops the file (videos up to 1 GB, mp4 or mov; a mov becomes an mp4 in the browser). When the user presses "Use in a post" on the card you get the paths in a message; otherwise call `list_upload_link_files` after the user says the upload is done. Attach the returned path. If `upload_media_from_url` answers with `lowResolution`, say so and offer the upload card for the original. Reels and Shorts want 9:16 video.
 - Undo: `delete_post` with the id from `list_posts` or `create_post`, only before it publishes, and ask first. It deletes that one channel; ask whether the user means all channels, and pass `allChannels: true` for that. Posty cannot remove a post from a platform once it is live.
 - Rate limits: if a call is refused for frequency, wait the number of seconds in the message.
 - Billing: `get_plans`, `subscribe`, `get_subscription` and `manage_subscription` are the only tools that name a plan or a price, and you call them only after the user asks about plans, asks to subscribe, or asks to manage billing. Never suggest a plan or an upgrade otherwise. To subscribe: confirm the plan and period, call `subscribe` once, give the user the `checkoutUrl`, and let THEM pay in Stripe Checkout with their own wallet or card. Never pay with a one-time or agent-issued card: the subscription renews and a one-time card fails at the first renewal. After the user says they paid, call `get_subscription` and check for `trialing` or `active` before continuing. A connection made before paying sees only these four tools; refresh the tool list (or reconnect) once `apiAndMcpAccess` is true.
@@ -67,8 +67,8 @@ User: "I have a video on my laptop, post it to TikTok, Reels and Shorts at 9 tom
 
 1. `get_workspace_context` → today's date and the user's timezone; compute tomorrow 09:00 local → UTC.
 2. `list_integrations` → the TikTok, Instagram and YouTube channel ids and handles.
-3. `create_upload_link` → give the user the link; ask them to drop the video on it.
-4. `list_upload_link_files` → the hosted path.
+3. `create_upload_link` → the upload card appears; ask the user to drop the video on it (or open the link on their phone).
+4. The user presses "Use in a post" on the card, or says it is done → `list_upload_link_files` → the hosted path.
 5. `get_integration_schema` for each of the three; write a caption within each limit. YouTube also needs a title and a privacy choice: ask the user.
 6. `preview_post` with the three-channel payload; show the per-account result.
 7. On the user's yes: `create_post` with the same payload and a fresh `idempotencyKey`. Report where and when it is scheduled, in local time.
