@@ -20,15 +20,6 @@ npm install -g posty-cli
 posty auth:login          # opens the browser to approve the login
 ```
 
-To work from a clone instead — only if you are changing the CLI itself:
-
-```bash
-git clone https://github.com/norbertlevente/posty-agent.git
-cd posty-agent
-pnpm install && pnpm run build
-npm link                  # provides the `posty` command
-```
-
 official website: https://posty.hu
 API base: https://api.posty.hu (also served at https://posty.hu/api)
 
@@ -277,12 +268,8 @@ Off a terminal (when you, an agent, run it) the CLI does not ask for a
 timezone: pass `--timezone` on date-taking commands, or run
 `posty config:set timezone Europe/Budapest` once. See "Date Handling".
 
-**Optional custom API URL:**
-```bash
-export POSTY_API_URL=https://api.posty.hu
-```
-`https://api.posty.hu` is live. The same API is also served under
-`https://posty.hu/api`, which is the CLI's built-in fallback. Anything else you
+The CLI talks to `https://api.posty.hu` (also served under
+`https://posty.hu/api`, its built-in fallback). Anything else you
 may have read about `docs.posty.hu`, `cdn.posty.hu` or `mcp.posty.hu` is
 wrong — those hostnames do not resolve.
 
@@ -880,11 +867,10 @@ How a date is resolved, in priority order:
 
 1. **Explicit offset in the string** (`Z`, `+01:00`) — used as written.
 2. **`--timezone <IANA name>`** on `posts:create` / `posts:list`.
-3. **`POSTY_TIMEZONE`** environment variable (IANA name).
-4. **The saved config** — `posty config:set timezone Europe/Budapest`
+3. **The saved config** — `posty config:set timezone Europe/Budapest`
    (also offered interactively during `posty auth:login` on a TTY).
-5. **None of the above and the date is naive → hard error, exit 1.** The
-   error names all four fixes. Do not retry the same naive date; add a
+4. **None of the above and the date is naive → hard error, exit 1.** The
+   error names the fixes. Do not retry the same naive date; add a
    timezone.
 
 Rules and behaviors:
