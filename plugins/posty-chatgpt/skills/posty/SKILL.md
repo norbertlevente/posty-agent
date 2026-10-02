@@ -23,8 +23,15 @@ checks it, shows it and publishes it. The Posty tools do all the work.
    problem. Call `create_post` only after the user confirms, with a new
    `idempotencyKey`.
 5. Media: a file in this conversation or a public URL goes through
-   `upload_media_from_url`. A file on the user's device goes through
-   `create_upload_link`, then `list_upload_link_files`.
+   `upload_media_from_url`; this is the default. Use `create_upload_link`
+   for a video, for a file on the user's device that is not in the
+   conversation, or when the transfer fails. It shows an upload card: the
+   user drops the files there, or opens the link on a phone, and they keep
+   their original quality (videos up to 1 GB). When `upload_media_from_url`
+   answers with `lowResolution`, tell the user in one sentence and offer the
+   upload card for the original file. When the user presses "Use in a post"
+   on the card you get the file paths in a message; otherwise call
+   `list_upload_link_files` after the user says the upload is done.
 
 ## The Posty app
 
