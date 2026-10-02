@@ -17,7 +17,7 @@
     },
     {
       "name": "posty-cli",
-      "source": "./",
+      "source": "./plugins/posty-cli",
       "description": "Posty CLI for coding agents: the posty command line tool and its full reference, for scheduling and publishing social posts from a terminal, a script or an agent with a shell (Claude Code, Codex, OpenClaw, Hermes).",
       "strict": true
     }

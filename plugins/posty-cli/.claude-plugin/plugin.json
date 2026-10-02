@@ -1,0 +1,43 @@
+{
+  "name": "posty-cli",
+  "displayName": "Posty CLI",
+  "version": "1.5.0",
+  "description": "Posty CLI for coding agents: the posty command line tool and its full reference, for scheduling and publishing social posts from a terminal, a script or an agent with a shell (Claude Code, Codex, OpenClaw, Hermes).",
+  "author": {
+    "name": "Norbert Kiss",
+    "email": "norbert@posty.hu",
+    "url": "https://github.com/norbertlevente"
+  },
+  "homepage": "https://posty.hu/ai/claude",
+  "documentationUrl": "https://posty.hu/en/developers",
+  "supportUrl": "https://posty.hu/en/help",
+  "privacyPolicyUrl": "https://posty.hu/privacy",
+  "termsOfServiceUrl": "https://posty.hu/terms",
+  "repository": "https://github.com/norbertlevente/posty-agent",
+  "license": "AGPL-3.0",
+  "keywords": [
+    "posty",
+    "cli",
+    "social-media",
+    "scheduling",
+    "automation",
+    "ai-agent",
+    "claude-code",
+    "codex",
+    "openclaw",
+    "hermes",
+    "facebook",
+    "instagram",
+    "x",
+    "twitter",
+    "linkedin",
+    "tiktok",
+    "youtube",
+    "threads",
+    "bluesky",
+    "telegram",
+    "discord",
+    "slack"
+  ],
+  "icon": "./.claude-plugin/icon.png"
+}
