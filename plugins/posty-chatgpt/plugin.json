@@ -62,15 +62,15 @@
             },
             {
               "description": "List the connected channels, then preview an image post on Facebook and Instagram before any write occurs.",
-              "prompt": "Which social channels are connected to my Posty workspace? Preview a draft post with that imported image on the Facebook Page and on the Instagram channel, saying: Submission review test, please do not publish. Show me each account's exact name and handle.",
+              "prompt": "Which social channels are connected to my Posty workspace? Preview a post with that imported image on the Facebook Page and on the Instagram channel, saying: Posty review test post. Show me each account's exact name and handle.",
               "tools_triggered": "list_integrations, get_integration_schema, preview_post",
-              "expected_behavior": "Lists the connected channels with their names and handles. The preview card shows the Facebook and Instagram accounts with the prepared text, its character count, each channel's own character limit, the attached image, and the publication time in the user's timezone. No post is created."
+              "expected_behavior": "Lists the connected channels with their names and handles. The preview card shows the Facebook and Instagram accounts with the prepared text, its character count, each channel's own character limit, the attached image, and the publication time in the user's timezone. No post is created yet."
             },
             {
-              "description": "Create the confirmed drafts on Facebook and Instagram, publishing nothing.",
-              "prompt": "I confirm the preview. Create it as drafts on both channels, scheduled one week from now, and do not publish anything.",
+              "description": "Schedule the confirmed post on Facebook and Instagram for a time one week ahead.",
+              "prompt": "I confirm the preview. Schedule it on both channels for one week from now at 10:00 in my timezone.",
               "tools_triggered": "create_post",
-              "expected_behavior": "Creates one Posty draft per channel with the image attached and returns each post ID with the account name and handle. Nothing is published to either platform."
+              "expected_behavior": "Creates one scheduled Posty post per channel with the image attached, in the QUEUE (scheduled) state, and returns each post ID with the account name, the handle and the publication time in the user's timezone. Posty publishes each post to the platform at that time; nothing is published immediately."
             },
             {
               "description": "Refuse a photo on YouTube: video-only validation with a clear message.",
@@ -79,10 +79,10 @@
               "expected_behavior": "Posty refuses: the validation reports that the attached item must be a video, because YouTube accepts only video uploads. No YouTube post is created, and the reply explains what is missing."
             },
             {
-              "description": "Read the drafts back with UTC and local times, then delete them, leaving the workspace as it was.",
-              "prompt": "Show me those two drafts in my Posty calendar with their publication times in UTC and in my timezone, then delete both of them.",
+              "description": "Read the scheduled posts back with UTC and local times, then cancel them, leaving the workspace as it was.",
+              "prompt": "Show me those two scheduled posts in my Posty calendar with their publication times in UTC and in my timezone, then delete both of them.",
               "tools_triggered": "list_posts, delete_post",
-              "expected_behavior": "Lists both drafts with their post IDs, their DRAFT state, the channel names and handles, and the publication times in both UTC and the user's timezone, as a calendar card. Then deletes each draft, reporting exactly what was removed and naming the channel for each. A following list_posts call confirms both drafts are gone."
+              "expected_behavior": "Lists both posts with their post IDs, their QUEUE (scheduled) state, the channel names and handles, and the publication times in both UTC and the user's timezone, as a calendar card. Then deletes each scheduled post before it is published, reporting exactly what was removed and naming the channel for each. A following list_posts call confirms both posts are gone."
             }
           ],
           "negative": [
