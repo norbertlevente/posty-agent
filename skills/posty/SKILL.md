@@ -1,13 +1,13 @@
 ---
 name: posty
-description: Posty schedules and publishes social posts from the command line to Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord and Slack.
+description: Posty schedules and publishes social posts from the command line to Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord, Slack and Pinterest (beta).
 homepage: https://posty.hu
 metadata: {"openclaw":{"emoji":"🌎","requires":{"bins":[],"env":[]}}}
 ---
 
 ## Install
 
-The npm package is **`posty-cli`**. The command it provides is `posty` — the
+The npm package is **`posty-cli`**. The command it provides is `posty`. The
 package name and the command name are deliberately different, because
 **`npm install -g posty` installs somebody else's package**: the bare name
 `posty` on npmjs.com belongs to an unrelated UK-postcode library. Never run it
@@ -20,17 +20,10 @@ npm install -g posty-cli
 posty auth:login          # opens the browser to approve the login
 ```
 
-To work from a clone instead — only if you are changing the CLI itself:
-
-```bash
-git clone https://github.com/norbertlevente/posty-agent.git
-cd posty-agent
-pnpm install && pnpm run build
-npm link                  # provides the `posty` command
-```
-
 official website: https://posty.hu
 API base: https://api.posty.hu (also served at https://posty.hu/api)
+MCP server, for chat clients without a terminal: https://api.posty.hu/mcp-oauth
+(the user signs in to Posty in the browser; same account, same channels)
 
 ---
 
@@ -81,9 +74,9 @@ build a `--settings` payload for it.
 
 ## ⚠️ Two Hard Rules (Read First)
 
-**Rule 1 — Authenticate before anything.** All commands fail without valid credentials.
+**Rule 1: Authenticate before anything.** All commands fail without valid credentials.
 
-**Rule 2 — Every file passed to `-m` (or to `image`/media fields in JSON mode) MUST first go through `posty upload`.** Raw filesystem paths (`image.jpg`, `video.mp4`) and external URLs (`https://example.com/...`) are **NOT** accepted by the publishing pipeline. TikTok, Instagram, YouTube, and most other providers reject anything that isn't a Posty-verified URL. Always:
+**Rule 2: Every file passed to `-m` (or to `image`/media fields in JSON mode) MUST first go through `posty upload`.** Raw filesystem paths (`image.jpg`, `video.mp4`) and external URLs (`https://example.com/...`) are **NOT** accepted by the publishing pipeline. TikTok, Instagram, YouTube, and most other providers reject anything that isn't a Posty-verified URL. Always:
 
 ```bash
 RESULT=$(posty upload <file>)
@@ -91,16 +84,16 @@ URL=$(echo "$RESULT" | jq -r '.path')
 posty posts:create ... -m "$URL" ...
 ```
 
-If you see `-m "something.jpg"` anywhere below, treat it as shorthand for "the `.path` you got back from `posty upload something.jpg`" — never a raw local file.
+If you see `-m "something.jpg"` anywhere below, treat it as shorthand for "the `.path` you got back from `posty upload something.jpg`", never a raw local file.
 
 ---
 
 ## Output contract
 
-Every command prints its **JSON result — and nothing else — to stdout**;
+Every command prints its **JSON result, and nothing else, to stdout**;
 status lines, warnings and errors go to stderr, and every failure exits 1. So
 `posty upload x.jpg | jq -r '.path'` is always safe, with no stripping needed.
-Unknown flags are an error, not silently ignored — if a flag is rejected, it
+Unknown flags are an error, not silently ignored. If a flag is rejected, it
 does not exist; do not retry with variations.
 
 ---
@@ -114,10 +107,10 @@ Before doing anything else, check auth status:
 posty auth:status
 ```
 
-If not authenticated, either:
-1. **Device login:** `posty auth:login` — opens a browser, the human approves it
-2. **API Key:** `export POSTY_API_KEY=your_api_key`
-3. **No account yet:** `posty auth:signup` creates one, see below. Only when
+If not authenticated:
+1. **Sign in:** `posty auth:login` opens a browser, and the human approves it.
+   You never see or handle a key.
+2. **No account yet:** `posty auth:signup` creates one, see below. Only when
    the user asks you to create a Posty account for them.
 
 ### Creating an account for the user (no free trial)
@@ -136,9 +129,8 @@ posty auth:signup --email anna@example.com --code 123456 --accept-terms [--works
 2. Show the user the terms (https://posty.hu/aszf) and the privacy notice
    (https://posty.hu/adatvedelem) and ask whether they agree. Pass
    `--accept-terms` ONLY after they said yes; never decide it for them.
-3. Run it again with `--code` and `--accept-terms`. The key is stored like
-   `auth:login` stores it (`~/.posty/credentials.json`, 0600) and is never
-   printed.
+3. Run it again with `--code` and `--accept-terms`. The CLI keeps the
+   sign-in the same way `auth:login` does and never prints it.
 4. **There is no free trial on an account made this way**, and until the
    user pays, only the `billing:*` commands work. Next: `billing:plans`,
    confirm a plan with the user, `billing:subscribe`, give them the link.
@@ -163,7 +155,7 @@ code: run step 1 again for a new one.
 
 Keys are **per person, named, and scoped**. They are stored hashed and shown
 exactly once, at creation, in the web app under **Settings → Developers**. A
-lost key cannot be recovered — only rotated.
+lost key cannot be recovered. It can only be rotated.
 
 Two limits apply to every request, and both explain 403s that look like bugs:
 
@@ -181,7 +173,7 @@ request naming a channel outside the grant is refused even when the scope is
 right.
 
 **When you hit a 403, read the message.** The CLI names the missing scope; the key is valid, so `auth:login` does not fix it. Do not
-retry, and do not try a different route to get around it — ask the user to mint
+retry, and do not try a different route to get around it. Ask the user to mint
 a key with the scope, or to have someone with the right role do it.
 
 ---
@@ -202,7 +194,7 @@ The fundamental pattern for using Posty CLI:
 ```bash
 # 1. Authenticate
 posty auth:status
-# If not authenticated: posty auth:login   (no client id/secret — it is a device flow)
+# If not authenticated: posty auth:login   (no client id/secret, it is a device flow)
 
 # 2. Discover
 posty integrations:list
@@ -253,9 +245,9 @@ channel ids from the other workspace are invalid here.
 
 ### Authentication
 
-**Option 1: Device login (recommended)**
+**Sign in: device login**
 ```bash
-# Opens a browser. No client ID or secret — the human approves the code shown.
+# Opens a browser. No client ID or secret, the human approves the code shown.
 posty auth:login
 
 # Check auth status (verifies credentials are still valid)
@@ -267,38 +259,24 @@ posty auth:logout
 
 How it works, so you can explain it if the user asks: the CLI calls
 `POST /device/code`, prints a short user code and opens the approval page in
-the browser, then polls `POST /device/token` until the human — signed in to
-Posty — approves it and chooses which workspace and which channels the
+the browser, then polls `POST /device/token` until the human (signed in to
+Posty) approves it and chooses which workspace and which channels the
 resulting key may reach. This runs inside Posty's own backend; there is no
 separate auth service.
 
-Credentials land in `~/.posty/credentials.json` (`0600`, in a `0700`
-directory) and take priority over `POSTY_API_KEY`. The token response also
-carries the API base, so the CLI points itself at the right host without a
-release.
+The CLI keeps its own sign-in after that; do not read, print or copy it.
 
-On a TTY, a successful login also offers to save a **scheduling timezone**
-(detected from the machine, confirmed by the human) into
-`~/.posty/config.json`. Off-TTY — i.e. when you, an agent, run it — no prompt
-appears: pass `--timezone` on date-taking commands, or run
+Off a terminal (when you, an agent, run it) the CLI does not ask for a
+timezone: pass `--timezone` on date-taking commands, or run
 `posty config:set timezone Europe/Budapest` once. See "Date Handling".
 
-**Option 2: API Key**
-```bash
-export POSTY_API_KEY=your_api_key_here
-```
-Mint it in the web app under **Settings → Developers**. It is shown once.
-
-**Optional custom API URL:**
-```bash
-export POSTY_API_URL=https://api.posty.hu
-```
-`https://api.posty.hu` is live. The same API is also served under
-`https://posty.hu/api`, which is the CLI's built-in fallback. Anything else you
+The CLI talks to `https://api.posty.hu` (also served under
+`https://posty.hu/api`, its built-in fallback). Anything else you
 may have read about `docs.posty.hu`, `cdn.posty.hu` or `mcp.posty.hu` is
-wrong — those hostnames do not resolve.
+wrong: those hostnames do not resolve. The MCP server lives on the API host,
+at `https://api.posty.hu/mcp-oauth`.
 
-### Upload link — when the file is not on this machine
+### Upload link: when the file is not on this machine
 
 `posty upload` needs the file on disk. When the person has it on their phone,
 or you cannot see their filesystem, do NOT ask them to host it somewhere
@@ -393,15 +371,15 @@ polling loop on `posts:list` cannot starve `posts:create`.
 
 | Routes | Limit |
 |---|---|
-| Reads — `posts:list`, `integrations:list`, `integrations:groups`, `integrations:settings`, `posts:missing`, `posts:find-slot`, notifications | 600/h (the `API_LIMIT` default; production sets 600) |
-| Publish and delete — `posts:create`, `posts:delete`, `posts:delete-group`, `posts:status`, `integrations:trigger` | 60/h |
-| Analytics and channel refresh — `analytics:platform`, `analytics:post`, `/social/:integration` | 30/h |
-| Uploads — `upload`, `upload-from-url` | 30/h |
-| Upload links — `upload:link` 60/h, `upload:files` 600/h | |
+| Reads: `posts:list`, `integrations:list`, `integrations:groups`, `integrations:settings`, `posts:missing`, `posts:find-slot`, notifications | 600/h (the `API_LIMIT` default; production sets 600) |
+| Publish and delete: `posts:create`, `posts:delete`, `posts:delete-group`, `posts:status`, `integrations:trigger` | 60/h |
+| Analytics and channel refresh: `analytics:platform`, `analytics:post`, `/social/:integration` | 30/h |
+| Uploads: `upload`, `upload-from-url` | 30/h |
+| Upload links: `upload:link` 60/h, `upload:files` 600/h | |
 
 The bucket is keyed on the hash of the presented key, so rotating a key starts
 a fresh allowance and the old secret's allowance dies with it. Exceeding a
-limit returns `429`. **Back off; do not retry in a tight loop** — a retry
+limit returns `429`. **Back off; do not retry in a tight loop**: a retry
 storm just burns the next hour's allowance too.
 
 ### Integration Discovery
@@ -433,12 +411,12 @@ posty posts:create -c "Content" -s "2026-12-31T12:00:00Z" -i "integration-id"
 # Draft post
 posty posts:create -c "Content" -s "2026-12-31T12:00:00Z" -t draft -i "integration-id"
 
-# Post with media (upload each file FIRST — see Rule 2)
+# Post with media (upload each file FIRST, see Rule 2)
 IMG1=$(posty upload img1.jpg | jq -r '.path')
 IMG2=$(posty upload img2.jpg | jq -r '.path')
 posty posts:create -c "Content" -m "$IMG1,$IMG2" -s "2026-12-31T12:00:00Z" -i "integration-id"
 
-# Post with comments (each with own media — every file uploaded first)
+# Post with comments (each with own media, every file uploaded first)
 MAIN=$(posty upload main.jpg | jq -r '.path')
 C1=$(posty upload comment1.jpg | jq -r '.path')
 C2A=$(posty upload comment2.jpg | jq -r '.path')
@@ -544,7 +522,7 @@ Returns an empty array if the provider doesn't support this feature or if the po
 posty upload image.jpg
 
 # EXACTLY EIGHT TYPES ARE ACCEPTED. Anything else returns 400 "Unsupported
-# file type." — the server sniffs the magic bytes, so renaming the file does
+# file type.". The server sniffs the magic bytes, so renaming the file does
 # not help.
 #
 #   image/jpeg  image/png  image/gif  image/webp
@@ -570,7 +548,7 @@ posty posts:create -c "Content" -s "2026-12-31T12:00:00Z" -m "$VIDEO_PATH" -i "t
 **Most supported channels have no tools at all.** Of the channels in the table
 at the top of this file, four expose a tool: Instagram (`audioSearch`),
 Discord (`channels`), Slack (`channels`) and Pinterest (`boards`). X, Facebook, Threads, Bluesky,
-YouTube, LinkedIn, TikTok and Telegram expose none — `integrations:settings`
+YouTube, LinkedIn, TikTok and Telegram expose none: `integrations:settings`
 returns an empty `tools` array for them, and `integrations:trigger` on them
 returns `404 Tool not found`.
 
@@ -586,7 +564,7 @@ posty integrations:settings "$IG_ID" | jq '.output.tools'
 # [ { "methodName": "audioSearch", "description": "Search audio …", "dataSchema": [ … ] } ]
 ```
 
-**Instagram — find audio for a Reel:**
+**Instagram, find audio for a Reel:**
 ```bash
 # Empty query returns trending audio. type is "music" (default) or "original_sound".
 AUDIO=$(posty integrations:trigger "$IG_ID" audioSearch -d '{"q":"lofi","type":"music"}')
@@ -641,7 +619,7 @@ posty posts:create \
 
 ### Pattern 4: Multi-Platform Campaign (different content per channel)
 
-JSON mode takes the API's real request body — `type`, `date`, `shortLink`,
+JSON mode takes the API's real request body: `type`, `date`, `shortLink`,
 `tags`, and a `posts` array where each element names an `integration`, its
 `value` thread and its `settings`. There is no `"integrations"` key and no
 `"provider"` key; a full working file is
@@ -667,7 +645,7 @@ cat > campaign.json << EOF
     {
       "integration": { "id": "<facebook-id>" },
       "value": [
-        { "content": "Our holiday sale is live — 20% off every plan until the end of December. Details on the website!", "image": [ { "id": "b", "path": "$IMG" } ] }
+        { "content": "Our holiday sale is live, 20% off every plan until the end of December. Details on the website!", "image": [ { "id": "b", "path": "$IMG" } ] }
       ],
       "settings": { "post_type": "post" }
     }
@@ -784,7 +762,7 @@ Some integrations expose a tool for data that cannot be hard-coded. Among suppor
 | X, Facebook, Threads, Bluesky, YouTube, LinkedIn, TikTok, Telegram | *(none)* |
 
 That is the whole list. There is no `getPlaylists`, no `getCompanies`, no
-`getBoards`, no `getFlairs` — earlier versions of this file invented all four,
+`getBoards`, no `getFlairs`. Earlier versions of this file invented all four,
 and `integrations:trigger` answers `404 Tool not found` for every one of them.
 
 ### Provider Settings Structure
@@ -815,18 +793,18 @@ posty posts:create -c "Content" -s "2026-12-31T12:00:00Z" --settings '{"title":"
 # Backend automatically adds "__type" based on integration ID
 ```
 
-Channels with **no settings of their own** — Threads and Bluesky — take an
+Channels with **no settings of their own** (Threads and Bluesky) take an
 empty object. Do not invent fields for them.
 
 **You never have to write `__type` yourself.** The server stamps it from the
 integration's provider before validating, overwriting whatever you sent. An
-example file carrying `"__type": "EmptySettings"` still works for that reason —
+example file carrying `"__type": "EmptySettings"` still works for that reason:
 it is being replaced, not accepted.
 
 ### Two behaviours that surprise people
 
 **1. A key without `posts:publish` silently produces a draft.** `posts:create`
-requires only `posts:draft`. If the key (or its owner's current role — a
+requires only `posts:draft`. If the key (or its owner's current role, a
 Contributor/DRAFTER) lacks `posts:publish`, the server coerces `type` to
 `draft` and creates a draft instead of refusing. It is not silent in the
 response: **read back the `type` you got, do not assume the one you sent.**
@@ -838,7 +816,7 @@ channels, whatever the content. X's Developer Policy forbids substantially
 similar content from multiple accounts through one developer app, and the
 account at risk is Posty's, shared by every customer. Split it into two posts.
 X alongside Facebook, Instagram, Threads, Bluesky, YouTube and the rest is
-unaffected — that combination is the entire point.
+unaffected. That combination is the entire point.
 
 ### Comments and Threading
 
@@ -879,7 +857,7 @@ Internally creates (note: every URL is a Posty-uploaded `.path`, not a raw filen
 **The contract: ALWAYS pass an explicit offset, or pass `--timezone` with an
 IANA name.** The CLI never guesses a timezone. The server reads a naive
 datetime as UTC, which silently shifts a Hungarian "12:00" by one or two
-hours — so the CLI refuses ambiguity instead.
+hours. The CLI refuses ambiguity instead.
 
 The two safe forms:
 
@@ -890,23 +868,22 @@ The two safe forms:
 
 How a date is resolved, in priority order:
 
-1. **Explicit offset in the string** (`Z`, `+01:00`) — used as written.
+1. **Explicit offset in the string** (`Z`, `+01:00`), used as written.
 2. **`--timezone <IANA name>`** on `posts:create` / `posts:list`.
-3. **`POSTY_TIMEZONE`** environment variable (IANA name).
-4. **The saved config** — `posty config:set timezone Europe/Budapest`
+3. **The saved config**: `posty config:set timezone Europe/Budapest`
    (also offered interactively during `posty auth:login` on a TTY).
-5. **None of the above and the date is naive → hard error, exit 1.** The
-   error names all four fixes. Do not retry the same naive date; add a
+4. **None of the above and the date is naive → hard error, exit 1.** The
+   error names the fixes. Do not retry the same naive date; add a
    timezone.
 
 Rules and behaviors:
 
 - Timezone values must be IANA names (`Europe/Budapest`, `UTC`). **Numeric
-  offsets (`+02:00`, `UTC+2`, `Etc/GMT+2`) are rejected as timezone values**
-  — never hand-compute DST; put an offset inside the date string only when
+  offsets (`+02:00`, `UTC+2`, `Etc/GMT+2`) are rejected as timezone values**.
+  Never hand-compute DST; put an offset inside the date string only when
   you are certain of it, otherwise use the IANA name and let the CLI convert
   (DST-aware).
-- Whenever a timezone is applied (steps 2–4), the CLI echoes the resolved
+- Whenever a timezone is applied (steps 2 to 4), the CLI echoes the resolved
   UTC instant on stderr:
   `ℹ️  Interpreted "2026-12-24 18:00" as Europe/Budapest (via --timezone) → 2026-12-24T17:00:00.000Z`
 - A bare date (`"2026-12-31"`) means midnight in the resolved timezone.
@@ -914,8 +891,8 @@ Rules and behaviors:
   `--timezone` flag; the defaults (30 days back / 30 days forward) never
   need a timezone.
 - `posty config:get` / `posty config:get timezone` shows what is saved;
-  settings live in `~/.posty/config.json` and survive `auth:logout`.
-- `posty posts:find-slot <integration-id>` returns `{"date": "..."}` — the
+  settings survive `auth:logout`.
+- `posty posts:find-slot <integration-id>` returns `{"date": "..."}`, the
   next free slot on that channel's schedule; pass it straight back to
   `posts:create -s`.
 - `-t now` publishes immediately and needs no `--date`.
@@ -964,7 +941,7 @@ JSON mode supports:
 Every field below is taken from the server's validation DTOs. A field that is
 not listed does not exist, and sending it is a `400`.
 
-### X (Twitter) — `x`
+### X (Twitter): `x`
 ```bash
 posty posts:create \
   -c "Tweet content" \
@@ -977,7 +954,7 @@ posty posts:create \
 match `https://x.com/i/communities/<digits>`), `made_with_ai` (bool),
 `paid_partnership` (bool).
 
-### Facebook — `facebook`
+### Facebook: `facebook`
 ```bash
 IMG=$(posty upload photo.jpg | jq -r '.path')
 posty posts:create \
@@ -990,7 +967,7 @@ posty posts:create \
 All optional: `post_type` (`post` | `story`), `url`, `text_format_preset_id`
 (a background for a **text-only** post; Pages only, ~130 characters max).
 
-### Instagram — `instagram`
+### Instagram: `instagram`
 ```bash
 IMG=$(posty upload image.jpg | jq -r '.path')
 
@@ -1005,10 +982,10 @@ posty posts:create -c "" -s "2026-12-31T12:00:00Z" \
 ```
 `post_type` is **required**: `post` | `story`. Optional: `collaborators` (array
 of `{label}`), `audio` (`{id, title?, artist?, image?, audio_volume?,
-video_volume?}` — get the `id` from the `audioSearch` tool), `is_trial_reel`,
+video_volume?}`; get the `id` from the `audioSearch` tool), `is_trial_reel`,
 `graduation_strategy` (`MANUAL` | `SS_PERFORMANCE`).
 
-### Threads — `threads`, and Bluesky — `bluesky`
+### Threads (`threads`) and Bluesky (`bluesky`)
 ```bash
 posty posts:create -c "Post text" -s "2026-12-31T12:00:00Z" -i "$THREADS_ID"
 ```
@@ -1020,7 +997,7 @@ State these plainly rather than attempting a workaround.
 
 - **No AI video generation.** The `/generate-video` and `/video/function`
   routes were removed from the API entirely (2026-08-06). Do not tell a user
-  Posty can generate video, and do not call those routes — they 404.
+  Posty can generate video, and do not call those routes: they 404.
 - **No image or video generation of any kind through this CLI.** Media comes
   from files the user already has, via `posty upload`.
 - **No channel deletion.** `DELETE /integrations/:id` was deliberately removed
@@ -1052,10 +1029,10 @@ documented above; there is no second syntax guide to consult.
 
 ## Common Gotchas
 
-1. **Not authenticated** - Run `posty auth:login` or `export POSTY_API_KEY=key` before using CLI
+1. **Not authenticated** - Ask the user to run `posty auth:login` and approve it in the browser
 2. **Invalid integration ID** - Run `integrations:list` to get current IDs
 3. **Settings schema mismatch** - Check `integrations:settings` for required fields
-4. **Media MUST be uploaded to Posty first** - ⚠️ **CRITICAL (Rule 2):** Every value passed to `-m` or to an `image`/media field in JSON mode must be a `.path` returned by `posty upload`. Raw local filenames (`image.jpg`) and external URLs (`https://...`) will be rejected — TikTok, Instagram, YouTube and most other providers only accept Posty-verified URLs. No exceptions: even a "quick test post" needs the upload step.
+4. **Media MUST be uploaded to Posty first** - ⚠️ **CRITICAL (Rule 2):** Every value passed to `-m` or to an `image`/media field in JSON mode must be a `.path` returned by `posty upload`. Raw local filenames (`image.jpg`) and external URLs (`https://...`) will be rejected. TikTok, Instagram, YouTube and most other providers only accept Posty-verified URLs. No exceptions: even a "quick test post" needs the upload step.
 5. **JSON escaping in shell** - Use single quotes for JSON: `--settings '{...}'`
 6. **Date format** - ISO 8601 with an explicit offset (`"2026-12-31T12:00:00Z"`), or a naive datetime plus `--timezone <IANA name>`. A naive datetime with no timezone configured is a hard error. Required except with `-t now` or `--json`.
 7. **Tool not found** - Check available tools in `integrations:settings` output
@@ -1074,9 +1051,8 @@ posty auth:status                                             # Check if authent
 posty auth:login                                              # OAuth2 device flow login
 posty auth:signup --email <address>                           # New account by e-mailed code; no free trial
 posty auth:logout                                             # Remove credentials
-export POSTY_API_KEY=key                                      # Or use API key
 
-# Settings (~/.posty/config.json — survives logout)
+# Settings (survive logout)
 posty config:set timezone Europe/Budapest         # Timezone for dates without an offset
 posty config:get                                  # Show saved settings as JSON
 
@@ -1087,12 +1063,12 @@ posty integrations:groups                         # List groups (customers)
 posty integrations:settings <id>                  # Get settings schema
 posty integrations:trigger <id> <method> -d '{}'  # Fetch dynamic data
 
-# Posting (date required unless -t now or --json; explicit offset or --timezone — never naive)
+# Posting (date required unless -t now or --json; explicit offset or --timezone, never naive)
 posty posts:create -c "text" -s "2026-12-31T12:00:00Z" -i "id"                  # Simple (UTC)
 posty posts:create -c "Good morning!" -s "2026-12-31 08:00" --timezone Europe/Budapest -i "id"  # Local wall-clock
 posty posts:create -c "text" -t now -i "id"                                     # Publish immediately
 posty posts:create -c "text" -s "2026-12-31T12:00:00Z" -t draft -i "id"        # Draft
-posty posts:create -c "text" -m "$(posty upload img.jpg | jq -r '.path')" -s "2026-12-31T12:00:00Z" -i "id"  # With media (upload first — Rule 2)
+posty posts:create -c "text" -m "$(posty upload img.jpg | jq -r '.path')" -s "2026-12-31T12:00:00Z" -i "id"  # With media (upload first, Rule 2)
 posty posts:create -c "main" -c "comment" -s "2026-12-31T12:00:00Z" -i "id"    # With comment
 posty posts:create -c "text" -s "2026-12-31T12:00:00Z" --settings '{}' -i "id" # Platform-specific
 posty posts:create --json file.json                                             # Complex
