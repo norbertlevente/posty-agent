@@ -52,6 +52,7 @@
       },
       "onboardingSkill": "./skills/get-started/SKILL.md",
       "review": {
+        "demo_recording_url": "https://youtu.be/F7Gl98mYX2g",
         "test_cases": {
           "positive": [
             {
