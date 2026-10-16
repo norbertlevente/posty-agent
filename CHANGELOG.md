@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-10-16
+
+### Fixed
+- **API errors print the server's sentence, not its JSON.** A refusal used to
+  read `API Error (402): {"statusCode":402,"message":"…","url":"…"}`; it now
+  reads `API Error (402): The monthly limit is 100 X posts and 100 are
+  already used. The count resets on 2026-11-03. You can still save it as a
+  draft.` The same applies to `auth:status` when it cannot verify a key. The
+  raw body is unchanged on `ApiError.body` for scripts.
+
 ## [1.4.0] - 2026-09-28
 
 ### Added

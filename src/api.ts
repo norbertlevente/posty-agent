@@ -21,6 +21,35 @@ export interface Workspace {
 }
 
 /**
+ * The sentence a person should read out of an error body.
+ *
+ * The API answers with JSON such as `{"statusCode":402,"message":"The monthly
+ * limit is ...","url":"..."}`, and printing that whole object buried the one
+ * line that says what happened and what to do. This takes `message` (joined
+ * when Nest sends a list of validation messages), then `msg`, then `detail`,
+ * and falls back to the raw body when it is not JSON or has none of them.
+ * The raw body stays on `ApiError.body` for anything that needs it.
+ */
+export function serverSentence(body: string): string {
+  const raw = (body ?? '').trim();
+  let json: any = null;
+  try {
+    json = JSON.parse(raw);
+  } catch {
+    return raw;
+  }
+  const pick = (value: unknown): string | null => {
+    if (typeof value === 'string' && value.trim()) return value.trim();
+    if (Array.isArray(value)) {
+      const parts = value.filter((part) => typeof part === 'string' && part.trim());
+      return parts.length ? parts.join('; ') : null;
+    }
+    return null;
+  };
+  return pick(json?.message) ?? pick(json?.msg) ?? pick(json?.detail) ?? raw;
+}
+
+/**
  * Thrown for any non-2xx answer from the API. `status` survives so command
  * handlers can say something more useful than the raw body. Only a 401 means
  * the credential was rejected and points at `posty auth:login`; a 403 is a
@@ -28,7 +57,7 @@ export interface Workspace {
  */
 export class ApiError extends Error {
   constructor(public status: number, public body: string) {
-    super(`API Error (${status}): ${body}`);
+    super(`API Error (${status}): ${serverSentence(body)}`);
     this.name = 'ApiError';
   }
 

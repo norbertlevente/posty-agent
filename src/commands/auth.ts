@@ -5,7 +5,7 @@ import { createInterface } from 'readline';
 import { getSetting, saveSetting } from '../settings';
 import { result, status } from '../output';
 import { assertIanaTimezone } from '../dates';
-import { ApiError, PostyAPI, SubscriptionState, Workspace } from '../api';
+import { ApiError, PostyAPI, serverSentence, SubscriptionState, Workspace } from '../api';
 import { getWorkspaceId } from '../config';
 
 const CREDENTIALS_DIR = join(homedir(), '.posty');
@@ -672,7 +672,7 @@ export async function authStatus() {
         claiming they are bad, but it still exits 1, because a caller that
         asked "are these good?" did not get a yes.
       */
-      status(`⚠️  Could not verify credentials (HTTP ${error.status}): ${error.body}`);
+      status(`⚠️  Could not verify credentials (HTTP ${error.status}): ${serverSentence(error.body)}`);
       result({ authenticated: null, ...base, reason: `http-${error.status}` });
       process.exit(1);
     }
