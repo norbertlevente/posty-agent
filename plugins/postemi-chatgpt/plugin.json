@@ -1,0 +1,138 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "postemi",
+  "version": "1.0.0",
+  "description": "Write, schedule and publish social media posts from ChatGPT with Postemi: Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord, Slack and Pinterest (beta). Plan a content calendar, preview every post per account, and manage scheduled posts in the Postemi app inside ChatGPT.",
+  "author": {
+    "name": "Norbert Levente Kiss",
+    "email": "norbert@posty.hu",
+    "url": "https://postemi.com"
+  },
+  "homepage": "https://postemi.com",
+  "repository": "https://github.com/norbertlevente/posty-agent",
+  "license": "AGPL-3.0",
+  "keywords": [
+    "social media",
+    "scheduling",
+    "content calendar",
+    "facebook",
+    "instagram",
+    "linkedin",
+    "tiktok"
+  ],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Postemi: Social Media Scheduler",
+        "shortDescription": "Schedule social media posts",
+        "longDescription": "Write, schedule and publish social media posts without leaving ChatGPT. Postemi connects to your Facebook pages, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord, Slack and Pinterest (beta) accounts, so you can go from an idea to a scheduled post in one conversation.\n\nWhat you can do:\n- Ask ChatGPT to write a post, a thread or a week of posts, adapted to each platform and its character limit.\n- See a preview card per account with the name, the handle, the local publish time and the character count before anything is saved.\n- Schedule for a date and time, save as a draft, or publish now, on one channel or many at once.\n- Add images and videos from the conversation, from a link, or from your own device.\n- Ask what is going out this week, and cancel a scheduled post.\n- Open the Postemi app from the ChatGPT sidebar or beside a conversation: a content calendar, a composer and your channel list. Select a post and ask ChatGPT to rewrite it.\n- In the ChatGPT desktop app, type @ to point at a channel or an upcoming post.\n\nPostemi is a social media scheduler made in Europe for small businesses, creators and agencies. Your timezone and the workspace ChatGPT works in are in the plugin settings.",
+        "developerName": "Norbert Levente Kiss",
+        "category": "Communication",
+        "capabilities": [
+          "Write and schedule posts",
+          "Preview posts per account",
+          "Content calendar",
+          "Cancel scheduled posts",
+          "Upload images and videos"
+        ],
+        "websiteURL": "https://postemi.com",
+        "supportURL": "https://postemi.com/help",
+        "privacyPolicyURL": "https://postemi.com/privacy",
+        "termsOfServiceURL": "https://postemi.com/terms",
+        "defaultPrompt": [
+          "Write an Instagram and Facebook post about our weekend offer and schedule it for Friday 9:00.",
+          "Plan next week's LinkedIn posts for my business and show me the previews.",
+          "Open my Postemi calendar."
+        ],
+        "brandColor": "#0A0A0A",
+        "brandColorDark": "#FFFFFF",
+        "composerIcon": "./assets/logo.svg",
+        "logo": "./assets/logo.png"
+      },
+      "onboardingSkill": "./skills/get-started/SKILL.md",
+      "review": {
+        "demo_recording_url": "TODO: owner records the Postemi demo video and puts the YouTube link here",
+        "test_cases": {
+          "positive": [
+            {
+              "description": "Import a valid public image into the Postemi media library for later attachment.",
+              "prompt": "Import this image into my Postemi media library: https://postemi.com/review/postemi-test-photo.jpg",
+              "tools_triggered": "upload_media_from_url",
+              "expected_behavior": "Returns the stored Postemi media identifier and its hosted media URL, or a concise validation error if the file cannot be imported."
+            },
+            {
+              "description": "List the connected channels, then preview an image post on Facebook and Instagram before any write occurs.",
+              "prompt": "Which social channels are connected to my Postemi workspace? Preview a post with that imported image on the Facebook Page and on the Instagram channel, saying: Postemi review test post. Show me each account's exact name and handle.",
+              "tools_triggered": "list_integrations, get_integration_schema, preview_post",
+              "expected_behavior": "Lists the connected channels with their names and handles. The preview card shows the Facebook and Instagram accounts with the prepared text, its character count, each channel's own character limit, the attached image, and the publication time in the user's timezone. No post is created yet."
+            },
+            {
+              "description": "Schedule the confirmed post on Facebook and Instagram for a time one week ahead.",
+              "prompt": "I confirm the preview. Schedule it on both channels for one week from now at 10:00 in my timezone.",
+              "tools_triggered": "create_post",
+              "expected_behavior": "Creates one scheduled Postemi post per channel with the image attached, in the QUEUE (scheduled) state, and returns each post ID with the account name, the handle and the publication time in the user's timezone. Postemi publishes each post to the platform at that time; nothing is published immediately."
+            },
+            {
+              "description": "Refuse a photo on YouTube: video-only validation with a clear message.",
+              "prompt": "Now try to schedule that same photo post on the YouTube channel too.",
+              "tools_triggered": "preview_post or create_post",
+              "expected_behavior": "Postemi refuses: the validation reports that the attached item must be a video, because YouTube accepts only video uploads. No YouTube post is created, and the reply explains what is missing."
+            },
+            {
+              "description": "Read the scheduled posts back with UTC and local times, then cancel them, leaving the workspace as it was.",
+              "prompt": "Show me those two scheduled posts in my Postemi calendar with their publication times in UTC and in my timezone, then delete both of them.",
+              "tools_triggered": "list_posts, delete_post",
+              "expected_behavior": "Lists both posts with their post IDs, their QUEUE (scheduled) state, the channel names and handles, and the publication times in both UTC and the user's timezone, as a calendar card. Then deletes each scheduled post before it is published, reporting exactly what was removed and naming the channel for each. A following list_posts call confirms both posts are gone."
+            }
+          ],
+          "negative": [
+            {
+              "description": "Do not trigger for unrelated calendar requests.",
+              "prompt": "What meetings do I have tomorrow?"
+            },
+            {
+              "description": "Do not trigger for writing that is not a social media post, such as a private e-mail.",
+              "prompt": "Write a short e-mail to my landlord about the broken heater in my flat."
+            },
+            {
+              "description": "Do not trigger for social analytics, which the Postemi tools do not expose.",
+              "prompt": "Show me my Instagram engagement analytics for last month."
+            }
+          ]
+        },
+        "commerce": false,
+        "commerce_description": "Postemi does not sell anything in ChatGPT. Plans are chosen and paid on postemi.com."
+      },
+      "publication": {
+        "release_notes": "Postemi is now an app inside ChatGPT. Open it from the sidebar or beside a conversation: a content calendar with list, week and month views, a composer with formatting, emoji and a live preview, and your channel list. Open a scheduled post to change its text, time or channels. In the conversation, the preview card lets you edit the text, pick the date and time, choose schedule, draft or publish now, and leave an account out before you schedule. The result card has Undo, asking what is scheduled shows a calendar card, and an upload card takes photos and videos in original quality, up to 1 GB, from your computer or your phone. Plugin settings hold your timezone and workspace, the @ menu of the desktop app lists your channels and upcoming posts, and a getting started guide helps you set up. Pinterest is the twelfth platform, in beta. Now available in the United States, Canada, the United Kingdom, Ireland and across Europe.",
+        "countries": [
+          "CH",
+          "AT",
+          "DE",
+          "CZ",
+          "SK",
+          "PL",
+          "RO",
+          "SI",
+          "GB",
+          "IE",
+          "US",
+          "CA",
+          "FR",
+          "ES",
+          "IT",
+          "PT",
+          "NL",
+          "BE",
+          "LU",
+          "SE",
+          "DK",
+          "NO",
+          "FI",
+          "HR",
+          "GR"
+        ]
+      }
+    }
+  }
+}
