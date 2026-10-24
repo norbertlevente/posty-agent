@@ -5,7 +5,7 @@
   "description": "Social media scheduler for Claude: write, schedule and publish posts to Facebook, Instagram, X (Twitter), LinkedIn, TikTok, YouTube, Threads, Bluesky, Pinterest (beta), Telegram, Discord and Slack, with a content calendar and photo and video uploads in full quality. Browser sign-in, no key.",
   "author": {
     "name": "Norbert Kiss",
-    "email": "norbert@posty.hu",
+    "email": "norbert@postemi.com",
     "url": "https://github.com/norbertlevente"
   },
   "homepage": "https://postemi.com/ai/claude",

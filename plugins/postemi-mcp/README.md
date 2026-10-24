@@ -37,6 +37,7 @@ stores posts and media in your workspace until you delete them.
 - Terms: https://postemi.com/terms
 - Help: https://postemi.com/help
 - Docs: https://postemi.com/docs/mcp
+- Support: norbert@postemi.com
 
 Made by Kiss Industries (Basel, Switzerland), the company behind Posty and
 Postemi.

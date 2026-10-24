@@ -13,10 +13,10 @@ that is deliberate: you write the post, Postemi publishes it.
 
 ## Use the MCP tools. Do not install anything.
 
-Never run `npm install`, never install or invoke a `posty` command line
+Never run `npm install`, never install or invoke a `postemi` command line
 tool, and never touch the user's shell for Postemi work. The MCP tools cover
-every task below without leaving the conversation. (Posty's separate CLI
-plugin, `posty-cli`, exists for terminal and script workflows; it is not
+every task below without leaving the conversation. (Postemi's separate CLI
+plugin, `postemi-cli`, exists for terminal and script workflows; it is not
 this one.)
 
 If a tool call answers that the server needs authentication, tell the user
