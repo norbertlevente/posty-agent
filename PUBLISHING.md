@@ -109,3 +109,140 @@ npm version major    # 1.0.0 → 2.0.0
 | `402 Payment Required` | Scoped package without `--access public` |
 | `EPUBLISHCONFLICT` | That version is already published. Versions are immutable; bump. |
 | Command not found after install | `bin` wrong, or `dist/index.js` lost its shebang |
+
+---
+
+## Postemi launch day
+
+Postemi (postemi.com) is Posty's international brand on the same backend.
+Everything below is prepared and committed; nothing is published, submitted
+or pushed. **Only the owner clicks Publish / Submit and runs `npm publish`.**
+Do the steps in this order; each one says how to check it.
+
+### What exists
+
+| Artefact | Where | Points at |
+|---|---|---|
+| npm package `postemi` (command `postemi`) | `packages/postemi/` (built by `pnpm build:postemi` from `src/`, brand in `src/brand.ts`) | `https://api.postemi.com`, device login on postemi.com/app/device |
+| Claude chat bundle `postemi` | `plugins/postemi-mcp` | `https://mcp.postemi.com/mcp` |
+| Claude CLI plugin `postemi-cli` | `plugins/postemi-cli` | the `postemi` command |
+| ChatGPT app "Postemi: Social Media Scheduler" | `plugins/postemi-chatgpt` (see its `SUBMIT.md`) | `https://mcp.postemi.com/mcp` |
+| Cursor plugin `postemi` | `plugins/postemi-cursor`, listed in `.cursor-plugin/marketplace.json` | same |
+| Grok Build plugin `postemi` | `plugins/postemi-grok` | same |
+| Agent skill `postemi` (ClawHub, Hermes, skills.sh) | `skills/postemi/SKILL.md` | the `postemi` command |
+| Gemini CLI extension | local repo `../postemi-gemini` (no remote yet) | same MCP URL |
+
+### 0. Before anything: the backend is live
+
+Postemi launch runbook (`postemi/docs/launch-runbook.md`) steps 1 to 4 are
+done. Then:
+
+```bash
+curl -s https://api.postemi.com/public/v1/status            # names Postemi
+curl -si https://mcp.postemi.com/mcp | head -5              # 401 with WWW-Authenticate on mcp.postemi.com
+pnpm install && pnpm run build:postemi
+node packages/postemi/dist/index.js auth:login              # approve on postemi.com/app/device
+node packages/postemi/dist/index.js auth:status             # authenticated: true
+node packages/postemi/dist/index.js integrations:list
+```
+
+If `auth:login` opens posty.hu/device instead of postemi.com/app/device,
+the backend does not have the `brand` field on `POST /device/code` yet
+(branch `postemi-golive`); stop and fix that first.
+
+### 1. Push `posty-agent` (owner OK needed)
+
+Merge `postemi-plugins` into `main` and push. The push fires the Anthropic
+directory webhook; the Posty listings are unchanged by it. Steps 3, 5 (skills.sh)
+and 7 read the public repo, so they come after this one.
+
+Check: `claude plugin marketplace update posty-agent`, then
+`claude plugin install postemi@posty-agent` and
+`claude plugin install postemi-cli@posty-agent` install.
+
+### 2. npm `postemi` (owner, Terminal.app: the 2FA is a passkey)
+
+```bash
+pnpm run release:check:postemi        # builds, packs and dry-runs; publishes nothing
+cd packages/postemi
+npm publish --access public           # prepublishOnly rebuilds from src/
+```
+
+Check: `npm view postemi version` (1.0.0, a few minutes after),
+`npm i -g postemi && postemi --help && postemi auth:status`.
+The tarball must hold `dist/index.js` (starts with `#!/usr/bin/env node`),
+`README.md`, `SKILL.md`, `PROVIDER_SETTINGS.md`, `SUPPORTED_FILE_TYPES.md`,
+`examples/`, `LICENSE`. `posty-cli` is a separate release (`npm publish` in
+the repo root) and does not change for Postemi.
+
+### 3. Claude directory: the chat bundle (owner submits)
+
+Follow `plugins/postemi-mcp/README.md`, "Submitting": a NEW plugin bundle at
+claude.ai/directory/manage, repo `norbertlevente/posty-agent`, path
+`plugins/postemi-mcp`. Check the icon before the first save (it is read
+once). Optional: a Postemi MCP connector with the same URL. Do not submit
+`postemi-cli` (same rule as `posty-cli`: the CLI is not listed at
+Anthropic; it lives in this repo's marketplace).
+
+### 4. ChatGPT app (owner submits)
+
+Follow `plugins/postemi-chatgpt/SUBMIT.md`. Open TODOs there: the demo video
+(`review.demo_recording_url`), the review test image on postemi.com, the
+reviewer account. ZIP the folder contents without `SUBMIT.md`:
+
+```bash
+cd plugins/postemi-chatgpt && zip -r ../../postemi-chatgpt-1.0.0.zip plugin.json mcp.json assets skills
+```
+
+Upload with the general "Upload new or existing plugin" box (a NEW app,
+never the Posty listing's box). Countries: Posty's 26 minus HU. After
+approval, publish by hand; only then narrow Posty's countries to HU.
+
+### 5. ClawHub `postemi` (feeds Hermes), skills.sh
+
+From this folder (the path must be a folder):
+
+```bash
+clawhub skill publish ./skills/postemi --slug postemi --version 1.0.0
+```
+
+Check: the scan is CLEAN, `hermes skills install clawhub/postemi` works.
+skills.sh lists skills from public GitHub repos, so after step 1
+`skills/postemi` is installable from `norbertlevente/posty-agent`.
+Optional later: postemi.com serving `/.well-known/skills/index.json` like
+posty.hu does, for `well-known:` installs in Hermes.
+
+### 6. Gemini CLI extension repo (owner creates the repo)
+
+```bash
+gh repo create norbertlevente/postemi-gemini --public --description "Postemi extension for Gemini CLI"
+gh repo edit norbertlevente/postemi-gemini --add-topic gemini-cli-extension
+cd ../postemi-gemini
+git remote add origin https://github.com/norbertlevente/postemi-gemini.git
+git push -u origin main
+```
+
+Check: `gemini extensions install https://github.com/norbertlevente/postemi-gemini`,
+then `/mcp` shows `postemi` and the browser sign-in opens on postemi.com.
+
+### 7. Cursor and Grok
+
+- Cursor Marketplace (cursor.com/marketplace/publish, also feeds Grok Bot):
+  repo `norbertlevente/posty-agent`, plugin `postemi` from
+  `.cursor-plugin/marketplace.json` (`plugins/postemi-cursor`).
+- Grok Build: a PR to `xai-org/plugin-marketplace` vendoring
+  `plugins/postemi-grok` as `external_plugins/postemi`, like Posty's PR
+  #1038. `grok plugin validate plugins/postemi-grok` passes.
+
+### Known gaps (not in this repo)
+
+- The REST billing routes answer with Posty's plans in forint and the
+  Hungarian slugs on every host. The Postemi CLI accepts `basic` and `team`
+  and maps them to `alap` and `csapat`, but `billing:plans` output stays
+  Posty's until the backend brands `GET /public/v1/plans` by host.
+- REST sign-up (`/public/v1/signup/*`) does not record the Postemi brand or
+  Postemi's terms, so the Postemi CLI has no `auth:signup` and sends people to
+  postemi.com/app/signup.
+- The postemi.com docs pages under `/docs/cli` and `/docs/settings/developers`
+  still say `posty-cli` and `POSTY_API_KEY`; change them to `postemi` and
+  `POSTEMI_API_KEY` in the postemi repo before announcing the CLI.
