@@ -10,21 +10,22 @@ import { listWorkspaces, useWorkspace, currentWorkspace } from './commands/works
 import { billingPlans, billingSubscribe, billingStatus, billingManage } from './commands/billing';
 import { fotoAiStatus, fotoAiModels, fotoAiGenerate, fotoAiGet } from './commands/fotoai';
 import type { Argv } from 'yargs';
+import { BRAND, IS_POSTEMI, envName, writeEnv } from './brand';
 
-yargs(hideBin(process.argv))
-  .scriptName('posty')
+const cli = yargs(hideBin(process.argv))
+  .scriptName(BRAND.cli)
   .usage('$0 <command> [options]')
   .option('workspace', {
     alias: 'w',
     describe:
-      'Workspace id this command acts on (overrides "posty workspaces:use" and POSTY_WORKSPACE)',
+      `Workspace id this command acts on (overrides "${BRAND.cli} workspaces:use" and ${envName('WORKSPACE')})`,
     type: 'string',
     global: true,
   })
   // One place reads the choice (config.ts), so the flag becomes the env var.
   .middleware((argv: any) => {
     if (argv.workspace) {
-      process.env.POSTY_WORKSPACE = String(argv.workspace);
+      writeEnv('WORKSPACE', String(argv.workspace));
     }
   })
   .command(
@@ -39,23 +40,23 @@ yargs(hideBin(process.argv))
         })
         .option('media', {
           alias: 'm',
-          describe: 'Comma-separated media URLs for the corresponding -c (repeatable; URLs must come from "posty upload")',
+          describe: `Comma-separated media URLs for the corresponding -c (repeatable; URLs must come from "${BRAND.cli} upload")`,
           type: 'string',
         })
         .option('integrations', {
           alias: 'i',
-          describe: 'Comma-separated list of integration IDs (from "posty integrations:list")',
+          describe: `Comma-separated list of integration IDs (from "${BRAND.cli} integrations:list")`,
           type: 'string',
         })
         .option('date', {
           alias: 's',
           describe:
-            'Publish date. ALWAYS give ISO 8601 with an explicit offset ("2026-12-31T12:00:00Z" / "+01:00"), or a datetime without offset ("2026-12-31 12:00") together with a timezone (--timezone / POSTY_TIMEZONE / posty config:set timezone). A naive date with no timezone configured is an error. Required unless --type now or --json.',
+            `Publish date. ALWAYS give ISO 8601 with an explicit offset ("2026-12-31T12:00:00Z" / "+01:00"), or a datetime without offset ("2026-12-31 12:00") together with a timezone (--timezone / ${envName('TIMEZONE')} / ${BRAND.cli} config:set timezone). A naive date with no timezone configured is an error. Required unless --type now or --json.`,
           type: 'string',
         })
         .option('timezone', {
           describe:
-            'IANA timezone name (e.g. Europe/Budapest) used to interpret --date when it has no explicit offset. Numeric offsets are not accepted here — put those in the date string.',
+            `IANA timezone name (e.g. ${BRAND.exampleTimezone}) used to interpret --date when it has no explicit offset. Numeric offsets are not accepted here — put those in the date string.`,
           type: 'string',
         })
         .option('type', {
@@ -82,7 +83,7 @@ yargs(hideBin(process.argv))
           default: true,
         })
         .option('settings', {
-          describe: 'Platform-specific settings as JSON string (schema: "posty integrations:settings <id>")',
+          describe: `Platform-specific settings as JSON string (schema: "${BRAND.cli} integrations:settings <id>")`,
           type: 'string',
         })
         .check((argv) => {
@@ -102,7 +103,7 @@ yargs(hideBin(process.argv))
           'Simple scheduled post (explicit UTC)'
         )
         .example(
-          '$0 posts:create -c "Merry Christmas! 🎄" -s "2026-12-24 18:00" --timezone Europe/Budapest -i "integration-id"',
+          `$0 posts:create -c "Merry Christmas! 🎄" -s "2026-12-24 18:00" --timezone ${BRAND.exampleTimezone} -i "integration-id"`,
           'Local wall-clock time with an explicit IANA timezone'
         )
         .example(
@@ -115,7 +116,7 @@ yargs(hideBin(process.argv))
         )
         .example(
           '$0 posts:create -c "Main post" -m "img1.jpg,img2.jpg" -s "2026-12-31T12:00:00Z" -i "integration-id"',
-          'Post with multiple images (each URL from "posty upload")'
+          `Post with multiple images (each URL from "${BRAND.cli} upload")`
         )
         .example(
           '$0 posts:create -c "Main post" -m "img1.jpg" -c "First comment" -m "img2.jpg" -c "Second comment" -m "img3.jpg,img4.jpg" -s "2026-12-31T12:00:00Z" -i "integration-id"',
@@ -155,7 +156,7 @@ yargs(hideBin(process.argv))
         })
         .option('timezone', {
           describe:
-            'IANA timezone name (e.g. Europe/Budapest) used to interpret --startDate/--endDate when they have no explicit offset',
+            `IANA timezone name (e.g. ${BRAND.exampleTimezone}) used to interpret --startDate/--endDate when they have no explicit offset`,
           type: 'string',
         })
         .option('customer', {
@@ -431,7 +432,7 @@ yargs(hideBin(process.argv))
     (yargs: Argv) => {
       return yargs
         .positional('id', {
-          describe: 'The id returned by "posty upload:link"',
+          describe: `The id returned by "${BRAND.cli} upload:link"`,
           type: 'string',
         })
         .example(
@@ -453,7 +454,7 @@ yargs(hideBin(process.argv))
     (yargs: Argv) => {
       return yargs
         .positional('id', {
-          describe: 'Workspace id, from "posty workspaces:list"',
+          describe: `Workspace id, from "${BRAND.cli} workspaces:list"`,
           type: 'string',
         })
         .example('$0 workspaces:use 3f2a…', 'Switch the CLI to that workspace');
@@ -468,7 +469,9 @@ yargs(hideBin(process.argv))
   )
   .command(
     'billing:plans',
-    'Show the Posty plans: prices in forint, limits, the trial rule and the current tier',
+    IS_POSTEMI
+      ? 'Show the Postemi plans: prices, limits, the trial rule and the current tier'
+      : 'Show the Posty plans: prices in forint, limits, the trial rule and the current tier',
     {},
     billingPlans as any
   )
@@ -478,7 +481,7 @@ yargs(hideBin(process.argv))
     (yargs: Argv) => {
       return yargs
         .option('tier', {
-          describe: 'The plan: alap, pro, kreator or csapat (see "posty billing:plans")',
+          describe: `The plan: ${BRAND.tierList} (see "${BRAND.cli} billing:plans")`,
           type: 'string',
           demandOption: true,
         })
@@ -521,7 +524,10 @@ yargs(hideBin(process.argv))
       });
     },
     billingManage as any
-  )
+  );
+
+/* FotoAI is a Posty (Hungary) service; Postemi does not offer it. */
+if (!IS_POSTEMI) cli
   .command(
     'fotoai:status',
     'Show whether FotoAI (fotoai.hu) is connected for the key owner, as whom, and the FotoAI credit balance',
@@ -545,7 +551,7 @@ yargs(hideBin(process.argv))
     "Price, and with --yes generate, an image or video with the key owner's own FotoAI credits; the result is saved into the media library",
     (yargs: Argv) => {
       return yargs
-        .option('model', { alias: 'm', describe: 'A model id from "posty fotoai:models"', type: 'string', demandOption: true })
+        .option('model', { alias: 'm', describe: `A model id from "${BRAND.cli} fotoai:models"`, type: 'string', demandOption: true })
         .option('prompt', { alias: 'p', describe: 'What to generate', type: 'string', demandOption: true })
         .option('aspect', { describe: 'Aspect ratio, e.g. 1:1, 4:5, 9:16, 16:9', type: 'string' })
         .option('duration', { describe: 'Video length in seconds (video models)', type: 'number' })
@@ -567,14 +573,16 @@ yargs(hideBin(process.argv))
         .option('wait', { describe: 'Wait up to this many seconds while it runs', type: 'number', default: 0 });
     },
     fotoAiGet as any
-  )
+  );
+
+cli
   .command(
     'config:set <key> <value>',
-    'Save a CLI setting to ~/.posty/config.json',
+    `Save a CLI setting to ~/${BRAND.configDirName}/config.json`,
     (yargs: Argv) => {
       return yargs
         .positional('key', {
-          describe: 'Setting name. Known: "timezone" (an IANA name), "workspace" (an id; prefer "posty workspaces:use")',
+          describe: `Setting name. Known: "timezone" (an IANA name), "workspace" (an id; prefer "${BRAND.cli} workspaces:use")`,
           type: 'string',
         })
         .positional('value', {
@@ -582,8 +590,8 @@ yargs(hideBin(process.argv))
           type: 'string',
         })
         .example(
-          '$0 config:set timezone Europe/Budapest',
-          'Interpret dates written without an explicit offset in Budapest time'
+          `$0 config:set timezone ${BRAND.exampleTimezone}`,
+          `Interpret dates written without an explicit offset in ${BRAND.exampleTimezoneCity} time`
         );
     },
     configSet as any
@@ -608,7 +616,7 @@ yargs(hideBin(process.argv))
     (yargs: Argv) => {
       return yargs
         .option('auth-server', {
-          describe: 'Auth server URL (default: https://posty.hu/api)',
+          describe: `Auth server URL (default: ${BRAND.defaultApiUrl})`,
           type: 'string',
         })
         .example(
@@ -617,10 +625,17 @@ yargs(hideBin(process.argv))
         );
     },
     authLogin as any
-  )
+  );
+
+/*
+  auth:signup is Posty only for now: a REST sign-up does not record the
+  Postemi brand or Postemi's terms yet, so the Postemi build sends people to
+  postemi.com/app/signup and then `postemi auth:login`.
+*/
+if (!IS_POSTEMI) cli
   .command(
     'auth:signup',
-    'Create a NEW Posty account with a code sent to the e-mail address, and store its key. No free trial: the next step is billing:subscribe',
+    `Create a NEW ${BRAND.name} account with a code sent to the e-mail address, and store its key. No free trial: the next step is billing:subscribe`,
     (yargs: Argv) => {
       return yargs
         .option('email', {
@@ -633,7 +648,7 @@ yargs(hideBin(process.argv))
           type: 'string',
         })
         .option('accept-terms', {
-          describe: 'The person has read https://posty.hu/aszf and https://posty.hu/adatvedelem and agrees',
+          describe: `The person has read ${BRAND.termsUrl} and ${BRAND.privacyUrl} and agrees`,
           type: 'boolean',
           default: false,
         })
@@ -647,7 +662,7 @@ yargs(hideBin(process.argv))
           type: 'string',
         })
         .option('timezone', {
-          describe: 'The person\'s IANA timezone for the account, e.g. Europe/Budapest (default: the one saved by config:set, else the system time zone)',
+          describe: `The person's IANA timezone for the account, e.g. ${BRAND.exampleTimezone} (default: the one saved by config:set, else the system time zone)`,
           type: 'string',
         })
         .option('language', {
@@ -656,7 +671,7 @@ yargs(hideBin(process.argv))
           choices: ['hu', 'en', 'de', 'cs'],
         })
         .option('api-url', {
-          describe: 'API base URL (default: POSTY_API_URL, then https://posty.hu/api)',
+          describe: `API base URL (default: ${envName('API_URL')}, then ${BRAND.defaultApiUrl})`,
           type: 'string',
         })
         .example(
@@ -669,7 +684,23 @@ yargs(hideBin(process.argv))
         );
     },
     authSignup as any
-  )
+  );
+
+/* Postemi creates accounts on postemi.com; see the note above auth:signup. */
+if (IS_POSTEMI) cli
+  .command(
+    'auth:signup',
+    false,
+    (yargs: Argv) => yargs.strict(false),
+    () => {
+      console.error(
+        `❌ The ${BRAND.cli} CLI cannot create an account. Create one at ${BRAND.signupUrl}, then run: ${BRAND.cli} auth:login`
+      );
+      process.exit(1);
+    }
+  );
+
+cli
   .command(
     'auth:logout',
     'Remove stored OAuth2 credentials',
@@ -682,7 +713,7 @@ yargs(hideBin(process.argv))
     {},
     authStatus as any
   )
-  .demandCommand(1, 'Specify a command. Run "posty --help" for the list.')
+  .demandCommand(1, `Specify a command. Run "${BRAND.cli} --help" for the list.`)
   .strict()
   .help()
   .alias('h', 'help')
@@ -690,6 +721,6 @@ yargs(hideBin(process.argv))
   .alias('v', 'version')
   .wrap(Math.min(110, process.stdout.columns || 110))
   .epilogue(
-    'Output contract: results are JSON on stdout; status and errors go to stderr. Every failure exits 1.\n\nAuthentication:\n  Device login: posty auth:login\n  API Key: export POSTY_API_KEY=your_api_key\n\nWorkspaces: a credential may reach several. "posty workspaces:list" shows them, "posty workspaces:use <id>" picks the one commands act on (or pass --workspace <id> / POSTY_WORKSPACE).\n\nDates: ALWAYS pass an explicit offset ("2026-12-31T12:00:00Z" / "+01:00"), or pass --timezone with an IANA name (e.g. Europe/Budapest). A date without either is resolved via POSTY_TIMEZONE, then the timezone saved by "posty config:set timezone" — and is an ERROR when none of those is set. Numeric offsets are never accepted as timezone values.\n\nFor more information, visit: https://posty.hu'
+    `Output contract: results are JSON on stdout; status and errors go to stderr. Every failure exits 1.\n\nAuthentication:\n  Device login: ${BRAND.cli} auth:login\n  API Key: export ${envName('API_KEY')}=your_api_key\n\nWorkspaces: a credential may reach several. "${BRAND.cli} workspaces:list" shows them, "${BRAND.cli} workspaces:use <id>" picks the one commands act on (or pass --workspace <id> / ${envName('WORKSPACE')}).\n\nDates: ALWAYS pass an explicit offset ("2026-12-31T12:00:00Z" / "+01:00"), or pass --timezone with an IANA name (e.g. ${BRAND.exampleTimezone}). A date without either is resolved via ${envName('TIMEZONE')}, then the timezone saved by "${BRAND.cli} config:set timezone" — and is an ERROR when none of those is set. Numeric offsets are never accepted as timezone values.\n\nFor more information, visit: ${BRAND.homepage}`
   )
   .parse();

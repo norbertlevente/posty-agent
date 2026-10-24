@@ -8,6 +8,7 @@ import {
 } from '../dates';
 import { result, status, fail } from '../output';
 import { readFileSync, existsSync } from 'fs';
+import { BRAND } from '../brand';
 
 /**
  * Read `--content`/`--media` off the raw argv, keeping the order they were
@@ -156,7 +157,7 @@ export async function createPost(args: any) {
     if (integrations.length === 0) {
       console.error('❌ At least one integration ID is required');
       console.error('Use -i or --integrations to specify integration IDs');
-      console.error('Run "posty integrations:list" to see available integrations');
+      console.error(`Run "${BRAND.cli} integrations:list" to see available integrations`);
       process.exit(1);
     }
 

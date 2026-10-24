@@ -1,6 +1,7 @@
 import { PostyConfig } from './api';
 import { loadCredentials } from './commands/auth';
 import { getSetting } from './settings';
+import { BRAND, envName, readEnv } from './brand';
 
 /**
  * Which workspace requests are about, in order of precedence: `--workspace`
@@ -10,7 +11,7 @@ import { getSetting } from './settings';
  * one-workspace key; the API refuses to guess for a key that spans several.
  */
 export function getWorkspaceId(): string | undefined {
-  const fromEnv = process.env.POSTY_WORKSPACE;
+  const fromEnv = readEnv('WORKSPACE');
   if (fromEnv) return fromEnv;
   const creds = loadCredentials();
   if (creds?.organizationId) return creds.organizationId;
@@ -31,14 +32,14 @@ export function getConfig(): PostyConfig {
   }
 
   // Fall back to environment variable
-  const apiKey = process.env.POSTY_API_KEY;
-  const apiUrl = process.env.POSTY_API_URL;
+  const apiKey = readEnv('API_KEY');
+  const apiUrl = readEnv('API_URL');
 
   if (!apiKey) {
     console.error('❌ Error: No authentication found.');
     console.error('Options:');
-    console.error('  1. Device login: posty auth:login');
-    console.error('  2. API Key: export POSTY_API_KEY=your_api_key');
+    console.error(`  1. Device login: ${BRAND.cli} auth:login`);
+    console.error(`  2. API Key: export ${envName('API_KEY')}=your_api_key`);
     process.exit(1);
   }
 

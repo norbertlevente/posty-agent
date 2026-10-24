@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto';
+import { BRAND, networkError } from './brand';
 
 export interface PostyConfig {
   apiKey: string;
@@ -218,7 +219,7 @@ export class PostyAPI {
     // `api.posty.hu` is live and equivalent; the same API is also served under
     // `/api` on the main host, which is the safer fallback for a key set by
     // hand. `posty auth:login` stores the real base in credentials.json.
-    this.apiUrl = config.apiUrl || 'https://posty.hu/api';
+    this.apiUrl = config.apiUrl || BRAND.defaultApiUrl;
   }
 
   private async request(endpoint: string, options: any = {}) {
@@ -237,7 +238,7 @@ export class PostyAPI {
         headers,
       });
     } catch (error: any) {
-      throw new Error(`Could not reach ${this.apiUrl}: ${error.message}`);
+      throw new Error(networkError(`Could not reach ${this.apiUrl}`, error));
     }
 
     if (!response.ok) {
@@ -355,7 +356,7 @@ export class PostyAPI {
         },
       });
     } catch (error: any) {
-      throw new Error(`Could not reach ${this.apiUrl}: ${error.message}`);
+      throw new Error(networkError(`Could not reach ${this.apiUrl}`, error));
     }
 
     if (!response.ok) {

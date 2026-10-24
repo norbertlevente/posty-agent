@@ -69,3 +69,12 @@ id_rsa*
 .claude/
 .firecrawl/
 .aider*
+
+# The postemi npm package (packages/postemi): package.json and README.md are
+# kept; `pnpm build:postemi` generates the rest.
+/packages/postemi/dist/
+/packages/postemi/LICENSE
+/packages/postemi/SKILL.md
+/packages/postemi/PROVIDER_SETTINGS.md
+/packages/postemi/SUPPORTED_FILE_TYPES.md
+/packages/postemi/examples/

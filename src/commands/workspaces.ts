@@ -3,6 +3,7 @@ import { getConfig, getWorkspaceId } from '../config';
 import { loadCredentials, saveCredentials } from './auth';
 import { saveSetting, settingsFilePath } from '../settings';
 import { result, status, fail } from '../output';
+import { BRAND } from '../brand';
 
 /**
  * `posty workspaces:list` — every workspace the credential can act on, with
@@ -30,7 +31,7 @@ export async function listWorkspaces() {
 export async function useWorkspace(args: any) {
   const id = String(args.id || '').trim();
   if (!id) {
-    fail('Failed to select workspace', new Error('Give the workspace id, from "posty workspaces:list"'));
+    fail('Failed to select workspace', new Error(`Give the workspace id, from "${BRAND.cli} workspaces:list"`));
   }
 
   // Listed WITHOUT naming a workspace: the list route is the one route that
@@ -77,7 +78,7 @@ export async function currentWorkspace() {
     const current = workspaces.find((w) => w.current) || null;
     if (!current && workspaces.length > 1) {
       status(
-        'No workspace selected and this key spans several. Run: posty workspaces:use <id>'
+        `No workspace selected and this key spans several. Run: ${BRAND.cli} workspaces:use <id>`
       );
     }
     result(current ?? (id ? { id, name: null } : null));

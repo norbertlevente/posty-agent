@@ -2,6 +2,7 @@ import { PostyAPI } from '../api';
 import { getConfig } from '../config';
 import { openBrowser } from './auth';
 import { result, status, fail } from '../output';
+import { BRAND, tierForApi } from '../brand';
 
 /*
   SUBSCRIBING FROM A SHELL, WITH THE ONE STEP THAT STAYS HUMAN.
@@ -37,7 +38,7 @@ export async function billingSubscribe(args: any) {
   if (!tier) {
     fail(
       'Failed to start the subscription',
-      new Error('Give the plan with --tier (alap, pro, kreator or csapat; see "posty billing:plans")')
+      new Error(`Give the plan with --tier (${BRAND.tierList}; see "${BRAND.cli} billing:plans")`)
     );
   }
   if (period !== 'monthly' && period !== 'yearly') {
@@ -49,14 +50,14 @@ export async function billingSubscribe(args: any) {
 
   const api = new PostyAPI(getConfig());
   try {
-    const checkout = await api.createSubscriptionCheckout(tier, period);
+    const checkout = await api.createSubscriptionCheckout(tierForApi(tier), period);
     status(
       `Checkout link for ${checkout.plan} (${checkout.period.toLowerCase()}, ${checkout.amount} ${checkout.currency}${
         checkout.trial ? `, ${checkout.trialDays}-day free trial` : ''
       }). The link expires at ${checkout.expiresAt}.`
     );
     status(
-      'The subscriber opens this link and pays in Stripe Checkout with their own Link wallet or card. Do not pay with a one-time or agent-issued card: the subscription renews and a one-time card fails at the first renewal. After paying, run "posty billing:status" to confirm.'
+      `The subscriber opens this link and pays in Stripe Checkout with their own Link wallet or card. Do not pay with a one-time or agent-issued card: the subscription renews and a one-time card fails at the first renewal. After paying, run "${BRAND.cli} billing:status" to confirm.`
     );
     /*
       The note goes to stderr ONCE, in the CLI's own words: the server's text
@@ -67,7 +68,7 @@ export async function billingSubscribe(args: any) {
     const { note: _note, ...json } = checkout;
     if (checkout.apiAndMcpAccess === false) {
       status(
-        `The ${checkout.plan} plan has no API or MCP access: after the payment this key still reaches only the billing commands, and the person uses Posty in the web app. Tell the person before they pay; a plan with apiAndMcpAccess: true in "posty billing:plans" keeps the CLI working.`
+        `The ${checkout.plan} plan has no API or MCP access: after the payment this key still reaches only the billing commands, and the person uses ${BRAND.name} in the web app. Tell the person before they pay; a plan with apiAndMcpAccess: true in "${BRAND.cli} billing:plans" keeps the CLI working.`
       );
     }
     if (args.open) {
