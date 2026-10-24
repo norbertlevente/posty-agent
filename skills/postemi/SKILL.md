@@ -104,9 +104,41 @@ postemi auth:status
 If not authenticated:
 1. **Sign in:** `postemi auth:login` opens a browser, and the human approves it.
    You never see or handle a key.
-2. **No account yet:** the user creates one at https://postemi.com/app/signup
-   (the CLI cannot create a Postemi account), then signs in with
-   `postemi auth:login`.
+2. **No account yet:** `postemi auth:signup` creates one, see below. Only when
+   the user asks you to create a Postemi account for them. They can also sign
+   up at https://postemi.com/app/signup and then run `postemi auth:login`.
+
+### Creating an account for the user (no free trial)
+
+When the user asks you to make them a Postemi account and they have none:
+
+```bash
+postemi auth:signup --email anna@example.com
+# → {codeSent:true, terms, privacy, timezone, language, next}   (no terminal: the code is on its way; `next` is the exact second command, every option kept)
+postemi auth:signup --email anna@example.com --code 123456 --accept-terms [--workspace-name "Anna's Cafe"] [--timezone Europe/London]
+# → {created:true, workspaceId, workspaceName, trial:false, credentials, next}
+```
+
+1. Run it with `--email` only. Postemi e-mails the user a six-digit code
+   (valid 10 minutes). Ask the user to read the code to you.
+2. Show the user the terms (https://postemi.com/terms) and the privacy notice
+   (https://postemi.com/privacy) and ask whether they agree. Pass
+   `--accept-terms` ONLY after they said yes; never decide it for them.
+3. Run it again with `--code` and `--accept-terms`. The CLI keeps the
+   sign-in the same way `auth:login` does and never prints it.
+4. **There is no free trial on an account made this way**, and until the
+   user pays, only the `billing:*` commands work. Next: `billing:plans`,
+   confirm a plan with the user, `billing:subscribe`, give them the link.
+   Channels are connected by the user in the web app after paying.
+5. **You keep working for the user only on a plan with API access**
+   (`limits.apiAndMcpAccess: true` in `billing:plans`). Basic has none: if
+   the user picks it, tell them BEFORE they pay that you will not be able to
+   schedule for them afterwards. `billing:subscribe` answers with
+   `apiAndMcpAccess: false` and prints the warning on stderr for such a plan.
+
+Exit 1 with "already has a Postemi account" (HTTP 409) means the address is
+taken: the user signs in with `postemi auth:login` instead. A wrong or expired
+code: run step 1 again for a new one.
 
 `postemi auth:status` reports a valid key of a workspace that has not paid yet
 as `authenticated: true, apiAccess: false, reason: "no-plan"` (exit 0). It is
@@ -988,6 +1020,7 @@ documented above; there is no second syntax guide to consult.
 # ⚠️ AUTHENTICATE FIRST - required before any other command
 postemi auth:status                                             # Check if authenticated
 postemi auth:login                                              # OAuth2 device flow login
+postemi auth:signup --email <address>                           # New account by e-mailed code; no free trial
 postemi auth:logout                                             # Remove credentials
 
 # Settings (survive logout)

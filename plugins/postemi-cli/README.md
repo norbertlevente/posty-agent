@@ -19,7 +19,9 @@ claude plugin install postemi-cli@posty-agent
 - The CLI: `npm install -g postemi` (package and command are both `postemi`).
 - A Postemi account on a plan with API access. Sign in with
   `postemi auth:login`: it opens the browser and the person approves it there.
-  The plugin asks for no key and reads none.
+  No account yet: `postemi auth:signup --email <address>` creates one with a
+  code sent by e-mail (or sign up at https://postemi.com/app/signup). The
+  plugin asks for no key and reads none.
 
 ## Where data goes
 

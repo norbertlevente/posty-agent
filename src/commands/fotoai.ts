@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { ApiError, PostyAPI } from '../api';
 import { getConfig } from '../config';
 import { result, status, fail } from '../output';
+import { BRAND } from '../brand';
 
 /*
   FOTOAI (fotoai.hu) FROM A SHELL.
@@ -134,7 +135,7 @@ export async function fotoAiGet(args: any) {
     if (current.media?.length) {
       status(`Saved in the media library. Attach each media[].path with posts:create.`);
     } else if (['queued', 'running'].includes(current.status)) {
-      status(`Still ${current.status}. Run "posty fotoai:get ${current.id} --wait 60" again.`);
+      status(`Still ${current.status}. Run "${BRAND.cli} fotoai:get ${current.id} --wait 60" again.`);
     }
     result(current);
   } catch (error: any) {
@@ -188,7 +189,7 @@ export async function fotoAiGenerate(args: any) {
     });
     status(`Generating (about ${started.estimated_seconds ?? '?'} seconds), id ${started.id}.`);
     if (!Number(args.wait)) {
-      status(`Run "posty fotoai:get ${started.id} --wait 60" for the media paths.`);
+      status(`Run "${BRAND.cli} fotoai:get ${started.id} --wait 60" for the media paths.`);
       result(started);
       return;
     }

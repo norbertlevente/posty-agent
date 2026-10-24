@@ -461,7 +461,7 @@ export class PostyAPI {
     BILLING. These four answer without the plan gate on the server, so they
     work for a workspace that has no subscription yet: they are how it gets
     one. The checkout and the portal need an OAuth token or a full-workspace
-    key (the "whole workspace" box on the `posty auth:login` approval page);
+    key (the "whole workspace" box on the `auth:login` approval page);
     a scoped key is refused with a sentence that says so.
   */
 

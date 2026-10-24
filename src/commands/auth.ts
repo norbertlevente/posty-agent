@@ -632,11 +632,7 @@ export async function authStatus() {
     status('');
     status('Options:');
     status(`  1. Device login: ${BRAND.cli} auth:login`);
-    status(
-      IS_POSTEMI
-        ? `  2. New account: create one at ${BRAND.signupUrl}, then run ${BRAND.cli} auth:login`
-        : `  2. New account: ${BRAND.cli} auth:signup --email <address>`
-    );
+    status(`  2. New account: ${BRAND.cli} auth:signup --email <address>`);
     status(`  3. API Key: export ${envName('API_KEY')}=your_api_key`);
     result({ authenticated: false, reason: 'no-credentials' });
     process.exit(1);

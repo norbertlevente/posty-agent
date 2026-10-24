@@ -33,8 +33,19 @@ postemi auth:logout    # deletes the stored credential
 
 You approve the login in the browser while signed in to Postemi, and choose
 there which workspace and which channels the key may reach. The CLI stores it
-in `~/.postemi/credentials.json` (mode `0600`). No account yet: create one at
-https://postemi.com/app/signup, then run `postemi auth:login`.
+in `~/.postemi/credentials.json` (mode `0600`).
+
+No account yet? Create one from the terminal:
+
+```bash
+postemi auth:signup --email anna@example.com    # e-mails a code, asks for it and for the terms
+postemi auth:signup --email anna@example.com --code 123456 --accept-terms --workspace-name "Anna's Cafe"
+```
+
+The person must agree to https://postemi.com/terms and
+https://postemi.com/privacy first. There is no free trial: next come
+`postemi billing:plans` and `postemi billing:subscribe`. You can also sign up
+at https://postemi.com/app/signup and then run `postemi auth:login`.
 
 For a server, CI or an agent without a browser, use an API key from
 Settings, Developers in the web app:

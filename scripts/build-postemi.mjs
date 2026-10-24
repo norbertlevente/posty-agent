@@ -7,7 +7,7 @@
   This script then copies what the package ships next to it:
 
     - SKILL.md      from skills/postemi/SKILL.md (written for Postemi)
-    - LICENSE       as is
+    - LICENSE       with the Postemi CLI header line
     - PROVIDER_SETTINGS.md, SUPPORTED_FILE_TYPES.md, examples/*.json
                     from the repo root, with the command and product name
                     changed (`posty upload` -> `postemi upload`, Posty ->
@@ -30,16 +30,25 @@ if (!existsSync(join(pkg, 'dist', 'index.js'))) {
   process.exit(1);
 }
 
+/*
+  Word start for `posty`: no letter, digit or _ before it, OR a JSON escape
+  (`\n`, `\t`, `\r`) right before it. `\b` alone (and a plain look-behind)
+  misses "...\n\nposty auth:login" in examples/*.json, where the character
+  before `posty` is the `n` of the escape.
+*/
+const B = String.raw`(?:(?<![A-Za-z0-9_])|(?<=\\[ntr]))`;
 const rename = (text) =>
   text
-    .replace(/\bposty-cli\b/g, 'postemi')
+    .replace(new RegExp(`${B}posty-cli\\b`, 'g'), 'postemi')
     .replace(/"posty"/g, '"postemi"')
-    .replace(/\bposty(?= [a-z])/g, 'postemi')
-    .replace(/\bPosty\b/g, 'Postemi');
+    .replace(new RegExp(`${B}posty(?= [a-z])`, 'g'), 'postemi')
+    .replace(new RegExp(`${B}Posty\\b`, 'g'), 'Postemi');
 
 /** Anything Posty-specific left after the rename is a build error, not a silent leak. */
 const check = (name, text) => {
-  const leaks = text.match(/posty\.hu|\bposty\b|\bPosty\b|POSTY_|Budapest|forint/g);
+  const leaks = text.match(
+    new RegExp(`posty\\.hu|${B}posty\\b|${B}Posty\\b|POSTY_|Budapest|forint`, 'g')
+  );
   if (leaks) {
     console.error(`${name}: Posty-specific text left after the rename: ${[...new Set(leaks)].join(', ')}`);
     process.exit(1);
@@ -47,7 +56,16 @@ const check = (name, text) => {
   return text;
 };
 
-copyFileSync(join(root, 'LICENSE'), join(pkg, 'LICENSE'));
+/* Same AGPL text and Postiz notice (the CLI code is the same); only the name line differs. */
+const license = readFileSync(join(root, 'LICENSE'), 'utf8');
+if (!license.startsWith('Posty CLI (posty-cli)\n')) {
+  console.error('LICENSE: the first line is no longer "Posty CLI (posty-cli)"; update build-postemi.mjs.');
+  process.exit(1);
+}
+writeFileSync(
+  join(pkg, 'LICENSE'),
+  check('LICENSE', license.replace('Posty CLI (posty-cli)\n', 'Postemi CLI (postemi)\n'))
+);
 copyFileSync(join(root, 'skills', 'postemi', 'SKILL.md'), join(pkg, 'SKILL.md'));
 
 for (const doc of ['PROVIDER_SETTINGS.md', 'SUPPORTED_FILE_TYPES.md']) {

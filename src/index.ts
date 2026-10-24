@@ -628,11 +628,11 @@ cli
   );
 
 /*
-  auth:signup is Posty only for now: a REST sign-up does not record the
-  Postemi brand or Postemi's terms yet, so the Postemi build sends people to
-  postemi.com/app/signup and then `postemi auth:login`.
+  auth:signup works for both brands: the backend brands the REST sign-up by
+  host, so api.postemi.com records a Postemi account with Postemi's terms and
+  privacy notice (BRAND.termsUrl / BRAND.privacyUrl) and sends English mail.
 */
-if (!IS_POSTEMI) cli
+cli
   .command(
     'auth:signup',
     `Create a NEW ${BRAND.name} account with a code sent to the e-mail address, and store its key. No free trial: the next step is billing:subscribe`,
@@ -679,25 +679,11 @@ if (!IS_POSTEMI) cli
           'Send the code, then ask for it and for the terms on the terminal'
         )
         .example(
-          '$0 auth:signup --email anna@example.com --code 123456 --accept-terms --workspace-name "Anna Kávézó"',
+          `$0 auth:signup --email anna@example.com --code 123456 --accept-terms --workspace-name "${IS_POSTEMI ? "Anna's Cafe" : 'Anna Kávézó'}"`,
           'Finish in one run (an agent, after the person read the code and agreed)'
         );
     },
     authSignup as any
-  );
-
-/* Postemi creates accounts on postemi.com; see the note above auth:signup. */
-if (IS_POSTEMI) cli
-  .command(
-    'auth:signup',
-    false,
-    (yargs: Argv) => yargs.strict(false),
-    () => {
-      console.error(
-        `❌ The ${BRAND.cli} CLI cannot create an account. Create one at ${BRAND.signupUrl}, then run: ${BRAND.cli} auth:login`
-      );
-      process.exit(1);
-    }
   );
 
 cli

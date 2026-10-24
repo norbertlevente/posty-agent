@@ -38,9 +38,12 @@ it, from the same source:
 | Agent skill (ClawHub, Hermes, skills.sh) | `skills/posty` | `skills/postemi` |
 | Gemini CLI extension | `norbertlevente/posty-gemini` | `postemi-gemini` (local repo until launch) |
 
-The Postemi CLI has no FotoAI commands and no `auth:signup` (accounts are
-made at https://postemi.com/app/signup), and names the plans Basic, Pro,
-Creator and Team. Launch-day publishing order: [PUBLISHING.md](./PUBLISHING.md#postemi-launch-day).
+The Postemi CLI has no FotoAI commands, names the plans Basic, Pro, Creator
+and Team, and `postemi auth:signup` creates a Postemi account (Postemi's terms
+and privacy notice, English e-mail). Plans, checkout and sign-up are branded by
+the API host, so the backend branch `postemi-golive` must be deployed and
+api.postemi.com / mcp.postemi.com live before `npm publish`. Launch-day
+publishing order: [PUBLISHING.md](./PUBLISHING.md#postemi-launch-day).
 
 ---
 

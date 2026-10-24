@@ -234,15 +234,16 @@ then `/mcp` shows `postemi` and the browser sign-in opens on postemi.com.
   `plugins/postemi-grok` as `external_plugins/postemi`, like Posty's PR
   #1038. `grok plugin validate plugins/postemi-grok` passes.
 
-### Known gaps (not in this repo)
+### Prerequisite: backend `postemi-golive` deployed
 
-- The REST billing routes answer with Posty's plans in forint and the
-  Hungarian slugs on every host. The Postemi CLI accepts `basic` and `team`
-  and maps them to `alap` and `csapat`, but `billing:plans` output stays
-  Posty's until the backend brands `GET /public/v1/plans` by host.
-- REST sign-up (`/public/v1/signup/*`) does not record the Postemi brand or
-  Postemi's terms, so the Postemi CLI has no `auth:signup` and sends people to
-  postemi.com/app/signup.
-- The postemi.com docs pages under `/docs/cli` and `/docs/settings/developers`
-  still say `posty-cli` and `POSTY_API_KEY`; change them to `postemi` and
-  `POSTEMI_API_KEY` in the postemi repo before announcing the CLI.
+The backend branch `postemi-golive` (Posty repo) brands the REST routes by
+host: on api.postemi.com, `GET /public/v1/plans` and `billing:subscribe`
+answer with Postemi's plans (Basic, Pro, Creator, Team; `alap` and `csapat`
+are still accepted), and `/public/v1/signup/start|complete` records the
+Postemi brand, Postemi's terms and privacy notice, and sends English mail
+(`postemi auth:signup`). The postemi.com docs already say `postemi` and
+`POSTEMI_API_KEY`.
+
+Do not run `npm publish` for `postemi` (or publish any Postemi plugin) until
+`postemi-golive` is deployed and https://api.postemi.com and
+https://mcp.postemi.com are live.
