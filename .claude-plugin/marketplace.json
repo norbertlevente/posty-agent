@@ -5,7 +5,7 @@
     "email": "norbert@posty.hu"
   },
   "metadata": {
-    "description": "Posty plugins: the MCP connector for chat, and the CLI for coding agents.",
+    "description": "Posty (posty.hu) and Postemi (postemi.com) plugins: the MCP connector for chat, and the CLI for coding agents.",
     "version": "1.4.0"
   },
   "plugins": [
@@ -25,6 +25,12 @@
       "name": "posty-cli",
       "source": "./plugins/posty-cli",
       "description": "Posty CLI for coding agents: the posty command line tool and its full reference, for scheduling and publishing social posts from a terminal, a script or an agent with a shell (Claude Code, Codex, OpenClaw, Hermes).",
+      "strict": true
+    },
+    {
+      "name": "postemi-cli",
+      "source": "./plugins/postemi-cli",
+      "description": "Postemi CLI for coding agents: the postemi command line tool and its full reference, for scheduling and publishing social posts from a terminal, a script or an agent with a shell (Claude Code, Codex, OpenClaw, Hermes).",
       "strict": true
     }
   ]
