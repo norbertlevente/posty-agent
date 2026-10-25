@@ -2,9 +2,7 @@
 
 A skill that teaches a coding agent (Claude Code and other agents with a
 terminal) to use the `postemi` command line tool to write, schedule and
-publish social media posts with Postemi (https://postemi.com): Facebook,
-Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord,
-Slack and Pinterest (beta).
+publish social media posts with Postemi (https://postemi.com): 20 platforms, including Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Pinterest and Mastodon.
 
 ## Install
 

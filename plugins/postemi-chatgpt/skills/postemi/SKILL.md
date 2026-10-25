@@ -1,6 +1,6 @@
 ---
 name: postemi
-description: Plan, write, preview, schedule, list and delete social media posts with Postemi (Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord, Slack, Pinterest (beta)), and open the Postemi app. Use for anything about the user's social media calendar, posting, scheduling or publishing.
+description: Plan, write, preview, schedule, list and delete social media posts with Postemi (20 platforms, including Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Pinterest and Mastodon), and open the Postemi app. Use for anything about the user's social media calendar, posting, scheduling or publishing.
 ---
 
 # Postemi

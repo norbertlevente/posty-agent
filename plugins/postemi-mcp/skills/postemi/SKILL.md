@@ -1,6 +1,6 @@
 ---
 name: postemi
-description: Schedule and publish social posts through Postemi's MCP tools (Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord, Slack, Pinterest (beta)). Use for anything about the user's social media calendar, posting, scheduling or publishing.
+description: Schedule and publish social posts through Postemi's MCP tools (20 platforms, including Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Pinterest and Mastodon). Use for anything about the user's social media calendar, posting, scheduling or publishing.
 homepage: https://postemi.com
 ---
 

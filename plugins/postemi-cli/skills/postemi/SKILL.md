@@ -1,6 +1,6 @@
 ---
 name: postemi
-description: Postemi schedules and publishes social posts from the command line to Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord, Slack and Pinterest (beta).
+description: Postemi schedules and publishes social posts from the command line to 20 platforms, including Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Pinterest and Mastodon.
 homepage: https://postemi.com
 metadata: {"openclaw":{"emoji":"🌎","requires":{"bins":[],"env":[]}}}
 ---

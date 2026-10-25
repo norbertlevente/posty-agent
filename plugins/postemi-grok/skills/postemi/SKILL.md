@@ -1,6 +1,6 @@
 ---
 name: postemi
-description: Write, preview, schedule, list and cancel social media posts with Postemi's MCP tools (Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord, Slack, Pinterest (beta)). Use for anything about posting, scheduling, a content calendar, or announcing a release or a feature on social media.
+description: Write, preview, schedule, list and cancel social media posts with Postemi's MCP tools (20 platforms, including Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Pinterest and Mastodon). Use for anything about posting, scheduling, a content calendar, or announcing a release or a feature on social media.
 ---
 
 # Postemi

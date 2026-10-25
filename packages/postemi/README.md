@@ -7,8 +7,7 @@ command-line tool. It uses the same public API as the web app: what you
 schedule here shows up in your Postemi calendar, and what you schedule there
 you can see here too.
 
-Channels: Facebook, Instagram, X (Twitter), LinkedIn, TikTok, YouTube,
-Threads, Bluesky, Telegram, Discord, Slack and Pinterest (beta).
+Channels: 20 platforms, including Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Pinterest and Mastodon.
 
 [`SKILL.md`](./SKILL.md) is the full command reference, written for AI agents.
 Show it to Claude, ChatGPT, Codex, OpenClaw or Hermes and they can use the
