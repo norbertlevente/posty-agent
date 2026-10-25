@@ -3,7 +3,6 @@ import { getConfig } from '../config';
 import { result, status, fail } from '../output';
 import { readFileSync, existsSync } from 'fs';
 import { basename } from 'path';
-import { BRAND } from '../brand';
 
 export async function uploadFile(args: any) {
   const config = getConfig();
@@ -42,7 +41,7 @@ export async function createUploadLink() {
   try {
     const res = await api.createUploadLink();
     status(
-      `🔗 Upload link created. Open it in a browser, drop the files, then run: ${BRAND.cli} upload:files ${res.id}`
+      `🔗 Upload link created. Open it in a browser, drop the files, then run: posty upload:files ${res.id}`
     );
     result(res);
     return res;

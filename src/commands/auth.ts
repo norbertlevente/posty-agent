@@ -7,9 +7,8 @@ import { result, status } from '../output';
 import { assertIanaTimezone } from '../dates';
 import { ApiError, PostyAPI, serverSentence, SubscriptionState, Workspace } from '../api';
 import { getWorkspaceId } from '../config';
-import { BRAND, IS_POSTEMI, envName, envSourceName, networkError, readEnv } from '../brand';
 
-const CREDENTIALS_DIR = join(homedir(), BRAND.configDirName);
+const CREDENTIALS_DIR = join(homedir(), '.posty');
 const CREDENTIALS_FILE = join(CREDENTIALS_DIR, 'credentials.json');
 
 /**
@@ -31,10 +30,10 @@ const CREDENTIALS_FILE = join(CREDENTIALS_DIR, 'credentials.json');
  * ever moves — and note the server tells the CLI its own API base in the token
  * response (`api_url`), so a migration needs no CLI release.
  */
-const DEFAULT_AUTH_SERVER = BRAND.defaultAuthServer;
+const DEFAULT_AUTH_SERVER = 'https://posty.hu/api';
 
 /** Fallback only. The token response carries the real one. */
-const DEFAULT_API_URL = BRAND.defaultApiUrl;
+const DEFAULT_API_URL = 'https://posty.hu/api';
 
 interface StoredCredentials {
   accessToken: string;
@@ -136,33 +135,33 @@ async function maybeConfigureTimezone(): Promise<void> {
   let timezone = detected;
   if (answer === 'n' || answer === 'no') {
     const typed = (
-      await ask(`Enter an IANA timezone name (e.g. ${BRAND.exampleTimezone}), or leave empty to skip: `)
+      await ask('Enter an IANA timezone name (e.g. Europe/Budapest), or leave empty to skip: ')
     ).trim();
     if (!typed) {
       console.error(
-        `Skipped. Dates without an explicit offset will be refused until you run: ${BRAND.cli} config:set timezone <IANA name>`
+        'Skipped. Dates without an explicit offset will be refused until you run: posty config:set timezone <IANA name>'
       );
       return;
     }
     try {
       timezone = assertIanaTimezone(typed, 'auth:login');
     } catch (error: any) {
-      console.error(error.message);
+      console.error(`${error.message}`);
       console.error(
-        `Skipped. Set it later with: ${BRAND.cli} config:set timezone <IANA name>`
+        'Skipped. Set it later with: posty config:set timezone <IANA name>'
       );
       return;
     }
   } else if (answer && answer !== 'y' && answer !== 'yes') {
     console.error(
-      `Skipped. Set it later with: ${BRAND.cli} config:set timezone <IANA name>`
+      'Skipped. Set it later with: posty config:set timezone <IANA name>'
     );
     return;
   }
 
   saveSetting('timezone', timezone);
   console.error(
-    `✅ Scheduling timezone saved: ${timezone} (change it with "${BRAND.cli} config:set timezone <IANA name>")`
+    `✅ Scheduling timezone saved: ${timezone} (change it with "posty config:set timezone <IANA name>")`
   );
 }
 
@@ -198,7 +197,7 @@ async function chooseWorkspace(creds: StoredCredentials): Promise<void> {
 
   if (!process.stdin.isTTY || !process.stderr.isTTY) {
     console.error(
-      `Pick one with: ${BRAND.cli} workspaces:use <id>   (or pass --workspace <id> on each command)`
+      'Pick one with: posty workspaces:use <id>   (or pass --workspace <id> on each command)'
     );
     return;
   }
@@ -207,15 +206,15 @@ async function chooseWorkspace(creds: StoredCredentials): Promise<void> {
   const index = Number(answer) - 1;
   const chosen = workspaces[index];
   if (!chosen) {
-    console.error(`Skipped. Pick one later with: ${BRAND.cli} workspaces:use <id>`);
+    console.error('Skipped. Pick one later with: posty workspaces:use <id>');
     return;
   }
   saveCredentials({ ...creds, organizationId: chosen.id });
-  console.error(`✅ Workspace: ${chosen.name} (change it with "${BRAND.cli} workspaces:use <id>")`);
+  console.error(`✅ Workspace: ${chosen.name} (change it with "posty workspaces:use <id>")`);
 }
 
 export async function authLogin(argv: any) {
-  const authServer = argv.authServer || readEnv('AUTH_SERVER') || DEFAULT_AUTH_SERVER;
+  const authServer = argv.authServer || process.env.POSTY_AUTH_SERVER || DEFAULT_AUTH_SERVER;
 
   console.log('🔐 Starting device authorization flow...\n');
 
@@ -233,10 +232,7 @@ export async function authLogin(argv: any) {
       // Shown on the approval page, so somebody can tell the login they just
       // started from one they did not.
       body: JSON.stringify({
-        client_name: readEnv('CLIENT_NAME') || BRAND.clientName,
-        // The Postemi build asks for Postemi's approval page
-        // (postemi.com/app/device). Posty sends no brand, as before.
-        ...(IS_POSTEMI ? { brand: 'postemi' } : {}),
+        client_name: process.env.POSTY_CLIENT_NAME || 'Posty CLI',
       }),
     });
 
@@ -253,7 +249,7 @@ export async function authLogin(argv: any) {
     expiresIn = data.expires_in;
     interval = data.interval || 5;
   } catch (error: any) {
-    console.error(`❌ ${networkError(`Could not reach auth server at ${authServer}`, error, 'AUTH_SERVER')}`);
+    console.error(`❌ Could not reach auth server at ${authServer}: ${error.message}`);
     process.exit(1);
   }
 
@@ -287,13 +283,7 @@ export async function authLogin(argv: any) {
       if (response.ok && data.access_token) {
         const creds: StoredCredentials = {
           accessToken: data.access_token,
-          /*
-            Posty stores the API base the server names. The Postemi build
-            stores the host it logged in on (api.postemi.com): the server
-            names Posty's base for every brand, and the Postemi host is what
-            makes the API answer as Postemi.
-          */
-          apiUrl: IS_POSTEMI ? String(authServer).replace(/\/+$/, '') : data.api_url || DEFAULT_API_URL,
+          apiUrl: data.api_url || DEFAULT_API_URL,
           organizationId: data.organization_id,
         };
         saveCredentials(creds);
@@ -327,8 +317,8 @@ export async function authLogin(argv: any) {
   process.exit(1);
 }
 
-const TERMS_URL = BRAND.termsUrl;
-const PRIVACY_URL = BRAND.privacyUrl;
+const TERMS_URL = 'https://posty.hu/aszf';
+const PRIVACY_URL = 'https://posty.hu/adatvedelem';
 
 /** POST a JSON body to the unauthenticated sign-up routes. */
 async function signupRequest(
@@ -403,7 +393,7 @@ function refusal(data: any): string {
 export async function authSignup(argv: any) {
   const email = String(argv.email || '').trim();
   const apiUrl = String(
-    argv.apiUrl || readEnv('API_URL') || DEFAULT_API_URL
+    argv.apiUrl || process.env.POSTY_API_URL || DEFAULT_API_URL
   ).replace(/\/+$/, '');
   const language = argv.language ? String(argv.language) : undefined;
   const timezone = signupTimezone(argv);
@@ -441,7 +431,7 @@ export async function authSignup(argv: any) {
           name and the timezone.
         */
         const nextCommand = [
-          `${BRAND.cli} auth:signup`,
+          'posty auth:signup',
           `--email ${shellWord(email)}`,
           '--code <code>',
           '--accept-terms',
@@ -505,7 +495,7 @@ export async function authSignup(argv: any) {
 
     if (completed.status === 409) {
       console.error(`❌ ${refusal(completed.data)}`);
-      console.error(`   Sign in instead: ${BRAND.cli} auth:login`);
+      console.error('   Sign in instead: posty auth:login');
       process.exit(1);
     }
     if (completed.status !== 201 && completed.status !== 200) {
@@ -517,7 +507,7 @@ export async function authSignup(argv: any) {
 
     const data = completed.data || {};
     if (!data.apiKey) {
-      console.error(`❌ The server answered without a key. Sign in with: ${BRAND.cli} auth:login`);
+      console.error('❌ The server answered without a key. Sign in with: posty auth:login');
       process.exit(1);
     }
 
@@ -534,9 +524,9 @@ export async function authSignup(argv: any) {
     status(`📁 Key saved to ${CREDENTIALS_FILE}`);
     status('');
     status('No free trial on this account. Next:');
-    status(`  ${BRAND.cli} billing:plans`);
-    status(`  ${BRAND.cli} billing:subscribe --tier <slug> --period <monthly|yearly>`);
-    status(`The person opens the checkout link and pays. This key then works for every command only on a plan with API access (apiAndMcpAccess: true in billing:plans); ${BRAND.basicPlanName} has none, so say so before the person picks it.`);
+    status('  posty billing:plans');
+    status('  posty billing:subscribe --tier <slug> --period <monthly|yearly>');
+    status('The person opens the checkout link and pays. This key then works for every command only on a plan with API access (apiAndMcpAccess: true in billing:plans); Alap has none, so say so before the person picks it.');
 
     result({
       created: true,
@@ -545,14 +535,14 @@ export async function authSignup(argv: any) {
       trial: false,
       credentials: CREDENTIALS_FILE,
       next: [
-        `${BRAND.cli} billing:plans`,
-        `${BRAND.cli} billing:subscribe --tier <slug> --period <monthly|yearly>`,
-        `${BRAND.cli} billing:status`,
+        'posty billing:plans',
+        'posty billing:subscribe --tier <slug> --period <monthly|yearly>',
+        'posty billing:status',
       ],
-      note: `This key keeps working after the payment only on a plan with apiAndMcpAccess: true in billing:plans. ${BRAND.basicPlanName} has no API access: tell the person before they pay for it.`,
+      note: 'This key keeps working after the payment only on a plan with apiAndMcpAccess: true in billing:plans. Alap has no API access: tell the person before they pay for it.',
     });
   } catch (error: any) {
-    console.error(`❌ ${networkError(`Could not reach the ${BRAND.name} API at ${apiUrl}`, error)}`);
+    console.error(`❌ Could not reach the Posty API at ${apiUrl}: ${error.message}`);
     process.exit(1);
   }
 }
@@ -586,7 +576,7 @@ export async function authLogout() {
  * The prefix is enough to tell two keys apart, which is all this is for.
  */
 export async function authStatus() {
-  const envKey = readEnv('API_KEY');
+  const envKey = process.env.POSTY_API_KEY;
   const creds = loadCredentials();
 
   /** Enough to identify a key, never enough to use one. */
@@ -624,16 +614,16 @@ export async function authStatus() {
     method = methodOf(envKey);
     source = 'environment';
     apiKey = envKey;
-    apiUrl = readEnv('API_URL') || DEFAULT_API_URL;
-    status(`🔑 Authentication method: ${label(method)} (${envSourceName('API_KEY')})`);
+    apiUrl = process.env.POSTY_API_URL || DEFAULT_API_URL;
+    status(`🔑 Authentication method: ${label(method)} (POSTY_API_KEY)`);
     status(`🔑 Credential: ${hint(envKey)}`);
   } else {
     status('❌ Not authenticated.');
     status('');
     status('Options:');
-    status(`  1. Device login: ${BRAND.cli} auth:login`);
-    status(`  2. New account: ${BRAND.cli} auth:signup --email <address>`);
-    status(`  3. API Key: export ${envName('API_KEY')}=your_api_key`);
+    status('  1. Device login: posty auth:login');
+    status('  2. New account: posty auth:signup --email <address>');
+    status('  3. API Key: export POSTY_API_KEY=your_api_key');
     result({ authenticated: false, reason: 'no-credentials' });
     process.exit(1);
   }
@@ -661,7 +651,7 @@ export async function authStatus() {
   } catch (error: any) {
     if (error instanceof ApiError && error.isWorkspaceChoice) {
       status('✅ Credentials are valid, but this key spans several workspaces and none is selected.');
-      status(`   Run: ${BRAND.cli} workspaces:list, then ${BRAND.cli} workspaces:use <id>`);
+      status('   Run: posty workspaces:list, then posty workspaces:use <id>');
       result({ authenticated: true, ...base, reason: 'choose-workspace' });
       process.exit(1);
     }
@@ -669,8 +659,8 @@ export async function authStatus() {
       status('❌ Credentials are expired or invalid. Please re-authenticate.');
       status(
         creds
-          ? `   Run: ${BRAND.cli} auth:login`
-          : `   Update your ${envName('API_KEY')} environment variable.`
+          ? '   Run: posty auth:login'
+          : '   Update your POSTY_API_KEY environment variable.'
       );
       result({ authenticated: false, ...base, reason: 'rejected' });
       process.exit(1);
@@ -706,7 +696,7 @@ export async function authStatus() {
         ? '✅ Credentials are valid. This workspace has no plan yet, so only the billing commands work.'
         : `✅ Credentials are valid. The current plan (${subscription.plan}) has no API access, so only the billing commands work.`
     );
-    status(`   Next: ${BRAND.cli} billing:plans, then ${BRAND.cli} billing:subscribe --tier <slug> --period <monthly|yearly>`);
+    status('   Next: posty billing:plans, then posty billing:subscribe --tier <slug> --period <monthly|yearly>');
     if (subscription.pendingCheckout) {
       status(`   An unpaid checkout is waiting: ${subscription.pendingCheckout.checkoutUrl}`);
     }

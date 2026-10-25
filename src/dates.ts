@@ -27,13 +27,11 @@
  */
 
 import { getSetting } from './settings';
-import { BRAND, envName, readEnv } from './brand';
 
 export type TimezoneSource =
   | '--timezone'
-  // `POSTY_TIMEZONE` (`POSTEMI_TIMEZONE` in the Postemi build), or
-  // `config (posty config:set timezone)` (with that build's command name).
-  | string;
+  | 'POSTY_TIMEZONE'
+  | 'config (posty config:set timezone)';
 
 export interface ResolvedTimezone {
   name: string;
@@ -58,7 +56,7 @@ export function assertIanaTimezone(name: string, origin: string): string {
   if (!value || OFFSET_SHAPED.test(value)) {
     throw new Error(
       `Invalid timezone "${name}" (from ${origin}): numeric offsets are not accepted as timezones — DST would be your problem to compute. ` +
-        `Use an IANA name like "${BRAND.exampleTimezone}" (or put the offset inside the date string itself, e.g. "2026-12-31T12:00:00+01:00").`
+        `Use an IANA name like "Europe/Budapest" (or put the offset inside the date string itself, e.g. "2026-12-31T12:00:00+01:00").`
     );
   }
 
@@ -66,7 +64,7 @@ export function assertIanaTimezone(name: string, origin: string): string {
     new Intl.DateTimeFormat('en-US', { timeZone: value });
   } catch {
     throw new Error(
-      `Unknown timezone "${name}" (from ${origin}). Use an IANA name like "${BRAND.exampleTimezone}" or "UTC".`
+      `Unknown timezone "${name}" (from ${origin}). Use an IANA name like "Europe/Budapest" or "UTC".`
     );
   }
 
@@ -87,19 +85,19 @@ export function resolveTimezone(flagValue?: string): ResolvedTimezone | null {
     };
   }
 
-  const env = readEnv('TIMEZONE');
+  const env = process.env.POSTY_TIMEZONE;
   if (env) {
     return {
-      name: assertIanaTimezone(env, envName('TIMEZONE')),
-      source: envName('TIMEZONE'),
+      name: assertIanaTimezone(env, 'POSTY_TIMEZONE'),
+      source: 'POSTY_TIMEZONE',
     };
   }
 
   const stored = getSetting('timezone');
   if (stored) {
     return {
-      name: assertIanaTimezone(stored, `~/${BRAND.configDirName}/config.json`),
-      source: `config (${BRAND.cli} config:set timezone)`,
+      name: assertIanaTimezone(stored, '~/.posty/config.json'),
+      source: 'config (posty config:set timezone)',
     };
   }
 
@@ -168,9 +166,9 @@ function naiveDateError(input: string, flagName: string): Error {
     `Date "${input}" has no timezone, and no timezone is configured. ` +
       `The server would read it as UTC, silently shifting your post. Fix one of:\n` +
       `  1. Explicit offset in the date:  ${flagName} "2026-12-31T12:00:00+01:00"  (or ...T12:00:00Z for UTC)\n` +
-      `  2. Timezone flag:                --timezone ${BRAND.exampleTimezone}\n` +
-      `  3. Environment variable:         export ${envName('TIMEZONE')}=${BRAND.exampleTimezone}\n` +
-      `  4. Save it once:                 ${BRAND.cli} config:set timezone ${BRAND.exampleTimezone}`
+      `  2. Timezone flag:                --timezone Europe/Budapest\n` +
+      `  3. Environment variable:         export POSTY_TIMEZONE=Europe/Budapest\n` +
+      `  4. Save it once:                 posty config:set timezone Europe/Budapest`
   );
 }
 
@@ -198,7 +196,7 @@ export function resolveDateInput(
   const m = NAIVE_SHAPE.exec(value);
   if (!m) {
     throw new Error(
-      `Invalid date "${input}". Use ISO 8601 with an explicit offset ("2026-12-31T12:00:00Z"), or "YYYY-MM-DD HH:mm" together with a timezone (--timezone ${BRAND.exampleTimezone}).`
+      `Invalid date "${input}". Use ISO 8601 with an explicit offset ("2026-12-31T12:00:00Z"), or "YYYY-MM-DD HH:mm" together with a timezone (--timezone Europe/Budapest).`
     );
   }
 

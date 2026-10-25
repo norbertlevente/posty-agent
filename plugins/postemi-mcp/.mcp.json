@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "postemi": {
-      "type": "http",
-      "url": "https://mcp.postemi.com/mcp"
-    }
-  }
-}

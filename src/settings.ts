@@ -11,9 +11,8 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
-import { BRAND } from './brand';
 
-const SETTINGS_DIR = join(homedir(), BRAND.configDirName);
+const SETTINGS_DIR = join(homedir(), '.posty');
 const SETTINGS_FILE = join(SETTINGS_DIR, 'config.json');
 
 /*

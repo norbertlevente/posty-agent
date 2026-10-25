@@ -9,15 +9,10 @@
   "scripts": {
     "dev": "tsup --watch",
     "build": "tsup",
-    "build:posty": "tsup",
-    "build:postemi": "CLI_BRAND=postemi tsup && node scripts/build-postemi.mjs",
-    "build:all": "pnpm run build:posty && pnpm run build:postemi",
     "typecheck": "tsc --noEmit -p .",
-    "pack:postemi": "pnpm run build:postemi && cd packages/postemi && npm pack",
     "start": "node ./dist/index.js",
     "prepublishOnly": "pnpm run build",
-    "release:check": "tsup && npm pack --dry-run && npm publish --dry-run",
-    "release:check:postemi": "pnpm run build:postemi && cd packages/postemi && npm pack --dry-run && npm publish --dry-run"
+    "release:check": "tsup && npm pack --dry-run && npm publish --dry-run"
   },
   "files": [
     "dist",

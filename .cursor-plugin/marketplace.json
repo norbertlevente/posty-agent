@@ -5,18 +5,13 @@
     "email": "norbert@posty.hu"
   },
   "metadata": {
-    "description": "Posty (posty.hu) and Postemi (postemi.com): write, schedule and publish social media posts from Cursor and Grok Bot."
+    "description": "Posty: write, schedule and publish social media posts from Cursor and Grok Bot."
   },
   "plugins": [
     {
       "name": "posty",
       "source": "plugins/posty-cursor",
       "description": "Write, schedule and publish social media posts to twelve platforms through Posty's MCP server, and announce releases from your changelog."
-    },
-    {
-      "name": "postemi",
-      "source": "plugins/postemi-cursor",
-      "description": "Write, schedule and publish social media posts to twelve platforms through Postemi's MCP server, and announce releases from your changelog."
     }
   ]
 }

@@ -21,30 +21,6 @@ claude plugin install posty-cli@posty-agent    # CLI, for the terminal and scrip
 
 In ChatGPT the same MCP server is the official plugin: https://posty.hu/ai/chatgpt
 
-## Postemi (postemi.com)
-
-Postemi is Posty's international brand: the same platform, backend and
-accounts, with its own names and hosts. This repo also builds everything for
-it, from the same source:
-
-| Surface | Posty | Postemi |
-|---|---|---|
-| npm package / command | `posty-cli` / `posty` | `postemi` / `postemi` |
-| REST API, device login | `https://api.posty.hu`, posty.hu/device | `https://api.postemi.com`, postemi.com/app/device |
-| MCP server | `https://api.posty.hu/mcp-oauth` | `https://mcp.postemi.com/mcp` |
-| Env variables, config folder | `POSTY_*`, `~/.posty` | `POSTEMI_*` (falls back to `POSTY_*`), `~/.postemi` |
-| Claude plugins | `posty`, `posty-cli` | `postemi` (`plugins/postemi-mcp`), `postemi-cli` |
-| ChatGPT, Cursor, Grok | `plugins/posty-*` | `plugins/postemi-chatgpt`, `-cursor`, `-grok` |
-| Agent skill (ClawHub, Hermes, skills.sh) | `skills/posty` | `skills/postemi` |
-| Gemini CLI extension | `norbertlevente/posty-gemini` | `postemi-gemini` (local repo until launch) |
-
-The Postemi CLI has no FotoAI commands, names the plans Basic, Pro, Creator
-and Team, and `postemi auth:signup` creates a Postemi account (Postemi's terms
-and privacy notice, English e-mail). Plans, checkout and sign-up are branded by
-the API host, so the backend branch `postemi-golive` must be deployed and
-api.postemi.com / mcp.postemi.com live before `npm publish`. Launch-day
-publishing order: [PUBLISHING.md](./PUBLISHING.md#postemi-launch-day).
-
 ---
 
 # Posty CLI
@@ -425,8 +401,7 @@ src/
 ├── commands/       # posts, integrations, analytics, upload, auth, config
 ├── dates.ts        # timezone resolution
 ├── settings.ts     # channel settings
-├── output.ts       # the JSON/stderr output contract
-└── brand.ts        # Posty or Postemi, fixed at build time (CLI_BRAND)
+└── output.ts       # the JSON/stderr output contract
 ```
 
 ```bash
@@ -439,11 +414,7 @@ node dist/index.js --help
 
 | Script | What it does |
 |---|---|
-| `pnpm run build` | Compiles into `dist/` (Posty, same as `build:posty`) |
-| `pnpm run build:postemi` | Builds the `postemi` npm package into `packages/postemi/` |
-| `pnpm run build:all` | Both |
-| `pnpm run typecheck` | `tsc --noEmit` |
-| `pnpm run pack:postemi` | Builds and packs `packages/postemi/postemi-<version>.tgz` (does not publish) |
+| `pnpm run build` | Compiles into `dist/` |
 | `pnpm run dev` | Watches and recompiles |
 | `pnpm run release:check` | Checks the package and publishing (does not publish) |
 

@@ -1,5 +1,4 @@
 import { randomUUID } from 'crypto';
-import { BRAND, networkError } from './brand';
 
 export interface PostyConfig {
   apiKey: string;
@@ -219,7 +218,7 @@ export class PostyAPI {
     // `api.posty.hu` is live and equivalent; the same API is also served under
     // `/api` on the main host, which is the safer fallback for a key set by
     // hand. `posty auth:login` stores the real base in credentials.json.
-    this.apiUrl = config.apiUrl || BRAND.defaultApiUrl;
+    this.apiUrl = config.apiUrl || 'https://posty.hu/api';
   }
 
   private async request(endpoint: string, options: any = {}) {
@@ -238,7 +237,7 @@ export class PostyAPI {
         headers,
       });
     } catch (error: any) {
-      throw new Error(networkError(`Could not reach ${this.apiUrl}`, error));
+      throw new Error(`Could not reach ${this.apiUrl}: ${error.message}`);
     }
 
     if (!response.ok) {
@@ -356,7 +355,7 @@ export class PostyAPI {
         },
       });
     } catch (error: any) {
-      throw new Error(networkError(`Could not reach ${this.apiUrl}`, error));
+      throw new Error(`Could not reach ${this.apiUrl}: ${error.message}`);
     }
 
     if (!response.ok) {
@@ -461,7 +460,7 @@ export class PostyAPI {
     BILLING. These four answer without the plan gate on the server, so they
     work for a workspace that has no subscription yet: they are how it gets
     one. The checkout and the portal need an OAuth token or a full-workspace
-    key (the "whole workspace" box on the `auth:login` approval page);
+    key (the "whole workspace" box on the `posty auth:login` approval page);
     a scoped key is refused with a sentence that says so.
   */
 
