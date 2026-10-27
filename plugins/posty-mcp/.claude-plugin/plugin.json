@@ -49,5 +49,5 @@
     "magyar"
   ],
   "mcpServers": "./.mcp.json",
-  "icon": "./.claude-plugin/icon.png"
+  "icon": "https://raw.githubusercontent.com/norbertlevente/posty-agent/main/plugins/posty-mcp/.claude-plugin/icon.png"
 }
