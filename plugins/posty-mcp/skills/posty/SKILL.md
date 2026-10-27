@@ -1,6 +1,6 @@
 ---
 name: posty
-description: Schedule and publish social posts through Posty's MCP tools (Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord, Slack, Pinterest). Use for anything about the user's social media calendar, posting, scheduling or publishing.
+description: Schedule and publish social posts through Posty's MCP tools (Facebook, Instagram, X, LinkedIn, TikTok, YouTube, Threads, Bluesky, Pinterest, Mastodon, Pixelfed, Tumblr, WordPress, Ghost, DEV, Google Chat, Microsoft Teams, Telegram, Discord, Slack). Use for anything about the user's social media calendar, posting, scheduling or publishing.
 homepage: https://posty.hu
 ---
 

@@ -12,7 +12,7 @@
     {
       "name": "posty",
       "source": "./plugins/posty-mcp",
-      "description": "Social media scheduler for Claude: write, schedule and publish posts to Facebook, Instagram, X (Twitter), LinkedIn, TikTok, YouTube, Threads, Bluesky, Pinterest, Telegram, Discord and Slack, with a content calendar and photo and video uploads in full quality. Browser sign-in, no key.",
+      "description": "Social media scheduler for Claude: write, schedule and publish posts to 20 platforms, including Facebook, Instagram, X (Twitter), LinkedIn, TikTok, YouTube, Threads, Bluesky, Pinterest, Mastodon, Tumblr, WordPress, Telegram, Discord and Slack, with a content calendar and photo and video uploads in full quality. Browser sign-in, no key.",
       "strict": true
     },
     {
