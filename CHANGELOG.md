@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.4.1] - 2026-10-16
+## [1.4.1] - 2026-11-02
+
+### Changed
+- **The licence is easier to detect.** `LICENSE` now holds only the verbatim
+  AGPL-3.0 text, so GitHub and npm show the licence. The copyright line and the
+  Postiz attribution are in the new `NOTICE` file. `package.json` now says
+  `AGPL-3.0-or-later`, as the notice always did.
 
 ### Fixed
 - **API errors print the server's sentence, not its JSON.** A refusal used to
