@@ -85,6 +85,16 @@ yargs(hideBin(process.argv))
           describe: 'Platform-specific settings as JSON string (schema: "posty integrations:settings <id>")',
           type: 'string',
         })
+        .option('cover-frame', {
+          describe:
+            'Video cover: the moment of the post\'s first video to show as the cover, in seconds (e.g. 2.5). Instagram and TikTok (TikTok: frame only, direct posts only)',
+          type: 'number',
+        })
+        .option('cover-image', {
+          describe:
+            'Video cover: a separate picture for the post\'s first video (a URL from "posty upload"). Instagram only; wins over --cover-frame there',
+          type: 'string',
+        })
         .check((argv) => {
           if (!argv.json && !argv.content) {
             throw new Error('Either --content or --json is required');

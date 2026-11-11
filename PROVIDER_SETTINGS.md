@@ -159,6 +159,16 @@ posty posts:create -c "" -s "2026-12-31T12:00:00Z" \
   --settings '{"post_type":"story"}' -m "$STORY" -i "$IG_ID"
 ```
 
+**Video cover (Reels and feed videos).** `--cover-frame <seconds>` picks a
+frame of the video; `--cover-image <url>` (from `posty upload`) sets a
+separate picture, and wins if both are given. Stories take no cover.
+
+```bash
+REEL=$(posty upload reel.mp4 | jq -r '.path')
+posty posts:create -c "New episode" -s "2026-12-31T12:00:00Z" \
+  --settings '{"post_type":"post"}' -m "$REEL" --cover-frame 3.5 -i "$IG_ID"
+```
+
 ---
 
 ## Threads — `threads`
@@ -270,6 +280,10 @@ posty posts:create \
   -m "$VIDEO" \
   -i "$TT_ID"
 ```
+
+**Video cover.** `--cover-frame <seconds>` chooses the moment of the video
+TikTok shows as the cover. TikTok accepts a frame only (no separate picture),
+and only with `DIRECT_POST`; in `UPLOAD` mode the cover is picked in the app.
 
 ---
 

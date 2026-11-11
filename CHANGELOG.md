@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-11
+
+### Added
+- **Video covers.** `posts:create --cover-frame <seconds>` picks the frame of
+  the post's first video to show as the cover (Instagram and TikTok), and
+  `--cover-image <url>` sets a separate cover picture (Instagram). The same
+  fields (`thumbnailTimestamp` in milliseconds, `thumbnail`) work on media
+  items in `--json`.
+
 ## [1.4.1] - 2026-11-02
 
 ### Changed

@@ -202,6 +202,38 @@ export async function createPost(args: any) {
         delay: args?.delay || 0,
       }));
 
+    /*
+      THE VIDEO COVER (2026-11-11). It belongs to the video's media item, the
+      same two fields the web editor's cover picker writes: `thumbnailTimestamp`
+      (milliseconds) and `thumbnail` (a picture URL). Applied to the first
+      video of the post itself (the first -c), never to a comment. A cover
+      with no video is refused rather than silently dropped.
+    */
+    const coverFrame = args.coverFrame ?? args['cover-frame'];
+    const coverImage = args.coverImage ?? args['cover-image'];
+    if (coverFrame !== undefined || coverImage) {
+      if (
+        coverFrame !== undefined &&
+        (typeof coverFrame !== 'number' || !Number.isFinite(coverFrame) || coverFrame < 0)
+      ) {
+        console.error('❌ --cover-frame must be a number of seconds, 0 or more (e.g. 2.5)');
+        process.exit(1);
+      }
+      const video = (values[0]?.image || []).find((m: { path: string }) =>
+        /\.(mp4|mov|m4v|webm)$/i.test(m.path.split(/[?#]/)[0])
+      );
+      if (!video) {
+        console.error('❌ --cover-frame / --cover-image need a video in the post\'s -m (the first -c).');
+        process.exit(1);
+      }
+      if (coverFrame !== undefined) {
+        (video as any).thumbnailTimestamp = Math.round(coverFrame * 1000);
+      }
+      if (coverImage) {
+        (video as any).thumbnail = String(coverImage).trim();
+      }
+    }
+
     // Parse provider-specific settings if provided
     // Note: __type is automatically added by the backend based on integration ID
     let settings: any = undefined;
