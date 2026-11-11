@@ -3,8 +3,12 @@
 A skill that teaches a coding agent (Claude Code and other agents with a
 terminal) to use the `posty` command line tool to write, schedule and publish
 social media posts with Posty (https://posty.hu): Facebook, Instagram, X,
-LinkedIn, TikTok, YouTube, Threads, Bluesky, Telegram, Discord, Slack and
-Pinterest.
+LinkedIn, TikTok, YouTube, Threads, Bluesky, Pinterest, Telegram, Discord and
+Slack, plus Mastodon, Pixelfed, Tumblr, WordPress, Ghost, Dev.to, Google Chat
+and Microsoft Teams in beta.
+
+Also included: the skill `posty-writing` (how to write posts that get read:
+ideas, hooks, formats, each network's style, a check before publishing).
 
 ## Requirements
 

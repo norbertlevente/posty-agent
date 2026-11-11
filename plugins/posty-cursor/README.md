@@ -11,6 +11,8 @@ confirm.
 - **MCP server** `posty` at `https://api.posty.hu/mcp-oauth`. Sign in with
   your browser on first use; no key to paste.
 - **Skill** `posty`: the workflow and the rules for posting through Posty.
+- **Skill** `posty-writing`: how to write posts that get read (ideas, hooks,
+  formats, each network's style, a check before publishing).
 - **Commands**
   - `/announce-release`: posts about your latest release, from the changelog.
   - `/schedule-post`: one post, at the time you name.
