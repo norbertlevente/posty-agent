@@ -2,16 +2,21 @@
 
 Every channel Posty supports, and every field its `--settings` payload accepts.
 
-**The channels below are the whole list.** Posty's server carries inherited
-code for many other providers — Reddit, Mastodon, Medium, Dev.to, Hashnode,
-WordPress, Lemmy, Nostr, VK, Tumblr, Dribbble, Farcaster and others.
-None of them are enabled or supported. Do not build a settings payload for one.
+**The channels below are the whole list** (the same as the table in
+SKILL.md). The first ones have their settings written out on this page; for
+the BETA channels, read the fields with `integrations:settings <id>` before you
+build a payload. Posty adds channels over time, so `posty integrations:list`
+can show one that is newer than this table. Posty's server also carries
+inherited code for providers it does not offer (Reddit, Medium, Hashnode,
+Lemmy, Nostr, VK, Dribbble, Farcaster and others): never build a settings
+payload for one.
 
 | Channel | `__type` | Has settings? | Status |
 |---|---|---|---|
 | X (Twitter) | `x` | yes | Publishing verified |
 | Facebook | `facebook` | yes, all optional | Publishing verified |
 | Instagram | `instagram` | yes | Publishing verified |
+| Instagram (no Facebook Page) | `instagram-standalone` | yes, same as Instagram | Live |
 | Threads | `threads` | **no** | Publishing verified |
 | Bluesky | `bluesky` | **no** | Publishing verified |
 | LinkedIn | `linkedin` | yes, all optional | Publishing verified |
@@ -20,7 +25,18 @@ None of them are enabled or supported. Do not build a settings payload for one.
 | Slack | `slack` | yes, `channel` required | Publishing verified |
 | YouTube | `youtube` | yes | Publishing verified |
 | TikTok | `tiktok` | yes | Publishing verified |
-| Pinterest | `pinterest` | yes, `board` required | BETA: pins visible only to their creator until Pinterest grants Standard access |
+| Pinterest | `pinterest` | yes, `board` required | Live for everyone since 2026-10-27 |
+| Mastodon (mastodon.social) | `mastodon` | **no** | BETA |
+| Mastodon (any other server) | `mastodon-custom` | **no** | BETA |
+| Pixelfed | `pixelfed` | **no** (a picture is required) | BETA |
+| WordPress | `wordpress` | yes, `title` and `type` required | BETA |
+| Tumblr | `tumblr` | yes, all optional | BETA |
+| Dev.to | `devto` | yes, `title` required | BETA |
+| Ghost | `ghost` | yes, `title` required | BETA |
+| Google Chat | `google-chat` | **no** | BETA |
+| Microsoft Teams | `microsoft-teams` | **no** | BETA |
+| Google Business Profile | `gmb` | yes, all optional | Coming soon, not schedulable yet |
+| LinkedIn Pages | `linkedin-page` | yes, same as LinkedIn | Coming soon, not schedulable yet |
 
 Source of truth for everything on this page:
 `libraries/nestjs-libraries/src/dtos/posts/providers-settings/*.ts` in the Posty
@@ -328,8 +344,8 @@ posty posts:create -c "Release notes are out" -s "2026-12-31T12:00:00Z" \
 
 ## Pinterest — `pinterest`
 
-**BETA.** Until Pinterest grants Posty Standard access, a pin is visible only
-to the account that created it. Tell the user before you schedule one.
+**Live for everyone** since Pinterest granted Posty Standard access on
+2026-10-27. Pins are public like any other pin.
 
 | Field | Values |
 |---|---|
@@ -367,7 +383,7 @@ YT_ID=$(posty integrations:list | jq -r '.[] | select(.identifier=="youtube")  |
 If a channel is not in `integrations:list`, the user cannot post to it. For
 Google Business Profile and LinkedIn company pages that is the expected state
 until those platforms approve the app (personal LinkedIn profiles work).
-Pinterest is live as a BETA channel. Say so rather than scheduling a post that will fail.
+Pinterest is live for everyone.
 
 ---
 
