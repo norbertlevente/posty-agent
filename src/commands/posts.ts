@@ -135,6 +135,11 @@ export async function createPost(args: any) {
   let postData: any;
 
   if (args.json) {
+    if ((args.coverFrame ?? args['cover-frame']) !== undefined || (args.coverImage ?? args['cover-image'])) {
+      console.error('❌ --cover-frame / --cover-image do not apply to --json.');
+      console.error('Put the cover on the video\'s media item in the JSON instead: "thumbnailTimestamp" (milliseconds) and/or "thumbnail" (a picture URL).');
+      process.exit(1);
+    }
     // Load from JSON file for complex posts with comments and media
     try {
       const jsonPath = args.json;
