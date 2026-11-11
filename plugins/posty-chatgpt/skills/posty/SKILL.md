@@ -42,8 +42,10 @@ checks it, shows it and publishes it. The Posty tools do all the work.
   `{"view":"compose","draft":{"text":"...","channelIds":["..."],"publishAtUtc":"..."}}`.
   Nothing is saved until the user presses the button in the app.
 - A post the user selects in the app is in your context with its `postId`.
-  To change it, write the new version, preview it, create it after the user
-  confirms, and then delete the old one with `delete_post`.
+  To change it, read it with `get_post`, show the user the new version, and
+  call `update_post` after they confirm (send every part back). Only the
+  time: `reschedule_post`. A failed post: `retry_post`, and tell the user the
+  result for each post. A published post cannot be changed.
 - A `posty://channel/<id>` or `posty://post/<id>` link in a message comes from
   the @ menu. The id is the `integrationId` or the `postId` the tools take.
 

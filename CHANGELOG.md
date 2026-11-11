@@ -7,6 +7,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-11-11
+
+### Added
+- **Change posts after they are made.** `posts:get <id>` shows one channel's
+  post in full: every part with its media, the alt text of each file, the
+  video cover, the settings, the tags, the state, the publish time and, for a
+  failed post, the reason. `posts:update <id>` changes a scheduled, draft or
+  failed post: send every part as `-c` like `posts:create` (or `--json` with
+  `{date, type, settings, posts:[{content, attachments, altText, cover}]}`);
+  without `-s` it keeps the post's time, and without `-t` a draft stays a
+  draft and anything else is scheduled. Media keep their alt text and cover
+  unless new ones are given; tags are kept; a published post is refused;
+  saving a failed post schedules it again. `posts:reschedule <id...> -s
+  <date>` changes only the time. `posts:retry <id...> [-s date]
+  [--confirmed]` tries failed posts again, and Posty decides per post: a
+  temporary failure at once, a platform limit not before it can have passed,
+  a disconnected channel only after the reconnect; content the platform
+  refused is not retried (fix it with `posts:update`), and a post that may
+  already be live needs `--confirmed` after asking the user.
+- **Alt text.** `--alt <text>` (repeatable) on `posts:create` and
+  `posts:update` gives alt text to the media of the post itself (the first
+  `-c`), in order. In `--json`, `alt` on the media item.
+- **`skills/posty-writing`**, a writing skill: post ideas, hooks and
+  headlines, opening lines, formatting, threads, each network's writing rules
+  (Pinterest included) and a check before publishing. It writes in the user's
+  language. Shipped in the `posty-cli`, `posty-cursor` and `posty-grok`
+  plugins.
+- **`scripts/check-skills.mjs`** checks that the copies of each skill match
+  their source under `skills/`, that no skill uses a dash, and that every
+  relative link resolves; `--sync` makes the copies first.
+
+### Changed
+- **`SKILL.md` rewritten** (about 700 lines instead of 1100). The workflow
+  has a Confirm step: show the user, per channel, the account, the text, the
+  media and the local publish time, and wait for a yes (or save a draft). The
+  channel table has a Status column: Pinterest is live for everyone since
+  2026-10-27, Mastodon, Pixelfed, Tumblr, WordPress, Ghost, Dev.to, Google
+  Chat and Microsoft Teams are in beta, Google Business Profile and LinkedIn
+  Pages are coming soon, and `integrations:list` may show a newer channel.
+  New in "Behaviours that surprise people": X posts lose their links, read
+  `notices` (links removed, the 24 hour caps of YouTube and TikTok), and HTTP
+  402 means the monthly X quota is used up. Video covers (`--cover-frame`,
+  `--cover-image`, and `thumbnailTimestamp` / `thumbnail` in `--json`) are
+  documented. Fixed examples: no more `PATH=` (it overwrote the shell's
+  path), no comment after a line continuation, no truncating a long text
+  (rewrite it and show the user), no past dates, the real `integration` /
+  `value` keys in the JSON example, and Pinterest `boards` in the tools
+  table. FotoAI, billing, account creation, key scopes, rate limits and the
+  analytics repair moved to `reference/details.md` (shipped in the package).
+- **The MCP plugin's skill** lists `read_settings`, `update_settings`,
+  `open_posty`, `get_post`, `update_post`, `reschedule_post` and `retry_post`,
+  `altText` and `cover` on post entries, the rule to save a missing timezone
+  with `update_settings`, the X link rule, the monthly X quota and the 24
+  hour caps. It says plainly that the MCP server has no analytics. The
+  ChatGPT, Cursor and Grok skills change a post with `update_post`.
+- **`PROVIDER_SETTINGS.md` and `HOW_TO_RUN.md`:** Pinterest is no longer
+  beta; the beta and coming soon channels are listed.
+
 ## [1.5.0] - 2026-11-11
 
 ### Added
