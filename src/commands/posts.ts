@@ -532,7 +532,7 @@ export async function updatePost(args: any) {
       type: args.type || (current?.state === 'DRAFT' ? 'draft' : 'schedule'),
       // Without --settings the server keeps the post's own settings.
       ...(settings ? { settings } : {}),
-      posts: values.map((v: any) => {
+      parts: values.map((v: any) => {
         const video = v.image.find((m: any) => m.thumbnail || m.thumbnailTimestamp != null);
         const alts = v.image.map((m: any) => m.alt);
         const lastAlt = alts.map((a: any) => a !== undefined).lastIndexOf(true);

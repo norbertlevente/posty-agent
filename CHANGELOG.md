@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   video cover, the settings, the tags, the state, the publish time and, for a
   failed post, the reason. `posts:update <id>` changes a scheduled, draft or
   failed post: send every part as `-c` like `posts:create` (or `--json` with
-  `{date, type, settings, posts:[{content, attachments, altText, cover}]}`);
+  `{date, type, settings, parts:[{content, attachments, altText, cover}]}`);
   without `-s` it keeps the post's time, and without `-t` a draft stays a
   draft and anything else is scheduled. Media keep their alt text and cover
   unless new ones are given; tags are kept; a published post is refused;

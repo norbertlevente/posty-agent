@@ -241,7 +241,7 @@ yargs(hideBin(process.argv))
         .option('timezone', { describe: 'IANA timezone for a --date without offset', type: 'string' })
         .option('type', { alias: 't', describe: 'schedule, draft or now. Leave out: a draft stays a draft, anything else is scheduled', type: 'string', choices: ['schedule', 'draft', 'now'] })
         .option('settings', { describe: 'Platform settings JSON (as in posts:create). Leave out to keep them', type: 'string' })
-        .option('json', { alias: 'j', describe: 'Path to a JSON body: {date, type, settings, posts:[{content, attachments, altText, cover}]}', type: 'string' })
+        .option('json', { alias: 'j', describe: 'Path to a JSON body: {date, type, settings, parts:[{content, attachments, altText, cover}]} (the shape posts:get returns)', type: 'string' })
         .example('$0 posts:get post-123', 'Read it first')
         .example('$0 posts:update post-123 -c "New text" -m "$IMG" --alt "A red bicycle"', 'Change text and alt text, keep the time'),
     updatePost as any

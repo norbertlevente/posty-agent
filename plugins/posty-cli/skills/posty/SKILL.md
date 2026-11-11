@@ -379,7 +379,7 @@ Telegram, Mastodon, Pixelfed, Google Chat, Teams) take `{}`.
 ```bash
 posty posts:get <id>                       # one post in full
 posty posts:update <id> -c "..." [-m ...] [--alt "..."] [-s date --timezone TZ] [-t schedule|draft|now] [--settings JSON]
-posty posts:update <id> --json change.json # {date, type, settings, posts:[{content, attachments, altText, cover}]}
+posty posts:update <id> --json change.json # {date, type, settings, parts:[{content, attachments, altText, cover}]}
 posty posts:reschedule <id...> -s "2026-12-31 10:00" --timezone Europe/Budapest
 posty posts:retry <id...> [-s date] [--confirmed]
 posty posts:status <id> --status draft     # back to draft; stops a running publish
@@ -394,8 +394,11 @@ posty posts:delete-group <group>           # every channel of a group (group fro
 - **`posts:update`** changes a scheduled, draft or failed post. Send EVERY
   entry again as `-c`, like `posts:create`, not only the changed one.
   Attachments keep their alt text and cover unless you give new ones; tags are
-  kept. Without `-s` it keeps the post's time. Without `-t` a draft stays a
-  draft and anything else is scheduled. A published post is refused. Saving a
+  kept. `--alt` sets alt text for the first entry's media only; the other
+  entries keep theirs (set them with `--json`, the `altText` of each part).
+  Without `-s` it keeps the post's time, except for a failed post: its time
+  has passed, so give `-s`, or use `posts:retry` to send it unchanged.
+  Without `-t` a draft stays a draft and anything else is scheduled. A published post is refused. Saving a
   failed post schedules it again. Run `posts:get` first, and confirm the
   change with the user as in the Workflow.
 - **`posts:reschedule`** changes only the time of one or more posts. A draft
