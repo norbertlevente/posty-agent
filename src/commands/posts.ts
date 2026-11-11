@@ -87,6 +87,84 @@ function echoInterpretation(input: string, resolved: ResolvedDate) {
   }
 }
 
+/** Each -c with its -m paths, as the API's `value` entries. */
+const buildValues = (
+  pairs: { content: string; media?: string }[],
+  args: any
+) => {
+  const values = pairs.map(({ content, media }) => ({
+    content,
+    image: media
+      ? media
+          .split(',')
+          .filter((img: string) => img.trim())
+          .map((img: string) => ({
+            id: Math.random().toString(36).substring(7),
+            path: img.trim(),
+          }))
+      : ([] as any[]),
+    delay: args?.delay || 0,
+  }));
+  applyAltAndCover(values, args);
+  return values;
+};
+
+/*
+  ALT TEXT AND THE VIDEO COVER, on the media of the post itself (the first
+  -c), never on a comment.
+
+  - `--alt` (repeatable) gives alt text to the first -c's media, in order;
+    more --alt than media is refused rather than guessed.
+  - The cover belongs to the video's media item, the same two fields the web
+    editor's cover picker writes: `thumbnailTimestamp` (milliseconds) and
+    `thumbnail` (a picture URL), on the first .mp4. A cover with no video is
+    refused rather than silently dropped.
+*/
+const applyAltAndCover = (values: { image: any[] }[], args: any) => {
+  const alts: string[] = ([] as any[])
+    .concat(args.alt ?? [])
+    .filter((a: any) => a !== undefined && a !== null)
+    .map((a: any) => String(a));
+  const media = values[0]?.image || [];
+  if (alts.length) {
+    if (alts.length > media.length) {
+      console.error(
+        `❌ ${alts.length} --alt given but the post (first -c) has ${media.length} media. Give one --alt per file, in the -m order.`
+      );
+      process.exit(1);
+    }
+    alts.forEach((alt, i) => {
+      media[i].alt = alt;
+    });
+  }
+
+  const coverFrame = args.coverFrame ?? args['cover-frame'];
+  const coverImage = args.coverImage ?? args['cover-image'];
+  if (coverFrame === undefined && !coverImage) {
+    return;
+  }
+  if (
+    coverFrame !== undefined &&
+    (typeof coverFrame !== 'number' || !Number.isFinite(coverFrame) || coverFrame < 0)
+  ) {
+    console.error('❌ --cover-frame must be a number of seconds, 0 or more (e.g. 2.5)');
+    process.exit(1);
+  }
+  const video = media.find((m: { path: string }) =>
+    /\.mp4$/i.test(m.path.split(/[?#]/)[0])
+  );
+  if (!video) {
+    console.error("❌ --cover-frame / --cover-image need an .mp4 video in the post's -m (the first -c).");
+    process.exit(1);
+  }
+  if (coverFrame !== undefined) {
+    video.thumbnailTimestamp = Math.round(coverFrame * 1000);
+  }
+  if (coverImage) {
+    video.thumbnail = String(coverImage).trim();
+  }
+};
+
 export async function getMissingContent(args: any) {
   const config = getConfig();
   const api = new PostyAPI(config);
@@ -135,9 +213,9 @@ export async function createPost(args: any) {
   let postData: any;
 
   if (args.json) {
-    if ((args.coverFrame ?? args['cover-frame']) !== undefined || (args.coverImage ?? args['cover-image'])) {
-      console.error('❌ --cover-frame / --cover-image do not apply to --json.');
-      console.error('Put the cover on the video\'s media item in the JSON instead: "thumbnailTimestamp" (milliseconds) and/or "thumbnail" (a picture URL).');
+    if ((args.coverFrame ?? args['cover-frame']) !== undefined || (args.coverImage ?? args['cover-image']) || args.alt !== undefined) {
+      console.error('❌ --alt / --cover-frame / --cover-image do not apply to --json.');
+      console.error('Put them on the media items in the JSON instead: "alt", and on the video "thumbnailTimestamp" (milliseconds) and/or "thumbnail" (a picture URL).');
       process.exit(1);
     }
     // Load from JSON file for complex posts with comments and media
@@ -195,49 +273,7 @@ export async function createPost(args: any) {
       process.exit(1);
     }
 
-    const values = (pairs.length ? pairs : contents.map((content: string) => ({ content, media: undefined })))
-      .map(({ content, media }: { content: string; media?: string }) => ({
-        content,
-        image: media
-          ? media.split(',').filter((img: string) => img.trim()).map((img: string) => ({
-              id: Math.random().toString(36).substring(7),
-              path: img.trim(),
-            }))
-          : [],
-        delay: args?.delay || 0,
-      }));
-
-    /*
-      THE VIDEO COVER (2026-11-11). It belongs to the video's media item, the
-      same two fields the web editor's cover picker writes: `thumbnailTimestamp`
-      (milliseconds) and `thumbnail` (a picture URL). Applied to the first
-      video of the post itself (the first -c), never to a comment. A cover
-      with no video is refused rather than silently dropped.
-    */
-    const coverFrame = args.coverFrame ?? args['cover-frame'];
-    const coverImage = args.coverImage ?? args['cover-image'];
-    if (coverFrame !== undefined || coverImage) {
-      if (
-        coverFrame !== undefined &&
-        (typeof coverFrame !== 'number' || !Number.isFinite(coverFrame) || coverFrame < 0)
-      ) {
-        console.error('❌ --cover-frame must be a number of seconds, 0 or more (e.g. 2.5)');
-        process.exit(1);
-      }
-      const video = (values[0]?.image || []).find((m: { path: string }) =>
-        /\.(mp4|mov|m4v|webm)$/i.test(m.path.split(/[?#]/)[0])
-      );
-      if (!video) {
-        console.error('❌ --cover-frame / --cover-image need a video in the post\'s -m (the first -c).');
-        process.exit(1);
-      }
-      if (coverFrame !== undefined) {
-        (video as any).thumbnailTimestamp = Math.round(coverFrame * 1000);
-      }
-      if (coverImage) {
-        (video as any).thumbnail = String(coverImage).trim();
-      }
-    }
+    const values = buildValues(pairs.length ? pairs : contents.map((content: string) => ({ content, media: undefined })), args);
 
     // Parse provider-specific settings if provided
     // Note: __type is automatically added by the backend based on integration ID
@@ -390,5 +426,176 @@ export async function deletePostGroup(args: any) {
     return res;
   } catch (error: any) {
     fail('Failed to delete post group', error);
+  }
+}
+
+/** `posts:get <id>`: one channel's post in full, the input for posts:update. */
+export async function getPost(args: any) {
+  const api = new PostyAPI(getConfig());
+  try {
+    const res = await api.getPost(args.id);
+    result(res);
+    return res;
+  } catch (error: any) {
+    fail('Failed to read post', error);
+  }
+}
+
+/** A date flag resolved like posts:create does it, or exit with the reason. */
+const dateFromArgs = (args: any, flag = '--date') => {
+  const timezone = timezoneForArgs(args);
+  try {
+    const resolved = resolveDateInput(args.date, timezone, flag);
+    echoInterpretation(args.date, resolved);
+    return resolved.iso;
+  } catch (error: any) {
+    console.error(`❌ ${error.message}`);
+    process.exit(1);
+  }
+};
+
+/*
+  `posts:update <id>`: rewrite one channel's scheduled, draft or failed post.
+
+  Every part is sent, like posts:create (-c/-m pairs), or the whole body with
+  --json. Without -s the post keeps its time; without -t a draft stays a
+  draft and anything else is scheduled. On the server, an attachment sent
+  again keeps its alt text and cover unless --alt / --cover-* set new ones,
+  and the post keeps its tags.
+*/
+export async function updatePost(args: any) {
+  const api = new PostyAPI(getConfig());
+  let body: any;
+
+  if (args.json) {
+    if (args.alt !== undefined || (args.coverFrame ?? args['cover-frame']) !== undefined || (args.coverImage ?? args['cover-image'])) {
+      console.error('❌ --alt / --cover-frame / --cover-image do not apply to --json; put altText and cover on the parts in the JSON.');
+      process.exit(1);
+    }
+    if (!existsSync(args.json)) {
+      console.error(`❌ JSON file not found: ${args.json}`);
+      process.exit(1);
+    }
+    try {
+      body = JSON.parse(readFileSync(args.json, 'utf-8'));
+    } catch (error: any) {
+      console.error(`❌ Failed to parse JSON file: ${error.message}`);
+      process.exit(1);
+    }
+  } else {
+    const contents = ([] as string[]).concat(args.content ?? []);
+    if (!contents.length || !contents[0]) {
+      console.error('❌ posts:update needs every part as -c (like posts:create), or --json.');
+      console.error(`Read the post first: posty posts:get ${args.id}`);
+      process.exit(1);
+    }
+    const pairs = pairContentsWithMedia(process.argv);
+    if (pairs.length && pairs.length !== contents.length) {
+      console.error('❌ Could not match --media to --content reliably. Use --json instead.');
+      process.exit(1);
+    }
+    const values = buildValues(
+      pairs.length ? pairs : contents.map((content) => ({ content, media: undefined })),
+      args
+    );
+
+    let current: any;
+    if (!args.date || !args.type) {
+      try {
+        current = await api.getPost(args.id);
+      } catch (error: any) {
+        fail('Failed to read post', error);
+      }
+    }
+
+    let settings: any;
+    if (args.settings) {
+      try {
+        settings = typeof args.settings === 'string' ? JSON.parse(args.settings) : args.settings;
+      } catch (error: any) {
+        console.error(`❌ Failed to parse settings JSON: ${error.message}`);
+        process.exit(1);
+      }
+    }
+
+    body = {
+      date: args.date ? dateFromArgs(args) : current?.publishAtUtc,
+      type: args.type || (current?.state === 'DRAFT' ? 'draft' : 'schedule'),
+      ...(settings ? { settings } : current?.settings ? { settings: current.settings } : {}),
+      posts: values.map((v: any) => {
+        const video = v.image.find((m: any) => m.thumbnail || m.thumbnailTimestamp != null);
+        const alts = v.image.map((m: any) => m.alt);
+        const lastAlt = alts.map((a: any) => a !== undefined).lastIndexOf(true);
+        return {
+          content: v.content,
+          attachments: v.image.map((m: any) => m.path),
+          // Only the alt texts this call sets; the server keeps the rest.
+          ...(lastAlt >= 0 ? { altText: alts.slice(0, lastAlt + 1).map((a: any) => a ?? '') } : {}),
+          ...(video
+            ? {
+                cover: {
+                  ...(video.thumbnailTimestamp != null ? { frameSeconds: video.thumbnailTimestamp / 1000 } : {}),
+                  ...(video.thumbnail ? { image: video.thumbnail } : {}),
+                },
+              }
+            : {}),
+        };
+      }),
+    };
+  }
+
+  try {
+    const res: any = await api.updatePost(args.id, body);
+    status(`✅ Post ${args.id} updated.`);
+    if (res?.notices) {
+      status(`Note: ${Array.isArray(res.notices) ? res.notices.join(' ') : res.notices}`);
+    }
+    result(res);
+    return res;
+  } catch (error: any) {
+    fail('Failed to update post', error);
+  }
+}
+
+/** `posts:reschedule <id...> -s <date>`: only the time changes. */
+export async function reschedulePosts(args: any) {
+  const api = new PostyAPI(getConfig());
+  const ids: string[] = ([] as string[]).concat(args.id ?? []).map(String);
+  if (!args.date) {
+    console.error('❌ --date is required.');
+    process.exit(1);
+  }
+  const date = dateFromArgs(args);
+  const out: any[] = [];
+  for (const id of ids) {
+    try {
+      const res: any = await api.reschedulePost(id, date);
+      out.push(...(res?.results || [{ postId: id, done: true }]));
+    } catch (error: any) {
+      out.push({ postId: id, done: false, message: error?.message || String(error) });
+    }
+  }
+  const failed = out.filter((r) => !r.done).length;
+  status(failed ? `⚠️ ${out.length - failed} moved, ${failed} not moved (see message).` : `✅ ${out.length} moved.`);
+  result({ results: out });
+  if (failed) process.exitCode = 1;
+  return out;
+}
+
+/** `posts:retry <id...>`: the server decides per post whether a retry can work. */
+export async function retryPosts(args: any) {
+  const api = new PostyAPI(getConfig());
+  const ids: string[] = ([] as string[]).concat(args.id ?? []).map(String);
+  const date = args.date ? dateFromArgs(args) : undefined;
+  try {
+    const res: any = await api.retryPosts(ids, date, !!args.confirmed);
+    const results = res?.results || [];
+    const not = results.filter((r: any) => !r.retried).length;
+    status(not ? `⚠️ ${results.length - not} retried, ${not} not retried (see message: what to fix first).` : `✅ ${results.length} retried.`);
+    result(res);
+    if (not) process.exitCode = 1;
+    return res;
+  } catch (error: any) {
+    fail('Failed to retry', error);
   }
 }

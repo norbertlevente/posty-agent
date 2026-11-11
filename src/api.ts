@@ -303,6 +303,41 @@ export class PostyAPI {
     });
   }
 
+  /** One channel's post in full: parts, attachments, alt text, cover, settings, tags, failure. */
+  async getPost(id: string) {
+    return this.request(`/public/v1/posts/${encodeURIComponent(id)}`, {
+      method: 'GET',
+    });
+  }
+
+  /** Rewrite one channel's scheduled, draft or failed post (every part is sent). */
+  async updatePost(id: string, body: any) {
+    return this.request(`/public/v1/posts/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+  }
+
+  /** Move one scheduled or draft post to a new time; content unchanged. */
+  async reschedulePost(id: string, date: string) {
+    return this.request(`/public/v1/posts/${encodeURIComponent(id)}/date`, {
+      method: 'PUT',
+      body: JSON.stringify({ date }),
+    });
+  }
+
+  /** Publish failed posts again; the server decides per post whether a retry can work. */
+  async retryPosts(ids: string[], date?: string, userConfirmed?: boolean) {
+    return this.request('/public/v1/posts/retry', {
+      method: 'POST',
+      body: JSON.stringify({
+        ids,
+        ...(date ? { date } : {}),
+        ...(userConfirmed ? { userConfirmed: true } : {}),
+      }),
+    });
+  }
+
   /** The whole group: every channel of one multi-channel post. */
   async deletePostGroup(group: string) {
     return this.request(`/public/v1/posts/group/${encodeURIComponent(group)}`, {
