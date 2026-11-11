@@ -404,13 +404,16 @@ posty posts:delete-group <group>           # every channel of a group (group fro
 - **`posts:reschedule`** changes only the time of one or more posts. A draft
   stays a draft. A failed post is not rescheduled: use `posts:retry`.
 - **`posts:retry`** asks Posty to try failed posts again. Posty decides per
-  post: a temporary failure is retried at once; a platform limit not before
-  the limit can have passed; a disconnected channel only after the user
-  reconnects it. Content the platform refused is NOT retried: fix it with
-  `posts:update`. When the post may already be live, or the account has a
-  problem, the answer says so: ask the user, then run it again with
-  `--confirmed`. Several posts are spread two minutes apart. Tell the user the
-  result for each post.
+  post and never risks posting twice. It retries at once only when nothing can
+  have reached the platform: the media never arrived, a disconnected channel
+  once the user reconnected it, a platform limit once it has passed. Content
+  the platform refused is NOT retried: fix it with `posts:update`. When the
+  failure may have come after the platform took the post (a timeout, a server
+  error, an unknown error), or the account has a problem, the answer says so:
+  ask the user to check the platform, then run it again with `--confirmed`.
+  Every answer carries the platform's exact words (`platformMessage`) and its
+  raw response (`platformResponse`); quote them to the user. Several posts are
+  spread two minutes apart. Tell the user the result for each post.
 
 ---
 

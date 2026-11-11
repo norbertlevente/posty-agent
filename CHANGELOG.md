@@ -21,11 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   unless new ones are given; tags are kept; a published post is refused;
   saving a failed post schedules it again. `posts:reschedule <id...> -s
   <date>` changes only the time. `posts:retry <id...> [-s date]
-  [--confirmed]` tries failed posts again, and Posty decides per post: a
-  temporary failure at once, a platform limit not before it can have passed,
-  a disconnected channel only after the reconnect; content the platform
-  refused is not retried (fix it with `posts:update`), and a post that may
-  already be live needs `--confirmed` after asking the user.
+  [--confirmed]` tries failed posts again, and Posty decides per post without
+  ever risking a second copy: at once only when nothing can have reached the
+  platform (media never arrived, a disconnected channel once reconnected, a
+  limit once passed); content the platform refused is not retried (fix it
+  with `posts:update`); a failure that may have come after the platform took
+  the post needs `--confirmed` after the user checked. Answers quote the
+  platform's exact message and raw response.
 - **Alt text.** `--alt <text>` (repeatable) on `posts:create` and
   `posts:update` gives alt text to the media of the post itself (the first
   `-c`), in order. In `--json`, `alt` on the media item.
