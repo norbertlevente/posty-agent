@@ -508,6 +508,15 @@ export async function updatePost(args: any) {
       }
     }
 
+    // A failed post's time is in the past: saving it unchanged would be
+    // refused. Retry it, or give it a new time.
+    if (!args.date && current?.state === 'ERROR') {
+      console.error(`❌ This post failed to publish, and its time (${current.publishAtUtc}) has passed.`);
+      console.error(`To send it again unchanged: posty posts:retry ${args.id}`);
+      console.error('To change it: add -s with a new time (or -t draft).');
+      process.exit(1);
+    }
+
     let settings: any;
     if (args.settings) {
       try {
@@ -521,7 +530,8 @@ export async function updatePost(args: any) {
     body = {
       date: args.date ? dateFromArgs(args) : current?.publishAtUtc,
       type: args.type || (current?.state === 'DRAFT' ? 'draft' : 'schedule'),
-      ...(settings ? { settings } : current?.settings ? { settings: current.settings } : {}),
+      // Without --settings the server keeps the post's own settings.
+      ...(settings ? { settings } : {}),
       posts: values.map((v: any) => {
         const video = v.image.find((m: any) => m.thumbnail || m.thumbnailTimestamp != null);
         const alts = v.image.map((m: any) => m.alt);
