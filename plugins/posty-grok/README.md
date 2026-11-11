@@ -16,6 +16,8 @@ for the workspace you want Grok to use. Do not paste an API key into the chat.
 - MCP server `posty` (streamable HTTP).
 - Skill `posty`: the posting workflow and its rules (preview before create,
   times in the user's timezone, per-account character limits).
+- Skill `posty-writing`: how to write posts that get read (ideas, hooks,
+  formats, each network's style, a check before publishing).
 - Commands `/announce-release` (posts about the latest release, from the
   changelog) and `/schedule-post`.
 

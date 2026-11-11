@@ -35,6 +35,10 @@ this.
 - Entries after the first in `postsAndComments` are a thread on X, Threads and
   Bluesky, and comments on LinkedIn and Facebook. Ask which the user wants.
 - X posts get no links; `preview_post` lists the links it would remove.
+- To change a post: `get_post`, show the user the change, then `update_post`
+  (send every part back). Only the time: `reschedule_post`. A failed post:
+  `retry_post`, then tell the user the result for each post. A published post
+  cannot be changed.
 - `list_posts` answers "what is scheduled". `delete_post` cancels one channel
   of a post before it publishes; pass `allChannels: true` only when the user
   wants every channel. Ask before you delete.

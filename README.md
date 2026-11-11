@@ -21,6 +21,16 @@ claude plugin install posty-cli@posty-agent    # CLI, for the terminal and scrip
 
 In ChatGPT the same MCP server is the official plugin: https://posty.hu/ai/chatgpt
 
+### Skills
+
+| Skill | What it teaches | In the plugins |
+|---|---|---|
+| [`skills/posty`](./skills/posty) | the CLI: every command, the workflow (confirm with the user before posting), the rules | `posty-cli` (and the npm package, as `SKILL.md`) |
+| [`skills/posty-writing`](./skills/posty-writing) | post ideas, hooks and headlines, opening lines, formatting, threads, each network's writing rules, a check before publishing | `posty-cli`, `posty-cursor`, `posty-grok` |
+
+The MCP plugins (`posty`, ChatGPT, Cursor, Grok) each have their own short
+`posty` skill under `plugins/<plugin>/skills/posty`.
+
 ---
 
 # Posty CLI
@@ -153,6 +163,14 @@ posty posts:create -c "Content" --date "2026-12-31T12:00:00Z" -i "<id1>,<id2>"
 posty posts:create -c "Content" --date "2026-12-31T12:00:00Z" \
   --settings '{"who_can_reply_post":"everyone"}' -i "<x-id>"
 
+# Alt text for the post's media, in order (repeat --alt)
+posty posts:create -c "Content" -m "$IMG1,$IMG2" --alt "First picture" --alt "Second picture" \
+  --date "2026-12-31T12:00:00Z" -i "<id>"
+
+# Video cover: a frame (Instagram, TikTok) or a picture from posty upload (Instagram)
+posty posts:create -c "Content" -m "$VIDEO" --cover-frame 2.5 --date "2026-12-31T12:00:00Z" -i "<id>"
+posty posts:create -c "Content" -m "$VIDEO" --cover-image "$COVER" --date "2026-12-31T12:00:00Z" -i "<id>"
+
 # Complex post from JSON
 posty posts:create --json post.json
 ```
@@ -172,6 +190,10 @@ posty posts:delete-group <group>                   # delete every channel of a g
 posty posts:status <id> --status draft             # back to draft
 posty posts:status <id> --status schedule          # queue a draft
 posty posts:find-slot <id>                         # next free slot
+posty posts:get <id>                               # one post in full (parts, media, alt text, cover, state, failure reason)
+posty posts:update <id> -c "..." [-m ...] [--alt ...] [-s ...] [-t ...]   # change a scheduled, draft or failed post; send every part
+posty posts:reschedule <id...> -s "2026-12-31 10:00" --timezone Europe/Budapest   # only the time
+posty posts:retry <id...> [-s date] [--confirmed]  # try failed posts again; Posty decides per post
 ```
 
 ### Analytics
@@ -417,6 +439,10 @@ node dist/index.js --help
 | `pnpm run build` | Compiles into `dist/` |
 | `pnpm run dev` | Watches and recompiles |
 | `pnpm run release:check` | Checks the package and publishing (does not publish) |
+| `node scripts/check-skills.mjs` | Checks the skills: the copies match their source, no dashes, links resolve |
+| `node scripts/check-skills.mjs --sync` | Copies `skills/posty` to the root `SKILL.md` and `reference/` and to the CLI plugin, and `skills/posty-writing` to the plugins, then checks |
+
+Edit a skill only under `skills/`, then run `node scripts/check-skills.mjs --sync`.
 
 ## Quick reference
 
@@ -448,6 +474,10 @@ posty posts:delete <id>
 posty posts:delete-group <group>
 posty posts:status <id> --status draft
 posty posts:find-slot <id>
+posty posts:get <id>
+posty posts:update <id> -c "..."
+posty posts:reschedule <id...> -s "..."
+posty posts:retry <id...>
 posty upload <file>
 posty upload:link
 posty upload:files <id>
@@ -487,6 +517,8 @@ made for.
 - [HOW_TO_RUN.md](./HOW_TO_RUN.md) — install and run from source
 - [PROVIDER_SETTINGS.md](./PROVIDER_SETTINGS.md) — per-channel settings schemas
 - [SUPPORTED_FILE_TYPES.md](./SUPPORTED_FILE_TYPES.md) — accepted media types
+- [reference/details.md](./reference/details.md): account creation, key scopes, FotoAI, billing, rate limits, the analytics repair
+- [skills/posty-writing](./skills/posty-writing/SKILL.md): how to write posts that get read
 
 ## Supported channels
 
@@ -495,6 +527,7 @@ made for.
 | X (Twitter) | `x` | `who_can_reply_post` required |
 | Facebook (Pages) | `facebook` | `post_type` |
 | Instagram | `instagram` | `post_type` required |
+| Instagram (no Facebook Page) | `instagram-standalone` | `post_type` required |
 | LinkedIn | `linkedin` | none required |
 | TikTok | `tiktok` | `privacy_level`, `content_posting_method` required |
 | YouTube | `youtube` | `title`, `type` required |
@@ -503,16 +536,24 @@ made for.
 | Telegram | `telegram` | none |
 | Discord | `discord` | `channel` required (from the `channels` tool) |
 | Slack | `slack` | `channel` required (from the `channels` tool) |
+| Pinterest | `pinterest` | `board` required (from the `boards` tool) |
+
+In beta: Mastodon (`mastodon`, `mastodon-custom`), Pixelfed, Tumblr,
+WordPress, Ghost, Dev.to, Google Chat and Microsoft Teams. Coming soon: Google
+Business Profile and LinkedIn company pages.
 
 `integrations:list` shows which channels you can actually use. The table is
-what Posty supports; the command output is what you have connected.
+what Posty supports; the command output is what you have connected, and it can
+show a channel newer than this table.
 
 ## Contributing
 
 1. Fork the project
 2. Create a branch (`git checkout -b feature/something`)
 3. Build, then try it: `pnpm run build && node dist/index.js --help`
-4. Open a pull request
+4. If you changed a skill (edit it under `skills/`):
+   `node scripts/check-skills.mjs --sync`
+5. Open a pull request
 
 ## Links
 
