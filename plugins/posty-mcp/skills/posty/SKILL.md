@@ -35,7 +35,9 @@ prompt in the desktop app), then retry. There is no key to paste.
 | `list_integrations` | the connected channels with id, name, `@handle`, platform, and whether each can publish now | no |
 | `list_groups` | the customer groups channels are filed under | no |
 | `get_integration_schema` | one channel's posting rules and its real character limit. Call before writing for that channel. | no |
-| `get_channel_options` | provider-specific choices (boards, subreddits, pages) when a setting needs an id | refreshes tokens |
+| `list_channel_options` | a channel's choices (boards, channels, blogs, tags, lists) when a setting needs an id | no |
+| `search_channel_options` | a keyword search on the channel's platform (subreddits, communities, Instagram audio) | no |
+| `list_channel_sub_options` | the choices under one picked item, such as a subreddit's flairs | no |
 | `preview_post` | validates a proposed post and shows exactly what would go out, per account. **Always call this and show the result before `create_post`.** | no |
 | `create_post` | creates a draft, schedules, or publishes now, across one or more channels | yes |
 | `list_posts` | the calendar: id, state, channel, UTC and local time | no |
